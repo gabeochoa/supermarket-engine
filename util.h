@@ -118,6 +118,13 @@ float dist(vec2f a, vec2f b) {
     return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 }
 
+float dist_i(vec2i a, vec2i b) {
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
+vec2i vtoi(vec2f a) { return vec2i{(int)a.x, (int)a.y}; }
+vec2f vtof(vec2i a) { return vec2f{1.0f * a.x, 1.0f * a.y}; }
+
 vec2f norm(vec2f a) {
     float m = mag(a);
     if (m == 0.f) {
@@ -190,6 +197,8 @@ sf::Text getText(const std::string t, int size = 48,
 #include <random>
 
 int randIn(int a, int b) { return a + (std::rand() % (b - a + 1)); }
+vec2i randVeci(int a, int b) { return vec2i{randIn(a, b), randIn(a, b)}; }
+vec2f randVecf(int a, int b) { return vtof(vec2i{randIn(a, b), randIn(a, b)}); }
 
 template <typename RandomGenerator = std::default_random_engine>
 struct random_selector {

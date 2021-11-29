@@ -17,10 +17,10 @@
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Mouse.hpp>
 #include <iostream>
-#include <map>
 #include <queue>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 #define FMT_HEADER_ONLY
 #include "fmt/format.h"
@@ -40,7 +40,7 @@ enum MenuState {
 constexpr float GRID_SIZEF = 100.f;
 constexpr int GRID_SIZE = static_cast<int>(GRID_SIZEF);
 // number of grid items in the world
-constexpr int WORLD_GRID_SIZE = 50;
+constexpr int WORLD_GRID_SIZE = 20;
 
 struct Tile : public sf::Drawable {
     sf::RectangleShape shape;
@@ -60,12 +60,14 @@ struct Tile : public sf::Drawable {
         target.draw(shape);
     }
 };
-std::vector<std::vector<Tile> > tilemap;
+std::vector<std::vector<Tile>> tilemap;
 
 /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
 struct Item : public sf::Drawable {
     std::string name;
     double price;
+    vec2f tilePosition;
+
     Item(std::string n, double p) : name(n), price(p) {}
     bool operator<(const Item &i) const { return this->name < i.name; }
 
@@ -73,7 +75,9 @@ struct Item : public sf::Drawable {
 
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
         sf::RectangleShape s =
-            sf::RectangleShape(vec2f{GRID_SIZEF, GRID_SIZEF});
+            sf::RectangleShape(vec2f{GRID_SIZEF / 4, GRID_SIZEF / 4});
+        s.setPosition(
+            vec2f{tilePosition.x * GRID_SIZEF, tilePosition.y * GRID_SIZEF});
         s.setFillColor(sf::Color::Green);
         target.draw(s);
     }
@@ -84,9 +88,9 @@ const std::vector<Item> all_items = std::vector<Item>{
 };
 
 struct Desire {
-    Item *item;
+    Item item;
     int amount;
-    Desire(Item *i, int a) : item(i), amount(a) {}
+    Desire(Item i, int a) : item(i), amount(a) {}
 };
 typedef std::vector<Desire> Desires;
 
@@ -99,6 +103,8 @@ struct Shelf : public sf::Drawable {
     Shelf() {
         shape = sf::RectangleShape(vec2f{GRID_SIZEF, GRID_SIZEF});
         shape.setFillColor(sf::Color::Black);
+
+        contents.push_back(Desire(all_items[0], 1));
     }
 
     void setTile(vec2f tile_pos) {
@@ -108,34 +114,149 @@ struct Shelf : public sf::Drawable {
     }
 
     void update(sf::Time elapsed) {
+        // Desire is empty
+        auto is_empty =
+            std::remove_if(contents.begin(), contents.end(),
+                           [](const Desire &d) { return d.amount == 0; });
+        contents.erase(is_empty, contents.end());
+        //
+
         for (Desire d : contents) {
-            d.item->update(elapsed);
+            d.item.update(elapsed);
         }
     }
 
     void draw(sf::RenderTarget &target, sf::RenderStates states) const {
         target.draw(shape);
         for (Desire d : contents) {
-            target.draw(*(d.item));
+            d.item.tilePosition = tilePosition;
+            target.draw(d.item);
         }
     }
 };
 std::vector<Shelf> shelves;
+
+bool inBounds(vec2i pos) {
+    return (pos.x <= WORLD_GRID_SIZE) && (pos.x >= 0) &&
+           (pos.y < WORLD_GRID_SIZE) && (pos.y >= 0);
+}
+
+bool isSame(vec2i s, vec2i g) { return s.x == g.x && s.y == g.y; }
+bool isSame(vec2f s, vec2f g) {
+    return (abs(g.x - s.x) < 0.05 && abs(g.y - s.y) < 0.05);
+}
+
+bool isValidLocation(vec2i pos) {
+    if (!inBounds(pos)) {
+        return false;
+    }
+    for (const Shelf &s : shelves) {
+        if (s.tilePosition.x == pos.x && s.tilePosition.y == pos.y) {
+            return false;
+        }
+    }
+    return true;
+}
+
+struct VectorHash {
+    std::size_t operator()(sf::Vector2<int> a) const {
+        return std::hash<int>()(a.x) ^ ((std::hash<int>()(a.y) << 1) >> 1);
+    }
+};
+
+struct QueueItem {
+    vec2i location;
+    double score;
+    QueueItem(vec2i l, double s) : location(l), score(s) {}
+    bool operator<(const QueueItem &s) const { return this->score > s.score; }
+};
+
+struct Score {
+    double value;
+    Score() : value(WORLD_GRID_SIZE * WORLD_GRID_SIZE) {}
+    Score(double s) : value(s) {}
+    bool operator<(const Score &s) const { return this->value < s.value; }
+};
+
+std::vector<vec2i> reconstruct_path(
+    const std::unordered_map<vec2i, vec2i, VectorHash> &cameFrom, vec2i cur) {
+    std::vector<vec2i> path;
+    path.push_back(cur);
+    while (cameFrom.find(cur) != cameFrom.end()) {
+        cur = cameFrom.at(cur);
+        path.push_back(cur);
+    }
+    return path;
+}
+
+std::vector<vec2i> astar(const vec2i &start, const vec2i &goal) {
+    auto heuristic = [](const vec2i &s, const vec2i &g) {
+        return abs(s.x - g.x) + abs(s.y - g.y);
+    };
+
+    std::priority_queue<QueueItem> openSet;
+    openSet.push(QueueItem{start, 0});
+
+    std::unordered_map<vec2i, vec2i, VectorHash> cameFrom;
+    std::unordered_map<vec2i, double, VectorHash> distTraveled;
+
+    distTraveled[start] = 0;
+
+    while (!openSet.empty()) {
+        QueueItem qi = openSet.top();
+        openSet.pop();
+        auto cur = qi.location;
+        if (isSame(cur, goal)) break;
+
+        const int x[] = {0, 0, 1, -1, -1, 1, -1, 1};
+        const int y[] = {1, -1, 0, 0, -1, -1, 1, 1};
+
+        for (int i = 0; i < 8; i++) {
+            vec2i neighbor = vec2i{cur.x + x[i], cur.y + y[i]};
+            double newCost = distTraveled[cur] + dist_i(cur, neighbor);
+            if (distTraveled.find(neighbor) == distTraveled.end() ||
+                newCost < distTraveled[neighbor]) {
+                distTraveled[neighbor] = newCost;
+                double prio = newCost + heuristic(neighbor, goal);
+                openSet.push(QueueItem{neighbor, prio});
+                cameFrom[neighbor] = cur;
+            }
+        }
+    }
+    return reconstruct_path(cameFrom, goal);
+}
+
+std::vector<Shelf>::iterator shelf_with_item(const Item &want) {
+    std::vector<Shelf>::iterator it =
+        std::find_if(shelves.begin(), shelves.end(), [&want](const Shelf &s) {
+            auto itt = std::find_if(
+                s.contents.begin(), s.contents.end(),
+                [&want](const Desire &d) { return d.item.name == want.name; });
+            return itt != s.contents.end();
+        });
+    return it;
+}
 
 struct Person : public sf::Drawable {
     sf::RectangleShape shape;
     vec2f tilePosition;
 
     Person() {
-        shape = sf::RectangleShape(vec2f{GRID_SIZEF, GRID_SIZEF});
+        shape = sf::RectangleShape(vec2f{GRID_SIZEF / 2, GRID_SIZEF / 2});
         shape.setFillColor(sf::Color::Red);
     }
 
     vec2f move_toward_target(vec2f pos, vec2f t, float px) {
-        if (pos.x <= t.x) pos.x += px;
-        if (pos.x >= t.x) pos.x -= px;
-        if (pos.y <= t.y) pos.y += px;
-        if (pos.y >= t.y) pos.y -= px;
+        double xdiff = t.x - pos.x;
+        double ydiff = t.y - pos.y;
+        if (xdiff < -px)
+            pos.x -= px;
+        else if (xdiff > px)
+            pos.x += px;
+        if (ydiff < -px)
+            pos.y -= px;
+        else if (ydiff > px)
+            pos.y += px;
         return pos;
     }
 
@@ -157,38 +278,72 @@ struct PersonWithDesire : public Person {
 
     int desireIndex = -1;
     vec2f desireLocation;
+    std::vector<vec2i> followPath;
 
     void add_desire(const Desire &d) { desires.push_back(d); }
 
     void clean_up_desires() {
-        auto is_complete =
+        desires.erase(
             std::remove_if(desires.begin(), desires.end(),
-                           [](const Desire &d) { return d.amount == 0; });
-        desires.erase(is_complete, desires.end());
+                           [](const Desire &d) { return d.amount == 0; }),
+            desires.end());
     }
 
     vec2f location_of_desire() {
-        desireIndex = 0;
-        // TODO find the location of the correct shelf
-        return vec2f{
-            1.0f * randIn(0, WORLD_GRID_SIZE),
-            1.0f * randIn(0, WORLD_GRID_SIZE),
-        };
+        for (int i = 0; i < desires.size(); i++) {
+            Item item = desires[i].item;
+            auto shelf_it = shelf_with_item(item);
+            if (shelf_it != shelves.end()) {
+                desireIndex = i;
+                return shelf_it->tilePosition;
+            } else {
+                std::cout << " no shelf with what i want " << item.name
+                          << std::endl;
+            }
+        }
+        // TODO replace with pain or wander
+        // didnt find any shelves, just go somewhere for now
+        return randVecf(0, WORLD_GRID_SIZE);
     }
     void move_toward_desire_location() {
         // no desires TODO - handle this
         if (desires.size() == 0) return;
+
+        // we have no selected desire
         if (desireIndex == -1) {
             desireLocation = location_of_desire();
             std::cout << fmt::format("my location {} {} des location {} {}",
                                      tilePosition.x, tilePosition.y,
                                      desireLocation.x, desireLocation.y)
                       << std::endl;
+        }
+
+        // are we at the shelf yet?
+        if (isSame(tilePosition, desireLocation)) {
+            // amazing gotta do something, but instead imma just rando the
+            // location
+            desireLocation = randVecf(0, WORLD_GRID_SIZE);
+            std::cout << fmt::format("my location {} {} des location {} {}",
+                                     tilePosition.x, tilePosition.y,
+                                     desireLocation.x, desireLocation.y)
+                      << std::endl;
+        }
+
+        if (followPath.size() == 0) {
+            followPath = astar(vtoi(tilePosition), vtoi(desireLocation));
+            if (followPath.size() != 0) {
+                // std::cout << "got an actual path to follow " << std::endl;
+                // for (vec2i f : followPath) {
+                // std::cout << f.x << ", " << f.y << std::endl;
+                // }
+            }
             return;
         }
 
-        tilePosition = move_toward_target(tilePosition, desireLocation, 0.05);
+        auto local_target = vtof(followPath.back());
+        tilePosition = move_toward_target(tilePosition, local_target, 0.05);
         setTile(tilePosition);
+        if (isSame(tilePosition, local_target)) followPath.pop_back();
     }
 
     void update(sf::Time dt) {
@@ -200,8 +355,7 @@ struct PersonWithDesire : public Person {
 
 struct Customer : public PersonWithDesire {
     Customer() {
-        auto apple = all_items[0];
-        Desire d(&apple, 1);
+        Desire d(all_items[0], 1);
         add_desire(d);
     }
 };
@@ -230,16 +384,13 @@ struct World : public sf::Drawable {
         gridOutline.setOutlineThickness(1.0f);
         gridOutline.setOutlineColor(sf::Color::Green);
 
-        Customer *cust = new Customer();
-        cust->setTile(vec2f{5, 5});
-        customers.push_back(cust);
+        for (int i = 0; i < 10; i++) {
+            customers.push_back(new Customer());
+        }
 
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 10; i++) {
             Shelf s = Shelf();
-            s.setTile(vec2f{
-                (float)1.0f * randIn(10, WORLD_GRID_SIZE),
-                (float)1.0f * randIn(10, WORLD_GRID_SIZE),
-            });
+            s.setTile(randVecf(0, WORLD_GRID_SIZE - 1));
             shelves.push_back(s);
         }
     }
@@ -287,12 +438,12 @@ struct World : public sf::Drawable {
         // TODO this doesnt work right now :(
         target.draw(gridOutline);
 
-        for (int i = 0; i < customers.size(); i++) {
-            target.draw(*customers[i]);
-        }
-
         for (int i = 0; i < shelves.size(); i++) {
             target.draw(shelves[i]);
+        }
+
+        for (int i = 0; i < customers.size(); i++) {
+            target.draw(*customers[i]);
         }
     }
 
@@ -346,9 +497,10 @@ struct GameScreen {
     int zoom_level;
     float zoom_speed = 0.01;
     int min_zoom = -100;
-    int max_zoom = 50;
+    int max_zoom;
 
     GameScreen() {
+        max_zoom = DEBUG ? 1000 : 50;
         world = new World();
         setGlobalWorld(world);
         hud.setWorld(world);
