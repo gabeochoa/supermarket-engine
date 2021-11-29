@@ -103,7 +103,6 @@ struct Shelf : public sf::Drawable {
     Shelf() {
         shape = sf::RectangleShape(vec2f{GRID_SIZEF, GRID_SIZEF});
         shape.setFillColor(sf::Color::Black);
-
         contents.push_back(Desire(all_items[0], 1));
     }
 
@@ -111,6 +110,12 @@ struct Shelf : public sf::Drawable {
         tilePosition = tile_pos;
         shape.setPosition(
             vec2f{tilePosition.x * GRID_SIZEF, tilePosition.y * GRID_SIZEF});
+    }
+
+    auto hasItem(const Item &want) const {
+        return std::find_if(
+            contents.begin(), contents.end(),
+            [&want](const Desire &d) { return d.item.name == want.name; });
     }
 
     void update(sf::Time elapsed) {
@@ -144,6 +149,10 @@ bool inBounds(vec2i pos) {
 bool isSame(vec2i s, vec2i g) { return s.x == g.x && s.y == g.y; }
 bool isSame(vec2f s, vec2f g) {
     return (abs(g.x - s.x) < 0.05 && abs(g.y - s.y) < 0.05);
+}
+
+bool isCloseEnough(vec2i s, vec2i g, int d) {
+    return (abs(g.x - s.x) <= d && abs(g.y - s.y) <= d);
 }
 
 bool isValidLocation(vec2i pos) {
@@ -237,6 +246,12 @@ std::vector<Shelf>::iterator shelf_with_item(const Item &want) {
     return it;
 }
 
+std::vector<Shelf>::iterator closest_shelf_to_current_pos(vec2f pos) {
+    return std::find_if(shelves.begin(), shelves.end(), [&pos](const Shelf &s) {
+        return isCloseEnough(vtoi(pos), vtoi(s.tilePosition), 1);
+    });
+}
+
 struct Person : public sf::Drawable {
     sf::RectangleShape shape;
     vec2f tilePosition;
@@ -305,38 +320,57 @@ struct PersonWithDesire : public Person {
         // didnt find any shelves, just go somewhere for now
         return randVecf(0, WORLD_GRID_SIZE);
     }
+
+    void grab_from_shelf(vec2f pos) {
+        Desire des = desires[desireIndex];
+
+        // find the closest shelf
+        auto shelf_it = closest_shelf_to_current_pos(pos);
+        if (shelf_it != shelves.end()) {
+            // found a matching shelf
+            std::vector<Desire>::iterator itt = std::find_if(
+                shelf_it->contents.begin(), shelf_it->contents.end(),
+                [&](const Desire &d) { return d.item.name == des.item.name; });
+            if (itt != shelf_it->contents.end()) {
+                // Shelf still has the item we want
+                // do they have enough?
+                if (itt->amount >= des.amount) {
+                    itt->amount -= des.amount;
+                    des.amount = 0;
+                } else {
+                    // they dont have enough....
+                    des.amount -= itt->amount;
+                    // take everything
+                    itt->amount = 0;
+                }
+                desires[desireIndex] = des;
+            } else {
+                // shelf didnt have our item at all
+            }
+        }
+        desireIndex = -1;
+    }
     void move_toward_desire_location() {
-        // no desires TODO - handle this
-        if (desires.size() == 0) return;
+        if (desires.size() == 0) {
+            tilePosition =
+                move_toward_target(tilePosition, vec2f{0.f, 0.f}, 0.05);
+            setTile(tilePosition);
+            // TODO go to checkout when done
+            return;
+        }
 
         // we have no selected desire
         if (desireIndex == -1) {
             desireLocation = location_of_desire();
-            std::cout << fmt::format("my location {} {} des location {} {}",
-                                     tilePosition.x, tilePosition.y,
-                                     desireLocation.x, desireLocation.y)
-                      << std::endl;
         }
 
         // are we at the shelf yet?
         if (isSame(tilePosition, desireLocation)) {
-            // amazing gotta do something, but instead imma just rando the
-            // location
-            desireLocation = randVecf(0, WORLD_GRID_SIZE);
-            std::cout << fmt::format("my location {} {} des location {} {}",
-                                     tilePosition.x, tilePosition.y,
-                                     desireLocation.x, desireLocation.y)
-                      << std::endl;
+            grab_from_shelf(tilePosition);
         }
 
         if (followPath.size() == 0) {
             followPath = astar(vtoi(tilePosition), vtoi(desireLocation));
-            if (followPath.size() != 0) {
-                // std::cout << "got an actual path to follow " << std::endl;
-                // for (vec2i f : followPath) {
-                // std::cout << f.x << ", " << f.y << std::endl;
-                // }
-            }
             return;
         }
 
@@ -364,10 +398,12 @@ struct World : public sf::Drawable {
     vec2i mousePosWindow;
     vec2f mousePosView;
     vec2i mousePosGrid;
-
     sf::RectangleShape gridOutline;
 
     std::vector<Customer *> customers;
+    Desires globalSupply;
+    Desires globalWants;
+    int numIdle;
 
     World() {
         tilemap.resize(WORLD_GRID_SIZE, std::vector<Tile>());
@@ -393,6 +429,7 @@ struct World : public sf::Drawable {
             s.setTile(randVecf(0, WORLD_GRID_SIZE - 1));
             shelves.push_back(s);
         }
+        numIdle = 0;
     }
 
     ~World() {
@@ -404,9 +441,43 @@ struct World : public sf::Drawable {
     void update(sf::Time dt) {
         gridOutline.setPosition(mousePosGrid.x * GRID_SIZE,
                                 mousePosGrid.y * GRID_SIZE);
+        globalSupply.clear();
+        globalWants.clear();
+        numIdle = 0;
+
+        for (int i = 0; i < shelves.size(); i++) {
+            shelves[i].update(dt);
+            for (const Desire &d : shelves[i].contents) {
+                auto it = std::find_if(globalSupply.begin(), globalSupply.end(),
+                                       [&](const Desire &des) {
+                                           return d.item.name == des.item.name;
+                                       });
+                if (it == globalSupply.end()) {
+                    globalSupply.push_back(d);
+                } else {
+                    it->amount += d.amount;
+                }
+            }
+        }
 
         for (int i = 0; i < customers.size(); i++) {
             customers[i]->update(dt);
+
+            if (customers[i]->desires.size() == 0) {
+                numIdle++;
+            }
+
+            for (const Desire &d : customers[i]->desires) {
+                auto it = std::find_if(globalWants.begin(), globalWants.end(),
+                                       [&](const Desire &des) {
+                                           return d.item.name == des.item.name;
+                                       });
+                if (it == globalWants.end()) {
+                    globalWants.push_back(d);
+                } else {
+                    it->amount += d.amount;
+                }
+            }
         }
     }
 
@@ -466,16 +537,89 @@ struct World : public sf::Drawable {
     }
 };
 
+struct UIText : public sf::Drawable {
+    sf::Text content;
+
+    UIText(float x, float y, std::string t = "", int size = 24,
+           sf::Color color = sf::Color::Red,
+           sf::Text::Style style = sf::Text::Regular) {
+        content.setFont(*getGlobalFont());
+        content.setString(t);
+        content.setCharacterSize(size);
+        content.setFillColor(color);
+        content.setStyle(style);
+        content.setPosition(vec2f{x, y});
+    }
+
+    void update(sf::Time dt) {}
+
+    void setContentString(std::string update) { content.setString(update); }
+
+    virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        target.draw(content);
+    }
+};
+
+constexpr int H_PADDING = (WIDTH / 50);
+constexpr int V_PADDING = (HEIGHT / 50);
+constexpr int V_SPACING = (HEIGHT / 45);
+
 struct HUD : public sf::Drawable {
     World *world;
+
+    typedef std::pair<std::string, UIText *> strUI;
+    std::map<std::string, UIText *> uitext;
 
     HUD() {}
 
     void setWorld(World *w) { world = w; }
 
-    void update(sf::Time dt) {}
+    void update(sf::Time dt) {
+        if (world == nullptr) {
+            return;
+        }
+        uitext.clear();
+
+        uitext.insert(strUI("idle_shoppers",
+                            new UIText(H_PADDING, V_PADDING + V_SPACING)));
+        uitext["idle_shoppers"]->setContentString(
+            fmt::format("Idle Shoppers: {}", world->numIdle));
+
+        uitext.insert(
+            strUI("supply",
+                  new UIText(H_PADDING,
+                             V_PADDING + (V_SPACING * (uitext.size() + 1)))));
+        uitext["supply"]->setContentString("Supply: ");
+
+        for (const Desire &d : world->globalSupply) {
+            uitext.insert(strUI(
+                "supply" + d.item.name,
+                new UIText(H_PADDING,
+                           V_PADDING + (V_SPACING * (uitext.size() + 1)))));
+            uitext["supply" + d.item.name]->setContentString(
+                fmt::format("{} ({})", d.item.name, d.amount));
+        }
+
+        uitext.insert(
+            strUI("wanted_header",
+                  new UIText(H_PADDING,
+                             V_PADDING + (V_SPACING * (uitext.size() + 1)))));
+        uitext["wanted_header"]->setContentString("Wants:");
+
+        for (const Desire &d : world->globalWants) {
+            uitext.insert(strUI(
+                d.item.name,
+                new UIText(H_PADDING,
+                           V_PADDING + (V_SPACING * (uitext.size() + 1)))));
+            uitext[d.item.name]->setContentString(
+                fmt::format("{} ({})", d.item.name, d.amount));
+        }
+    }
 
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        for (strUI text : uitext) {
+            target.draw(*text.second);
+        }
     }
 
     void processEvent(sf::RenderWindow &app, sf::Event event) {
