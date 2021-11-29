@@ -38,7 +38,21 @@ std::vector<std::string> split(const std::string& input,
 }
 
 std::map<std::string, sf::Keyboard::Key> KEYS;
+
+void default_keys() {
+    KEYS["Left"] = sf::Keyboard::A;
+    KEYS["Right"] = sf::Keyboard::D;
+    KEYS["Up"] = sf::Keyboard::W;
+    KEYS["Down"] = sf::Keyboard::S;
+    KEYS["Scroll-In"] = sf::Keyboard::PageDown;
+    KEYS["Scroll-Out"] = sf::Keyboard::PageUp;
+}
+
 void load_keys() {
+    // load default keys
+    default_keys();
+
+    // load keybindings from file
     std::ifstream ifs("./resources/keybindings.ini");
     if (!ifs.is_open()) {
         // TODO add error message
