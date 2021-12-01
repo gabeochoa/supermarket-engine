@@ -17,6 +17,7 @@
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Mouse.hpp>
 #include <iostream>
+#include <memory>
 #include <queue>
 #include <sstream>
 #include <string>
@@ -103,7 +104,6 @@ struct Shelf : public sf::Drawable {
     Shelf() {
         shape = sf::RectangleShape(vec2f{GRID_SIZEF, GRID_SIZEF});
         shape.setFillColor(sf::Color::Black);
-        contents.push_back(Desire(all_items[0], 1));
     }
 
     void setTile(vec2f tile_pos) {
@@ -139,7 +139,7 @@ struct Shelf : public sf::Drawable {
         }
     }
 };
-std::vector<Shelf> shelves;
+std::vector<std::unique_ptr<Shelf>> shelves;
 
 bool inBounds(vec2i pos) {
     return (pos.x <= WORLD_GRID_SIZE) && (pos.x >= 0) &&
@@ -159,8 +159,8 @@ bool isValidLocation(vec2i pos) {
     if (!inBounds(pos)) {
         return false;
     }
-    for (const Shelf &s : shelves) {
-        if (s.tilePosition.x == pos.x && s.tilePosition.y == pos.y) {
+    for (const std::unique_ptr<Shelf> &s : shelves) {
+        if (s->tilePosition.x == pos.x && s->tilePosition.y == pos.y) {
             return false;
         }
     }
@@ -235,21 +235,26 @@ std::vector<vec2i> astar(const vec2i &start, const vec2i &goal) {
     return reconstruct_path(cameFrom, goal);
 }
 
-std::vector<Shelf>::iterator shelf_with_item(const Item &want) {
-    std::vector<Shelf>::iterator it =
-        std::find_if(shelves.begin(), shelves.end(), [&want](const Shelf &s) {
+std::vector<std::unique_ptr<Shelf>>::iterator shelf_with_item(
+    const Item &want) {
+    std::vector<std::unique_ptr<Shelf>>::iterator it = std::find_if(
+        shelves.begin(), shelves.end(),
+        [&want](const std::unique_ptr<Shelf> &s) {
             auto itt = std::find_if(
-                s.contents.begin(), s.contents.end(),
+                s->contents.begin(), s->contents.end(),
                 [&want](const Desire &d) { return d.item.name == want.name; });
-            return itt != s.contents.end();
+            return itt != s->contents.end();
         });
     return it;
 }
 
-std::vector<Shelf>::iterator closest_shelf_to_current_pos(vec2f pos) {
-    return std::find_if(shelves.begin(), shelves.end(), [&pos](const Shelf &s) {
-        return isCloseEnough(vtoi(pos), vtoi(s.tilePosition), 1);
-    });
+std::vector<std::unique_ptr<Shelf>>::iterator closest_shelf_to_current_pos(
+    vec2f pos) {
+    return std::find_if(shelves.begin(), shelves.end(),
+                        [&pos](const std::unique_ptr<Shelf> &s) {
+                            return isCloseEnough(vtoi(pos),
+                                                 vtoi(s->tilePosition), 1);
+                        });
 }
 
 struct Person : public sf::Drawable {
@@ -260,6 +265,8 @@ struct Person : public sf::Drawable {
         shape = sf::RectangleShape(vec2f{GRID_SIZEF / 2, GRID_SIZEF / 2});
         shape.setFillColor(sf::Color::Red);
     }
+
+    void setFillColor(sf::Color c) { shape.setFillColor(c); }
 
     vec2f move_toward_target(vec2f pos, vec2f t, float px) {
         double xdiff = t.x - pos.x;
@@ -304,52 +311,10 @@ struct PersonWithDesire : public Person {
             desires.end());
     }
 
-    vec2f location_of_desire() {
-        for (int i = 0; i < desires.size(); i++) {
-            Item item = desires[i].item;
-            auto shelf_it = shelf_with_item(item);
-            if (shelf_it != shelves.end()) {
-                desireIndex = i;
-                return shelf_it->tilePosition;
-            } else {
-                std::cout << " no shelf with what i want " << item.name
-                          << std::endl;
-            }
-        }
-        // TODO replace with pain or wander
-        // didnt find any shelves, just go somewhere for now
-        return randVecf(0, WORLD_GRID_SIZE);
-    }
+    virtual vec2f location_of_desire() = 0;
 
-    void grab_from_shelf(vec2f pos) {
-        Desire des = desires[desireIndex];
+    virtual void run_shelf_action(vec2f pos) = 0;
 
-        // find the closest shelf
-        auto shelf_it = closest_shelf_to_current_pos(pos);
-        if (shelf_it != shelves.end()) {
-            // found a matching shelf
-            std::vector<Desire>::iterator itt = std::find_if(
-                shelf_it->contents.begin(), shelf_it->contents.end(),
-                [&](const Desire &d) { return d.item.name == des.item.name; });
-            if (itt != shelf_it->contents.end()) {
-                // Shelf still has the item we want
-                // do they have enough?
-                if (itt->amount >= des.amount) {
-                    itt->amount -= des.amount;
-                    des.amount = 0;
-                } else {
-                    // they dont have enough....
-                    des.amount -= itt->amount;
-                    // take everything
-                    itt->amount = 0;
-                }
-                desires[desireIndex] = des;
-            } else {
-                // shelf didnt have our item at all
-            }
-        }
-        desireIndex = -1;
-    }
     void move_toward_desire_location() {
         if (desires.size() == 0) {
             tilePosition =
@@ -366,7 +331,7 @@ struct PersonWithDesire : public Person {
 
         // are we at the shelf yet?
         if (isSame(tilePosition, desireLocation)) {
-            grab_from_shelf(tilePosition);
+            run_shelf_action(tilePosition);
         }
 
         if (followPath.size() == 0) {
@@ -387,10 +352,114 @@ struct PersonWithDesire : public Person {
     }
 };
 
+struct StockClerk : public PersonWithDesire {
+    StockClerk() {
+        setTile(randVecf(0, WORLD_GRID_SIZE));
+
+        Desire d(all_items[0], 10);
+        add_desire(d);
+        setFillColor(sf::Color::Blue);
+    }
+
+    void run_shelf_action(vec2f pos) {
+        if (shelves.empty()) return;
+
+        auto shelf_it = closest_shelf_to_current_pos(pos);
+        // Does this shelf already have this item?
+        Desire des = desires[desireIndex];
+        const std::unique_ptr<Shelf> &shelf = *shelf_it;
+
+        bool found = false;
+        for (int i = 0; i < shelf->contents.size(); i++) {
+            if (shelf->contents[i].item.name == des.item.name) {
+                shelf->contents[i].amount += des.amount;
+                found = true;
+            }
+        }
+
+        if (!found) {
+            shelf->contents.push_back(Desire(des));
+        }
+
+        // maybe we want to have a max stack size or something
+        // and not add everything
+        des.amount = 0;
+        // write back so it can be cleaned up
+        desires[desireIndex] = des;
+        desireIndex = -1;
+    }
+
+    vec2f location_of_desire() {
+        // find any empty shelves first
+        std::vector<std::unique_ptr<Shelf>>::iterator it =
+            std::find_if(shelves.begin(), shelves.end(),
+                         [](const std::unique_ptr<Shelf> &s) {
+                             return s->contents.empty();
+                         });
+        if (it != shelves.end()) {
+            desireIndex = 0;
+            return (*it)->tilePosition;
+        }
+
+        // TODO - wander?
+        // just send them to the top left and wait
+        return vec2f{0, 0};
+    }
+};
+
 struct Customer : public PersonWithDesire {
     Customer() {
+        setTile(randVecf(0, WORLD_GRID_SIZE));
+
         Desire d(all_items[0], 1);
         add_desire(d);
+    }
+
+    vec2f location_of_desire() {
+        for (int i = 0; i < desires.size(); i++) {
+            Item item = desires[i].item;
+            auto shelf_it = shelf_with_item(item);
+            if (shelf_it != shelves.end()) {
+                desireIndex = i;
+                return (*shelf_it)->tilePosition;
+            } else {
+                // std::cout << " no shelf with what i want " << item.name
+                // << std::endl;
+            }
+        }
+        // TODO replace with pain or wander
+        // didnt find any shelves, just go somewhere for now
+        return randVecf(0, WORLD_GRID_SIZE);
+    }
+
+    void run_shelf_action(vec2f pos) {
+        Desire des = desires[desireIndex];
+
+        // find the closest shelf
+        auto shelf_it = closest_shelf_to_current_pos(pos);
+        if (shelf_it != shelves.end()) {
+            // found a matching shelf
+            std::vector<Desire>::iterator itt = std::find_if(
+                (*shelf_it)->contents.begin(), (*shelf_it)->contents.end(),
+                [&](const Desire &d) { return d.item.name == des.item.name; });
+            if (itt != (*shelf_it)->contents.end()) {
+                // Shelf still has the item we want
+                // do they have enough?
+                if (itt->amount >= des.amount) {
+                    itt->amount -= des.amount;
+                    des.amount = 0;
+                } else {
+                    // they dont have enough....
+                    des.amount -= itt->amount;
+                    // take everything
+                    itt->amount = 0;
+                }
+                desires[desireIndex] = des;
+            } else {
+                // shelf didnt have our item at all
+            }
+        }
+        desireIndex = -1;
     }
 };
 
@@ -401,7 +470,9 @@ struct World : public sf::Drawable {
     sf::RectangleShape gridOutline;
 
     std::vector<Customer *> customers;
-    Desires globalSupply;
+    std::vector<PersonWithDesire *> employees;
+    Desires globalStock;
+    Desires globalForPurchase;
     Desires globalWants;
     int numIdle;
 
@@ -424,10 +495,14 @@ struct World : public sf::Drawable {
             customers.push_back(new Customer());
         }
 
-        for (int i = 0; i < 10; i++) {
-            Shelf s = Shelf();
-            s.setTile(randVecf(0, WORLD_GRID_SIZE - 1));
-            shelves.push_back(s);
+        for (int i = 0; i < 1; i++) {
+            employees.push_back(new StockClerk());
+        }
+
+        for (int i = 0; i < 5; i++) {
+            std::unique_ptr<Shelf> s(new Shelf());
+            s->setTile(randVecf(0, WORLD_GRID_SIZE - 1));
+            shelves.push_back(std::move(s));
         }
         numIdle = 0;
     }
@@ -436,26 +511,51 @@ struct World : public sf::Drawable {
         for (int i = customers.size() - 1; i >= 0; i--) {
             delete customers[i];
         }
+
+        for (int i = employees.size() - 1; i >= 0; i--) {
+            delete employees[i];
+        }
     }
 
     void update(sf::Time dt) {
         gridOutline.setPosition(mousePosGrid.x * GRID_SIZE,
                                 mousePosGrid.y * GRID_SIZE);
-        globalSupply.clear();
+        globalStock.clear();
+        globalForPurchase.clear();
         globalWants.clear();
         numIdle = 0;
 
-        for (int i = 0; i < shelves.size(); i++) {
-            shelves[i].update(dt);
-            for (const Desire &d : shelves[i].contents) {
-                auto it = std::find_if(globalSupply.begin(), globalSupply.end(),
+        // What supplies do we have (including in the back)
+        for (int i = 0; i < employees.size(); i++) {
+            employees[i]->update(dt);
+
+            for (const Desire &d : employees[i]->desires) {
+                auto it = std::find_if(globalStock.begin(), globalStock.end(),
                                        [&](const Desire &des) {
                                            return d.item.name == des.item.name;
                                        });
-                if (it == globalSupply.end()) {
-                    globalSupply.push_back(d);
+                if (it == globalStock.end()) {
+                    globalStock.push_back(d);
                 } else {
                     it->amount += d.amount;
+                }
+            }
+        }
+
+        // Whats out on shelves
+        for (int i = 0; i < shelves.size(); i++) {
+            shelves[i]->update(dt);
+
+            for (const Desire &d : shelves[i]->contents) {
+                auto it = std::find_if(globalForPurchase.begin(),
+                                       globalForPurchase.end(),
+                                       [&](const Desire &des) {
+                                           return d.item.name == des.item.name;
+                                       });
+                if (it == globalForPurchase.end()) {
+                    globalForPurchase.push_back(d);
+                } else {
+                    it->amount = it->amount + d.amount;
                 }
             }
         }
@@ -510,11 +610,15 @@ struct World : public sf::Drawable {
         target.draw(gridOutline);
 
         for (int i = 0; i < shelves.size(); i++) {
-            target.draw(shelves[i]);
+            target.draw(*shelves[i]);
         }
 
         for (int i = 0; i < customers.size(); i++) {
             target.draw(*customers[i]);
+        }
+
+        for (int i = 0; i < employees.size(); i++) {
+            target.draw(*employees[i]);
         }
     }
 
@@ -585,34 +689,54 @@ struct HUD : public sf::Drawable {
         uitext["idle_shoppers"]->setContentString(
             fmt::format("Idle Shoppers: {}", world->numIdle));
 
-        uitext.insert(
-            strUI("supply",
-                  new UIText(H_PADDING,
-                             V_PADDING + (V_SPACING * (uitext.size() + 1)))));
-        uitext["supply"]->setContentString("Supply: ");
-
-        for (const Desire &d : world->globalSupply) {
+        if (!world->globalStock.empty()) {
             uitext.insert(strUI(
-                "supply" + d.item.name,
+                "stock",
                 new UIText(H_PADDING,
                            V_PADDING + (V_SPACING * (uitext.size() + 1)))));
-            uitext["supply" + d.item.name]->setContentString(
-                fmt::format("{} ({})", d.item.name, d.amount));
+            uitext["stock"]->setContentString("Available Stock: ");
+            for (const Desire &d : world->globalStock) {
+                uitext.insert(strUI(
+                    "supply" + d.item.name,
+                    new UIText(H_PADDING,
+                               V_PADDING + (V_SPACING * (uitext.size() + 1)))));
+                uitext["supply" + d.item.name]->setContentString(
+                    fmt::format("{} ({})", d.item.name, d.amount));
+            }
         }
 
-        uitext.insert(
-            strUI("wanted_header",
-                  new UIText(H_PADDING,
-                             V_PADDING + (V_SPACING * (uitext.size() + 1)))));
-        uitext["wanted_header"]->setContentString("Wants:");
-
-        for (const Desire &d : world->globalWants) {
+        if (!world->globalForPurchase.empty()) {
             uitext.insert(strUI(
-                d.item.name,
+                "shelved",
                 new UIText(H_PADDING,
                            V_PADDING + (V_SPACING * (uitext.size() + 1)))));
-            uitext[d.item.name]->setContentString(
-                fmt::format("{} ({})", d.item.name, d.amount));
+            uitext["shelved"]->setContentString("Out on Shelves: ");
+
+            for (const Desire &d : world->globalForPurchase) {
+                uitext.insert(strUI(
+                    "shelved" + d.item.name,
+                    new UIText(H_PADDING,
+                               V_PADDING + (V_SPACING * (uitext.size() + 1)))));
+                uitext["shelved" + d.item.name]->setContentString(
+                    fmt::format("{} ({})", d.item.name, d.amount));
+            }
+        }
+
+        if (!world->globalWants.empty()) {
+            uitext.insert(strUI(
+                "wanted_header",
+                new UIText(H_PADDING,
+                           V_PADDING + (V_SPACING * (uitext.size() + 1)))));
+            uitext["wanted_header"]->setContentString("Wants:");
+
+            for (const Desire &d : world->globalWants) {
+                uitext.insert(strUI(
+                    d.item.name,
+                    new UIText(H_PADDING,
+                               V_PADDING + (V_SPACING * (uitext.size() + 1)))));
+                uitext[d.item.name]->setContentString(
+                    fmt::format("{} ({})", d.item.name, d.amount));
+            }
         }
     }
 
