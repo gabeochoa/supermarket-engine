@@ -42,7 +42,7 @@ constexpr float GRID_SIZEF = 100.f;
 constexpr int GRID_SIZE = static_cast<int>(GRID_SIZEF);
 // number of grid items in the world
 constexpr int WORLD_GRID_SIZE = 10;
-// TODO - can we lower this? it feels too long
+// @TODO - can we lower this? it feels too long
 constexpr float PLAYER_TILE_REACH = 0.5;
 constexpr float P_MOVE_DIST = 0.05;
 
@@ -304,7 +304,7 @@ std::vector<std::unique_ptr<Shelf>>::iterator shelf_with_item(
 
 std::vector<std::unique_ptr<Shelf>>::iterator closest_shelf_to_current_pos(
     vec2f pos) {
-    // FIX this literally isnt the closest, its just the first thats close
+    // @FIX this literally isnt the closest, its just the first thats close
     // enough
     return std::find_if(shelves.begin(), shelves.end(),
                         [&pos](const std::unique_ptr<Shelf> &s) {
@@ -382,7 +382,7 @@ struct PersonWithDesire : public Person {
             tilePosition =
                 move_toward_target(tilePosition, vec2f{0.f, 0.f}, P_MOVE_DIST);
             setTile(tilePosition);
-            // TODO go to checkout when done
+            // @TODO go to checkout when done
             return;
         }
 
@@ -464,7 +464,7 @@ struct StockClerk : public PersonWithDesire {
             return (*it)->tilePosition;
         }
 
-        // TODO - wander?
+        // @TODO - wander?
         // just send them to the top left and wait
         return vec2f{0, 0};
     }
@@ -490,7 +490,7 @@ struct Customer : public PersonWithDesire {
                 // << std::endl;
             }
         }
-        // TODO replace with pain or wander
+        // @TODO replace with pain or wander
         // didnt find any shelves, just go somewhere for now
         return randVecf(0, WORLD_GRID_SIZE);
     }
@@ -683,9 +683,6 @@ struct World : public sf::Drawable {
             }
         }
 
-        // TODO this doesnt work right now :(
-        target.draw(gridOutline);
-
         for (int i = 0; i < shelves.size(); i++) {
             target.draw(*shelves[i]);
         }
@@ -697,16 +694,20 @@ struct World : public sf::Drawable {
         for (int i = 0; i < employees.size(); i++) {
             target.draw(*employees[i]);
         }
+
+        // @REARR - should this go in HUD? how can it
+        target.draw(gridOutline);
     }
 
     void processEvent(sf::RenderWindow &app, sf::Event event) {
         mousePosWindow = sf::Mouse::getPosition(app);
-        mousePosView = app.mapPixelToCoords(mousePosWindow);
+        // this has to be the game view because at the time we process
+        // events, there are no active views
+        mousePosView = app.mapPixelToCoords(mousePosWindow, *game_view);
         mousePosGrid = vec2i{
-            (int)mousePosView.x / GRID_SIZE,
-            (int)mousePosView.y / GRID_SIZE,
+            (int)fmax(0, mousePosView.x / GRID_SIZE),
+            (int)fmax(0, mousePosView.y / GRID_SIZE),
         };
-
         if (event.type == sf::Event::KeyPressed) {
             if (event.key.code == KEYS["1"])
                 customers.push_back(new Customer());
@@ -759,10 +760,30 @@ struct HUD : public sf::Drawable {
         }
         uitext.clear();
 
-        uitext.insert(strUI("idle_shoppers",
-                            new UIText(H_PADDING, V_PADDING + V_SPACING)));
-        uitext["idle_shoppers"]->setContentString(
-            fmt::format("Idle Shoppers: {}", world->numIdle));
+        // @TODO  is there a way to make this look better?
+        // we could do the position separate but for UI (vs devUI) we want them
+        // to be colocated maybe we just need a struct or something? or a
+        // constraint system
+
+        uitext.insert(
+            strUI("mouseposwindow",
+                  new UIText(
+                      H_PADDING, V_PADDING + (V_SPACING * (uitext.size() + 1)),
+                      fmt::format("window mouse: {}", world->mousePosWindow))));
+        uitext.insert(strUI(
+            "mouseposview",
+            new UIText(H_PADDING, V_PADDING + (V_SPACING * (uitext.size() + 1)),
+                       fmt::format("view mouse: {}", world->mousePosView))));
+
+        uitext.insert(strUI(
+            "mouseposgrid",
+            new UIText(H_PADDING, V_PADDING + (V_SPACING * (uitext.size() + 1)),
+                       fmt::format("grid mouse: {}", world->mousePosGrid))));
+
+        uitext.insert(strUI(
+            "idle_shoppers",
+            new UIText(H_PADDING, V_PADDING + (V_SPACING * (uitext.size() + 1)),
+                       fmt::format("Idle Shoppers: {}", world->numIdle))));
 
         if (!world->globalStock.empty()) {
             uitext.insert(strUI(
@@ -949,7 +970,7 @@ int main() {
     setGlobalFont(&font);
 
     load_keys();
-    // TODO move export to save options
+    // @TODO move export to save options
     export_keys();
 
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Ahoy!");
