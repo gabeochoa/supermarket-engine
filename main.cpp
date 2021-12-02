@@ -304,6 +304,8 @@ std::vector<std::unique_ptr<Shelf>>::iterator shelf_with_item(
 
 std::vector<std::unique_ptr<Shelf>>::iterator closest_shelf_to_current_pos(
     vec2f pos) {
+    // FIX this literally isnt the closest, its just the first thats close
+    // enough
     return std::find_if(shelves.begin(), shelves.end(),
                         [&pos](const std::unique_ptr<Shelf> &s) {
                             return isCloseEnough(vtoi(pos),
@@ -432,13 +434,13 @@ struct StockClerk : public PersonWithDesire {
         bool found = false;
         for (int i = 0; i < shelf->contents.size(); i++) {
             if (shelf->contents[i].item.name == des.item.name) {
-                shelf->contents[i].amount += des.amount;
+                shelf->contents[i].amount += 1;
                 found = true;
             }
         }
 
         if (!found) {
-            shelf->contents.push_back(Desire(des));
+            shelf->contents.push_back(Desire(des.item, 1));
         }
 
         // maybe we want to have a max stack size or something
@@ -565,19 +567,19 @@ struct World : public sf::Drawable {
         gridOutline.setOutlineThickness(1.0f);
         gridOutline.setOutlineColor(sf::Color::Green);
 
-        for (int i = 0; i < 10; i++) {
-            customers.push_back(new Customer());
+        for (int i = 0; i < WORLD_GRID_SIZE - 3; i++) {
+            for (int j = 0; j < WORLD_GRID_SIZE - 2; j += 2) {
+                std::unique_ptr<Shelf> s(new Shelf());
+                s->setTile(vtof(vec2i{1 + j, i}));
+                shelves.push_back(std::move(s));
+            }
         }
 
-        for (int i = 0; i < 1; i++) {
-            employees.push_back(new StockClerk());
-        }
+        // Create one shelf with an item
+        std::unique_ptr<Shelf> s(new Shelf(all_items[0]));
+        s->setTile(vec2f{WORLD_GRID_SIZE - 2, WORLD_GRID_SIZE - 2});
+        shelves.push_back(std::move(s));
 
-        for (int i = 0; i < 5; i++) {
-            std::unique_ptr<Shelf> s(new Shelf());
-            s->setTile(randVecf(0, WORLD_GRID_SIZE - 1));
-            shelves.push_back(std::move(s));
-        }
         numIdle = 0;
     }
 
