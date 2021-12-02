@@ -62,6 +62,7 @@ struct Tile : public sf::Drawable {
     void update(sf::Time dt) {}
 
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        prof p(__PROFILE_FUNC__);
         target.draw(shape);
     }
 };
@@ -98,6 +99,7 @@ struct Item : public sf::Drawable {
     void update(sf::Time dt) {}
 
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        prof p(__PROFILE_FUNC__);
         sf::RectangleShape s =
             sf::RectangleShape(vec2f{GRID_SIZEF / 4, GRID_SIZEF / 4});
         s.setPosition(
@@ -170,6 +172,7 @@ struct Shelf : public sf::Drawable {
     }
 
     void update(sf::Time elapsed) {
+        prof p(__PROFILE_FUNC__);
         // Desire is empty
         auto is_empty =
             std::remove_if(contents.begin(), contents.end(),
@@ -183,6 +186,7 @@ struct Shelf : public sf::Drawable {
     }
 
     void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        prof p(__PROFILE_FUNC__);
         target.draw(shape);
         for (Desire d : contents) {
             d.item.tilePosition = tilePosition;
@@ -254,6 +258,7 @@ std::vector<vec2i> reconstruct_path(
 }
 
 std::vector<vec2i> astar(const vec2i &start, const vec2i &goal) {
+    prof p(__PROFILE_FUNC__);
     auto heuristic = [](const vec2i &s, const vec2i &g) {
         return abs(s.x - g.x) + abs(s.y - g.y);
     };
@@ -354,6 +359,7 @@ struct Person : public sf::Drawable {
     void update(sf::Time dt) {}
 
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        prof p(__PROFILE_FUNC__);
         target.draw(shape);
     }
 };
@@ -410,6 +416,7 @@ struct PersonWithDesire : public Person {
     }
 
     void update(sf::Time dt) {
+        prof p(__PROFILE_FUNC__);
         Person::update(dt);
         clean_up_desires();
         move_toward_desire_location();
@@ -596,6 +603,7 @@ struct World : public sf::Drawable {
     }
 
     void update(sf::Time dt) {
+        prof p(__PROFILE_FUNC__);
         gridOutline.setPosition(mousePosGrid.x * GRID_SIZE,
                                 mousePosGrid.y * GRID_SIZE);
         globalStock.clear();
@@ -739,6 +747,7 @@ struct UIText : public sf::Drawable {
     void setContentString(std::string update) { content.setString(update); }
 
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        prof p(__PROFILE_FUNC__);
         target.draw(content);
     }
 };
@@ -758,6 +767,7 @@ struct HUD : public sf::Drawable {
     void setWorld(World *w) { world = w; }
 
     void update(sf::Time dt) {
+        prof p(__PROFILE_FUNC__);
         if (world == nullptr) {
             return;
         }
@@ -840,6 +850,7 @@ struct HUD : public sf::Drawable {
     }
 
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        prof p(__PROFILE_FUNC__);
         for (strUI text : uitext) {
             target.draw(*text.second);
         }
@@ -921,6 +932,7 @@ struct GameScreen : public Window {
     }
 
     int run(sf::RenderWindow &app) {
+        prof p(__PROFILE_FUNC__);
         elapsed = tickTimer.restart();
         const double dt = elapsed.asSeconds();
 
@@ -976,12 +988,12 @@ struct DebugProfile : public sf::Drawable {
 
         ProfileSampleStats(Samples s, double a, double mi, double mx, double su)
             : samples(s), avg(a), min(mi), max(mx), sum(su) {
-            auto ex = std::deque<double>{
-                1.f,
-                2.f,
-                3.f,
-            };
-            _acc.insert(std::make_pair("test", ex));
+            // auto ex = std::deque<double>{
+            // 0.000012098f,
+            // 0.0001123f,
+            // 0.00003f,
+            // };
+            // _acc.insert(std::make_pair("test", ex));
         }
     };
 
@@ -989,6 +1001,7 @@ struct DebugProfile : public sf::Drawable {
     DebugProfile() {}
 
     void update(sf::Time dt) {
+        prof p(__PROFILE_FUNC__);
         pairs.clear();
 
         for (auto itr = _acc.begin(); itr != _acc.end(); ++itr) {
@@ -1006,17 +1019,18 @@ struct DebugProfile : public sf::Drawable {
         sort(pairs.begin(), pairs.end(),
              [=](std::pair<std::string, ProfileSampleStats> &a,
                  std::pair<std::string, ProfileSampleStats> &b) {
-                 return a.second.avg < b.second.avg;
+                 return a.second.avg > b.second.avg;
              });
     }
 
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        prof p(__PROFILE_FUNC__);
         int y = 0;
         for (auto p : pairs) {
             auto name = p.first;
             auto stats = p.second;
 
-            auto t = fmt::format("{}: \tavg: {}\tmin: {}\tmax: {}", name,
+            auto t = fmt::format("{}: \tavg: {:.2f}\tmin: {}\tmax: {}", name,
                                  stats.avg, stats.min, stats.max);
             auto text = UIText(0, y, t);
             y += 30;
@@ -1042,6 +1056,7 @@ struct DebugScreen : public Window {
     void handle_input(const double &dt) {}
 
     int run(sf::RenderWindow &app) {
+        prof p(__PROFILE_FUNC__);
         elapsed = tickTimer.restart();
         const double dt = elapsed.asSeconds();
 
@@ -1086,18 +1101,17 @@ int main() {
     std::vector<sf::RenderWindow *> render_windows;
 
     auto vm = sf::VideoMode(WIDTH, HEIGHT);
-    auto framerate = 60;
 
     // NOTE: the order needs to match menu state
 
     sf::RenderWindow *game_window = new sf::RenderWindow(vm, "Ahoy!");
-    game_window->setFramerateLimit(framerate);
+    game_window->setFramerateLimit(60);
     GameScreen gs;
     windows.push_back(&gs);
     render_windows.push_back(game_window);
 
     sf::RenderWindow *debug_window = new sf::RenderWindow(vm, "Ahoy (debug)!");
-    debug_window->setFramerateLimit(framerate);
+    debug_window->setFramerateLimit(15);
     DebugScreen ds;
     windows.push_back(&ds);
     render_windows.push_back(debug_window);
