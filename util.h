@@ -40,6 +40,8 @@ std::vector<std::string> split(const std::string& input,
 std::map<std::string, sf::Keyboard::Key> KEYS;
 
 void default_keys() {
+    KEYS["1"] = sf::Keyboard::Num1;
+    KEYS["2"] = sf::Keyboard::Num2;
     KEYS["Left"] = sf::Keyboard::A;
     KEYS["Right"] = sf::Keyboard::D;
     KEYS["Up"] = sf::Keyboard::W;
@@ -110,6 +112,26 @@ std::ostream& operator<<(std::ostream& os, vec2f const& v) {
 
 std::ostream& operator<<(std::ostream& os, vec2i const& v) {
     return os << "(" << v.x << "," << v.y << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, std::vector<vec2f> const& vf) {
+    os << "vector<v2f>: [";
+    os << std::endl;
+    for (const vec2f& v : vf) {
+        os << "  " << v << std::endl;
+    }
+    os << "]";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, std::vector<vec2i> const& vi) {
+    os << "vector<v2i>: [";
+    os << std::endl;
+    for (const vec2i& v : vi) {
+        os << "  " << v << std::endl;
+    }
+    os << "]";
+    return os;
 }
 
 vec2f min(vec2f a, vec2f b) { return vec2f{fmin(a.x, b.x), fmin(a.y, b.y)}; }
