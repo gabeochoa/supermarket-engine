@@ -41,7 +41,10 @@ enum MenuState {
 constexpr float GRID_SIZEF = 100.f;
 constexpr int GRID_SIZE = static_cast<int>(GRID_SIZEF);
 // number of grid items in the world
-constexpr int WORLD_GRID_SIZE = 20;
+constexpr int WORLD_GRID_SIZE = 10;
+// TODO - can we lower this? it feels too long
+constexpr float PLAYER_TILE_REACH = 0.5;
+constexpr float P_MOVE_DIST = 0.05;
 
 struct Tile : public sf::Drawable {
     sf::RectangleShape shape;
@@ -68,6 +71,23 @@ struct Item : public sf::Drawable {
     std::string name;
     double price;
     vec2f tilePosition;
+    sf::Color color;
+
+    Item(std::string n, double p, sf::Color c) : name(n), price(p), color(c) {}
+    ~Item() {}
+    Item(const Item &i)
+        : name(i.name),
+          price(i.price),
+          tilePosition(i.tilePosition),
+          color(i.color) {}
+    Item &operator=(const Item &i) {
+        if (this == &i) return *this;
+        this->name = i.name;
+        this->price = i.price;
+        this->tilePosition = i.tilePosition;
+        this->color = i.color;
+        return *this;
+    }
 
     Item(std::string n, double p) : name(n), price(p) {}
     bool operator<(const Item &i) const { return this->name < i.name; }
@@ -79,19 +99,28 @@ struct Item : public sf::Drawable {
             sf::RectangleShape(vec2f{GRID_SIZEF / 4, GRID_SIZEF / 4});
         s.setPosition(
             vec2f{tilePosition.x * GRID_SIZEF, tilePosition.y * GRID_SIZEF});
-        s.setFillColor(sf::Color::Green);
+        s.setFillColor(color);
         target.draw(s);
     }
 };
 
 const std::vector<Item> all_items = std::vector<Item>{
-    Item("apple", 1.0),
+    Item("apple", 1.0, sf::Color(196, 51, 64)),
 };
 
 struct Desire {
     Item item;
     int amount;
     Desire(Item i, int a) : item(i), amount(a) {}
+    ~Desire() {}
+    Desire(const Desire &d) : item(d.item), amount(d.amount) {}
+
+    Desire &operator=(const Desire &d) {
+        if (this == &d) return *this;
+        this->item = d.item;
+        this->amount = d.amount;
+        return *this;
+    }
 };
 typedef std::vector<Desire> Desires;
 
