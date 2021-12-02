@@ -1,7 +1,7 @@
 
 
 mac: 
-	clang++ -g -Wall -std=c++20 -c main.cpp 
+	clang++ -g -Wall -Wdeprecated-copy -std=c++20 -c main.cpp 
 	clang++ main.o -o ./output/main.exe -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 	export DEBUG=123; ./output/main.exe 
 

@@ -104,6 +104,14 @@ void log(std::string line, bool nl = true) {
     if (nl) std::cout << std::endl;
 }
 
+std::ostream& operator<<(std::ostream& os, vec2f const& v) {
+    return os << "(" << v.x << "," << v.y << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, vec2i const& v) {
+    return os << "(" << v.x << "," << v.y << ")";
+}
+
 vec2f min(vec2f a, vec2f b) { return vec2f{fmin(a.x, b.x), fmin(a.y, b.y)}; }
 
 vec2f max(vec2f a, vec2f b) { return vec2f{fmax(a.x, b.x), fmax(a.y, b.y)}; }
