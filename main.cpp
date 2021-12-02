@@ -660,12 +660,10 @@ struct World : public sf::Drawable {
         };
 
         if (event.type == sf::Event::KeyPressed) {
-            switch (event.key.code) {
-                case sf::Keyboard::Space:
-                    break;
-                default:
-                    break;
-            }
+            if (event.key.code == KEYS["1"])
+                customers.push_back(new Customer());
+            if (event.key.code == KEYS["2"])
+                employees.push_back(new StockClerk());
         }
     }
 };
