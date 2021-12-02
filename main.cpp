@@ -133,13 +133,22 @@ struct Shelf : public sf::Drawable {
     sf::RectangleShape shape;
 
     Shelf() {
+        // empty by default
         shape = sf::RectangleShape(vec2f{GRID_SIZEF, GRID_SIZEF});
-        shape.setFillColor(sf::Color::Black);
+        shape.setFillColor(sf::Color(150, 150, 150));
+    }
+
+    Shelf(Item i) {
+        shape = sf::RectangleShape(vec2f{GRID_SIZEF, GRID_SIZEF});
+        shape.setFillColor(sf::Color(150, 150, 150));
+        contents.push_back(Desire(i, 1));
     }
 
     ~Shelf() {}
+
     Shelf(const Shelf &s)
         : contents(s.contents), tilePosition(s.tilePosition), shape(s.shape) {}
+
     Shelf &operator=(const Shelf &s) {
         this->contents = s.contents;
         this->tilePosition = s.tilePosition;
