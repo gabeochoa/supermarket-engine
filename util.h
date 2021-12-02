@@ -114,6 +114,32 @@ std::ostream& operator<<(std::ostream& os, vec2i const& v) {
     return os << "(" << v.x << "," << v.y << ")";
 }
 
+template <>
+struct fmt::formatter<vec2f> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    constexpr auto format(vec2f const& v, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(), "({},{})", v.x, v.y);
+    }
+};
+
+template <>
+struct fmt::formatter<vec2i> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    constexpr auto format(vec2i const& v, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(), "({},{})", v.x, v.y);
+    }
+};
+
 std::ostream& operator<<(std::ostream& os, std::vector<vec2f> const& vf) {
     os << "vector<v2f>: [";
     os << std::endl;
