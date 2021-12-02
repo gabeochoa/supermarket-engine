@@ -137,9 +137,10 @@ struct Shelf : public sf::Drawable {
         shape.setFillColor(sf::Color::Black);
     }
 
-    ~Shelf(){}
-    Shelf(const Shelf& s): contents(s.contents), tilePosition(s.tilePosition), shape(s.shape) {}
-    Shelf &operator=(const Shelf &s){
+    ~Shelf() {}
+    Shelf(const Shelf &s)
+        : contents(s.contents), tilePosition(s.tilePosition), shape(s.shape) {}
+    Shelf &operator=(const Shelf &s) {
         this->contents = s.contents;
         this->tilePosition = s.tilePosition;
         this->shape = s.shape;
@@ -482,32 +483,46 @@ struct Customer : public PersonWithDesire {
         return randVecf(0, WORLD_GRID_SIZE);
     }
 
+    /*
+     * As the customer, now that we are near our goal shelf,
+     * find the one we are trying to reach and remove the items from it
+     * and put it in our pocket
+     * */
     void run_shelf_action(vec2f pos) {
-        Desire des = desires[desireIndex];
+        auto matching_shelf = shelves.end();
+        auto matching_desire = shelves[0]->contents.end();
+        for (auto it = shelves.begin(); it != shelves.end(); it++) {
+            if (dist(pos, (*it)->tilePosition) < PLAYER_TILE_REACH) continue;
 
-        // find the closest shelf
-        auto shelf_it = closest_shelf_to_current_pos(pos);
-        if (shelf_it != shelves.end()) {
-            // found a matching shelf
-            std::vector<Desire>::iterator itt = std::find_if(
-                (*shelf_it)->contents.begin(), (*shelf_it)->contents.end(),
-                [&](const Desire &d) { return d.item.name == des.item.name; });
-            if (itt != (*shelf_it)->contents.end()) {
-                // Shelf still has the item we want
-                // do they have enough?
-                if (itt->amount >= des.amount) {
-                    itt->amount -= des.amount;
-                    des.amount = 0;
-                } else {
-                    // they dont have enough....
-                    des.amount -= itt->amount;
-                    // take everything
-                    itt->amount = 0;
-                }
-                desires[desireIndex] = des;
-            } else {
-                // shelf didnt have our item at all
+            auto itt = std::find_if(
+                (*it)->contents.begin(), (*it)->contents.end(),
+                [&](const Desire &d) {
+                    return d.item.name == desires[desireIndex].item.name;
+                });
+            if (itt == (*it)->contents.end()) {
+                continue;
             }
+            matching_shelf = it;
+            matching_desire = itt;
+        }
+        if (matching_shelf == shelves.end()) {
+            // log("no shelf within reach has our item");
+            // welp lets give up,
+            desireIndex = -1;
+            return;
+        }
+
+        // nice we found a matching shelf
+
+        // do they have enough?
+        if (matching_desire->amount >= desires[desireIndex].amount) {
+            matching_desire->amount -= desires[desireIndex].amount;
+            desires[desireIndex].amount = 0;
+        } else {
+            // they dont have enough....
+            desires[desireIndex].amount -= matching_desire->amount;
+            // take everything
+            matching_desire->amount = 0;
         }
         desireIndex = -1;
     }
