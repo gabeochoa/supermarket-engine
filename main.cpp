@@ -184,6 +184,10 @@ bool isCloseEnough(vec2i s, vec2i g, int d) {
     return (abs(g.x - s.x) <= d && abs(g.y - s.y) <= d);
 }
 
+bool isCloseEnough(vec2f s, vec2f g, float d) {
+    return (abs(g.x - s.x) <= d && abs(g.y - s.y) <= d);
+}
+
 bool isValidLocation(vec2i pos) {
     if (!inBounds(pos)) {
         return false;
