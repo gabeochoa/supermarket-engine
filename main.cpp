@@ -73,8 +73,11 @@ struct Item : public sf::Drawable {
     vec2f tilePosition;
     sf::Color color;
 
+    Item(std::string n, double p) : name(n), price(p) {}
     Item(std::string n, double p, sf::Color c) : name(n), price(p), color(c) {}
+
     ~Item() {}
+
     Item(const Item &i)
         : name(i.name),
           price(i.price),
@@ -89,7 +92,6 @@ struct Item : public sf::Drawable {
         return *this;
     }
 
-    Item(std::string n, double p) : name(n), price(p) {}
     bool operator<(const Item &i) const { return this->name < i.name; }
 
     void update(sf::Time dt) {}
@@ -104,7 +106,7 @@ struct Item : public sf::Drawable {
     }
 };
 
-const std::vector<Item> all_items = std::vector<Item>{
+const std::vector<const Item> all_items = std::vector<const Item>{
     Item("apple", 1.0, sf::Color(196, 51, 64)),
 };
 
@@ -133,6 +135,15 @@ struct Shelf : public sf::Drawable {
     Shelf() {
         shape = sf::RectangleShape(vec2f{GRID_SIZEF, GRID_SIZEF});
         shape.setFillColor(sf::Color::Black);
+    }
+
+    ~Shelf(){}
+    Shelf(const Shelf& s): contents(s.contents), tilePosition(s.tilePosition), shape(s.shape) {}
+    Shelf &operator=(const Shelf &s){
+        this->contents = s.contents;
+        this->tilePosition = s.tilePosition;
+        this->shape = s.shape;
+        return *this;
     }
 
     void setTile(vec2f tile_pos) {
@@ -291,12 +302,18 @@ std::vector<std::unique_ptr<Shelf>>::iterator closest_shelf_to_current_pos(
 }
 
 struct Person : public sf::Drawable {
+    const std::vector<sf::Color> PCOLORS = std::vector<sf::Color>{
+        sf::Color(46, 20, 0),  sf::Color(66, 28, 0),     sf::Color(86, 37, 0),
+        sf::Color(164, 70, 0), sf::Color(255, 229, 180),
+    };
+
     sf::RectangleShape shape;
     vec2f tilePosition;
 
     Person() {
+        random_selector<> rs{};
         shape = sf::RectangleShape(vec2f{GRID_SIZEF / 2, GRID_SIZEF / 2});
-        shape.setFillColor(sf::Color::Red);
+        shape.setFillColor(rs(PCOLORS));
     }
 
     void setFillColor(sf::Color c) { shape.setFillColor(c); }
