@@ -9,10 +9,22 @@
 #include <iostream>
 #include <numeric>
 
+// string split
+#include <regex>
+std::vector<std::string> split(const std::string& input,
+                               const std::string& regex) {
+    // passing -1 as the submatch index parameter performs splitting
+    std::regex re(regex);
+    std::sregex_token_iterator first{input.begin(), input.end(), re, -1};
+    std::sregex_token_iterator last;
+    return std::vector<std::string>{first, last};
+}
+
 // profileing stuff
 #include <chrono>
-typedef std::vector<double> samples;
-std::map<std::string, samples> _acc;
+#include <deque>
+typedef std::deque<double> Samples;
+std::map<std::string, Samples> _acc;
 struct prof {
     std::string name;
     std::chrono::system_clock::time_point tstart;
@@ -21,14 +33,42 @@ struct prof {
     ~prof() {
         std::chrono::system_clock::time_point tend =
             std::chrono::system_clock::now();
-        std::chrono::duration<double> elapsed = tend - tstart;
-        std::map<std::string, samples>::iterator p = _acc.find(name);
+        std::chrono::duration<double> elapsed =
+            std::chrono::duration_cast<std::chrono::milliseconds>(tend -
+                                                                  tstart);
+        std::map<std::string, Samples>::iterator p = _acc.find(name);
         if (p == _acc.end()) {
-            _acc.insert(std::make_pair(name, std::vector<double>()));
+            _acc.insert(std::make_pair(name, std::deque<double>()));
         }
+
         _acc[name].push_back(elapsed.count());
+
+        if (_acc[name].size() > 1000) {
+            _acc[name].pop_front();
+        }
     }
 };
+
+// https://stackoverflow.com/a/29856690
+const std::string computeMethodName(const std::string& function,
+                                    const std::string& prettyFunction) {
+    size_t locFunName = prettyFunction.find(
+        function);  // If the input is a constructor, it gets the beginning of
+                    // the class name, not of the method. That's why later on we
+                    // have to search for the first parenthesys
+    size_t begin = prettyFunction.rfind(" ", locFunName) + 1;
+    size_t end = prettyFunction.find(
+        "(", locFunName + function.length());  // Adding function.length() make
+                                               // this faster and also allows to
+                                               // handle operator parenthesis!
+    if (prettyFunction[end + 1] == ')')
+        return (prettyFunction.substr(begin, end - begin) + "()");
+    else
+        return (prettyFunction.substr(begin, end - begin) + "(...)");
+}
+
+#define __PROFILE_FUNC__ computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__)
+
 // end profiling stuff
 
 constexpr int WIDTH = 1920;
@@ -48,16 +88,6 @@ sf::Font* FONTPTR = nullptr;
 World* world = nullptr;
 sf::RenderWindow* window = nullptr;
 sf::View* game_view = nullptr;
-
-#include <regex>
-std::vector<std::string> split(const std::string& input,
-                               const std::string& regex) {
-    // passing -1 as the submatch index parameter performs splitting
-    std::regex re(regex);
-    std::sregex_token_iterator first{input.begin(), input.end(), re, -1};
-    std::sregex_token_iterator last;
-    return std::vector<std::string>{first, last};
-}
 
 std::map<std::string, sf::Keyboard::Key> KEYS;
 

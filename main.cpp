@@ -16,6 +16,7 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Mouse.hpp>
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <queue>
@@ -30,11 +31,11 @@
 enum MenuState {
     EXIT = -1,
 
-    ROOT = 0,
+    GAME = 0,
+    DEBUGMS = 1,
     ABOUT,
     PAUSED,
     SETTINGS,
-    GAME,
 };
 
 // size of each grid spot
@@ -659,6 +660,8 @@ struct World : public sf::Drawable {
     }
 
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        prof p(__PROFILE_FUNC__);
+        sleep(sf::milliseconds(100));
         int sx = 14;
         int sy = 12;
 
@@ -854,7 +857,11 @@ struct HUD : public sf::Drawable {
     }
 };
 
-struct GameScreen {
+struct Window {
+    virtual int run(sf::RenderWindow &app) = 0;
+};
+
+struct GameScreen : public Window {
     World *world;
     sf::View view;
     HUD hud;
@@ -862,6 +869,10 @@ struct GameScreen {
     float zoom_speed = 0.01;
     int min_zoom = -100;
     int max_zoom;
+
+    sf::Clock tickTimer;
+    sf::Time elapsed;
+    sf::Event event;
 
     GameScreen() {
         max_zoom = DEBUG ? 1000 : 50;
@@ -909,58 +920,156 @@ struct GameScreen {
         view.move(xd, yd);
     }
 
-    virtual int run(sf::RenderWindow &app) {
-        bool running = true;
-        sf::Clock tickTimer;
-        sf::Time elapsed;
-        sf::Event event;
+    int run(sf::RenderWindow &app) {
+        elapsed = tickTimer.restart();
+        const double dt = elapsed.asSeconds();
 
-        view.setSize(app.getSize().x, app.getSize().y);
-        view.setCenter(app.getSize().x / 2.0f, app.getSize().y / 2.0f);
-
-        while (running) {
-            elapsed = tickTimer.restart();
-            const double dt = elapsed.asSeconds();
-
-            while (app.pollEvent(event)) {
-                process_subscreen_events(app, event);
-                // Window closed
-                if (event.type == sf::Event::Closed) return (-1);
-                if (event.type == sf::Event::MouseWheelMoved) {
-                    const int delta = event.mouseWheel.delta;
-                    if (delta < 0 && zoom_level < max_zoom) {
-                        view.zoom(1 + zoom_speed);
-                        zoom_level += 2;
-                    } else if (delta > 0 && zoom_level > min_zoom) {
-                        view.zoom(1 - zoom_speed);
-                        zoom_level -= 2;
-                    }
-                }
-                if (event.type == sf::Event::KeyPressed) {
-                    switch (event.key.code) {
-                        case sf::Keyboard::Escape:
-                            return MenuState::PAUSED;
-                        default:
-                            break;
-                    }
+        while (app.pollEvent(event)) {
+            process_subscreen_events(app, event);
+            // Window closed
+            if (event.type == sf::Event::Closed) return (-1);
+            if (event.type == sf::Event::MouseWheelMoved) {
+                const int delta = event.mouseWheel.delta;
+                if (delta < 0 && zoom_level < max_zoom) {
+                    view.zoom(1 + zoom_speed);
+                    zoom_level += 2;
+                } else if (delta > 0 && zoom_level > min_zoom) {
+                    view.zoom(1 - zoom_speed);
+                    zoom_level -= 2;
                 }
             }
-
-            // this is the non event based input
-            handle_input(dt);
-            // update all subscreens now that events are done
-            update_subscreens(elapsed);
-            app.clear(sf::Color::Black);
-            app.setView(view);
-            app.draw(*world);
-            // set back to normal 1080p (util.h) size
-            // before drawing the HUD so it is scaled correctly
-            app.setView(app.getDefaultView());
-            app.draw(hud);
-            // output to screen
-            app.display();
+            if (event.type == sf::Event::KeyPressed) {
+                switch (event.key.code) {
+                    case sf::Keyboard::Escape:
+                        return MenuState::EXIT;
+                    default:
+                        break;
+                }
+            }
         }
-        return -1;
+
+        // this is the non event based input
+        handle_input(dt);
+        // update all subscreens now that events are done
+        update_subscreens(elapsed);
+        app.clear(sf::Color::Black);
+        app.setView(view);
+        app.draw(*world);
+        // set back to normal 1080p (util.h) size
+        // before drawing the HUD so it is scaled correctly
+        app.setView(app.getDefaultView());
+        app.draw(hud);
+        // output to screen
+        app.display();
+
+        // If we are in debug mode, nows the time to pass to the debug window to
+        // do some work
+        if (DEBUG) return MenuState::DEBUGMS;
+        return MenuState::GAME;
+    }
+};
+
+struct DebugProfile : public sf::Drawable {
+    struct ProfileSampleStats {
+        Samples samples;
+        double avg, min, max, sum;
+
+        ProfileSampleStats(Samples s, double a, double mi, double mx, double su)
+            : samples(s), avg(a), min(mi), max(mx), sum(su) {
+            auto ex = std::deque<double>{
+                1.f,
+                2.f,
+                3.f,
+            };
+            _acc.insert(std::make_pair("test", ex));
+        }
+    };
+
+    std::vector<std::pair<std::string, ProfileSampleStats>> pairs;
+    DebugProfile() {}
+
+    void update(sf::Time dt) {
+        pairs.clear();
+
+        for (auto itr = _acc.begin(); itr != _acc.end(); ++itr) {
+            auto name = itr->first;
+            Samples samples = itr->second;
+
+            double sum = std::accumulate(samples.begin(), samples.end(), 0.0);
+            double avg = sum / samples.size();
+            double min = *std::min_element(samples.begin(), samples.end());
+            double max = *std::max_element(samples.begin(), samples.end());
+            pairs.push_back(std::make_pair(
+                name, ProfileSampleStats(samples, avg, min, max, sum)));
+        }
+
+        sort(pairs.begin(), pairs.end(),
+             [=](std::pair<std::string, ProfileSampleStats> &a,
+                 std::pair<std::string, ProfileSampleStats> &b) {
+                 return a.second.avg < b.second.avg;
+             });
+    }
+
+    virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
+        int y = 0;
+        for (auto p : pairs) {
+            auto name = p.first;
+            auto stats = p.second;
+
+            auto t = fmt::format("{}: \tavg: {}\tmin: {}\tmax: {}", name,
+                                 stats.avg, stats.min, stats.max);
+            auto text = UIText(0, y, t);
+            y += 30;
+            target.draw(text);
+        }
+    }
+};
+struct DebugScreen : public Window {
+    World *world;
+    DebugProfile debugProfile;
+
+    typedef std::pair<std::string, UIText *> strUI;
+    std::map<std::string, UIText *> uitext;
+
+    sf::Clock tickTimer;
+    sf::Time elapsed;
+    sf::Event event;
+
+    DebugScreen() { world = getGlobalWorld(); }
+
+    ~DebugScreen() {}
+
+    void handle_input(const double &dt) {}
+
+    int run(sf::RenderWindow &app) {
+        elapsed = tickTimer.restart();
+        const double dt = elapsed.asSeconds();
+
+        while (app.pollEvent(event)) {
+            // Window closed
+            if (event.type == sf::Event::Closed) return (-1);
+            if (event.type == sf::Event::KeyPressed) {
+                switch (event.key.code) {
+                    case sf::Keyboard::Escape:
+                        return MenuState::EXIT;
+                    default:
+                        break;
+                }
+            }
+        }
+        // this is the non event based input
+        handle_input(dt);
+
+        debugProfile.update(elapsed);
+
+        app.clear(sf::Color::Black);
+        app.setView(app.getDefaultView());
+
+        app.draw(debugProfile);
+
+        app.display();
+
+        return MenuState::GAME;
     }
 };
 
@@ -973,11 +1082,32 @@ int main() {
     // @TODO move export to save options
     export_keys();
 
-    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Ahoy!");
-    window.setFramerateLimit(60);
+    std::vector<Window *> windows;
+    std::vector<sf::RenderWindow *> render_windows;
 
+    auto vm = sf::VideoMode(WIDTH, HEIGHT);
+    auto framerate = 60;
+
+    // NOTE: the order needs to match menu state
+
+    sf::RenderWindow *game_window = new sf::RenderWindow(vm, "Ahoy!");
+    game_window->setFramerateLimit(framerate);
     GameScreen gs;
-    gs.run(window);
+    windows.push_back(&gs);
+    render_windows.push_back(game_window);
+
+    sf::RenderWindow *debug_window = new sf::RenderWindow(vm, "Ahoy (debug)!");
+    debug_window->setFramerateLimit(framerate);
+    DebugScreen ds;
+    windows.push_back(&ds);
+    render_windows.push_back(debug_window);
+
+    int activeWindow = 0;  // GameScreen
+    while (activeWindow >= 0) {
+        activeWindow =
+            windows[activeWindow]->run(*(render_windows[activeWindow]));
+    }
+
     return 0;
 }
 
