@@ -9,6 +9,28 @@
 #include <iostream>
 #include <numeric>
 
+// profileing stuff
+#include <chrono>
+typedef std::vector<double> samples;
+std::map<std::string, samples> _acc;
+struct prof {
+    std::string name;
+    std::chrono::system_clock::time_point tstart;
+
+    prof(std::string n) : name(n) { tstart = std::chrono::system_clock::now(); }
+    ~prof() {
+        std::chrono::system_clock::time_point tend =
+            std::chrono::system_clock::now();
+        std::chrono::duration<double> elapsed = tend - tstart;
+        std::map<std::string, samples>::iterator p = _acc.find(name);
+        if (p == _acc.end()) {
+            _acc.insert(std::make_pair(name, std::vector<double>()));
+        }
+        _acc[name].push_back(elapsed.count());
+    }
+};
+// end profiling stuff
+
 constexpr int WIDTH = 1920;
 constexpr int HEIGHT = 1080;
 
