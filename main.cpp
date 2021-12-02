@@ -337,7 +337,7 @@ struct Person : public sf::Drawable {
             pos.x -= px;
         else if (xdiff > px)
             pos.x += px;
-        if (ydiff < -px)
+        else if (ydiff < -px)
             pos.y -= px;
         else if (ydiff > px)
             pos.y += px;
@@ -380,7 +380,7 @@ struct PersonWithDesire : public Person {
     void move_toward_desire_location() {
         if (desires.size() == 0) {
             tilePosition =
-                move_toward_target(tilePosition, vec2f{0.f, 0.f}, 0.05);
+                move_toward_target(tilePosition, vec2f{0.f, 0.f}, P_MOVE_DIST);
             setTile(tilePosition);
             // TODO go to checkout when done
             return;
@@ -402,7 +402,8 @@ struct PersonWithDesire : public Person {
         }
 
         auto local_target = vtof(followPath.back());
-        tilePosition = move_toward_target(tilePosition, local_target, 0.05);
+        tilePosition =
+            move_toward_target(tilePosition, local_target, P_MOVE_DIST);
         setTile(tilePosition);
         if (isSame(tilePosition, local_target)) followPath.pop_back();
     }
