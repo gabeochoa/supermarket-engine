@@ -982,56 +982,17 @@ struct GameScreen : public Window {
 };
 
 struct DebugProfile : public sf::Drawable {
-    struct ProfileSampleStats {
-        Samples samples;
-        double avg, min, max, sum;
-
-        ProfileSampleStats(Samples s, double a, double mi, double mx, double su)
-            : samples(s), avg(a), min(mi), max(mx), sum(su) {
-            // auto ex = std::deque<double>{
-            // 0.000012098f,
-            // 0.0001123f,
-            // 0.00003f,
-            // };
-            // _acc.insert(std::make_pair("test", ex));
-        }
-    };
-
-    std::vector<std::pair<std::string, ProfileSampleStats>> pairs;
     DebugProfile() {}
 
-    void update(sf::Time dt) {
-        prof p(__PROFILE_FUNC__);
-        pairs.clear();
-
-        for (auto itr = _acc.begin(); itr != _acc.end(); ++itr) {
-            auto name = itr->first;
-            Samples samples = itr->second;
-
-            double sum = std::accumulate(samples.begin(), samples.end(), 0.0);
-            double avg = sum / samples.size();
-            double min = *std::min_element(samples.begin(), samples.end());
-            double max = *std::max_element(samples.begin(), samples.end());
-            pairs.push_back(std::make_pair(
-                name, ProfileSampleStats(samples, avg, min, max, sum)));
-        }
-
-        sort(pairs.begin(), pairs.end(),
-             [=](std::pair<std::string, ProfileSampleStats> &a,
-                 std::pair<std::string, ProfileSampleStats> &b) {
-                 return a.second.avg > b.second.avg;
-             });
-    }
+    void update(sf::Time dt) { prof p(__PROFILE_FUNC__); }
 
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const {
         prof p(__PROFILE_FUNC__);
         int y = 0;
-        for (auto p : pairs) {
-            auto name = p.first;
-            auto stats = p.second;
-
-            auto t = fmt::format("{}: \tavg: {:.2f}\tmin: {}\tmax: {}", name,
-                                 stats.avg, stats.min, stats.max);
+        for (const auto &x : _acc) {
+            auto name = x.first;
+            auto stats = x.second;
+            auto t = fmt::format("{}: \tavg: {:.2f}", name, stats.average());
             auto text = UIText(0, y, t);
             y += 30;
             target.draw(text);

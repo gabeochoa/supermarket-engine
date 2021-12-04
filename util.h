@@ -23,7 +23,33 @@ std::vector<std::string> split(const std::string& input,
 // profileing stuff
 #include <chrono>
 #include <deque>
-typedef std::deque<double> Samples;
+struct Samples {
+    constexpr static int size = 1000;
+    int index;
+    int numItems;
+    bool has_looped;
+    double samples[size];
+    double sum, avg, min, max;
+    Samples() : index(0), numItems(0), sum(0), avg(0), min(0), max(0) {}
+    double& operator[](int index) { return samples[index]; }
+
+    double average() const { return sum / std::min(numItems, Samples::size); }
+
+    void addSample(double s) {
+        index = (index + 1) % Samples::size;
+        numItems++;
+        sum += s;
+
+        if (numItems < Samples::size) {
+            samples[index] = s;
+        } else {
+            double& old = samples[index];
+            sum -= old;
+            old = s;
+        }
+    }
+};
+
 std::map<std::string, Samples> _acc;
 struct prof {
     std::string name;
@@ -38,14 +64,9 @@ struct prof {
                                                                   tstart);
         std::map<std::string, Samples>::iterator p = _acc.find(name);
         if (p == _acc.end()) {
-            _acc.insert(std::make_pair(name, std::deque<double>()));
+            _acc.insert(std::make_pair(name, Samples()));
         }
-
-        _acc[name].push_back(elapsed.count());
-
-        if (_acc[name].size() > 1000) {
-            _acc[name].pop_front();
-        }
+        _acc[name].addSample(elapsed.count());
     }
 };
 
