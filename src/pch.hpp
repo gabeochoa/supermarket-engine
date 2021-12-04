@@ -14,6 +14,12 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #define FMT_HEADER_ONLY
 #include "fmt/format.h"
+
+// All of these files should not rely on any other header
+// if they do we will run into duplicate symbol issues
+#include "log.h"
+#include "strutil.h"

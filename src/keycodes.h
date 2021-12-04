@@ -1,12 +1,13 @@
 
 #pragma once
 
+#include <fstream>
+#include <map>
+
 #include "pch.hpp"
 
-typedef uint16_t KeyCode;
-
 namespace Key {
-enum : KeyCode {
+enum KeyCode : uint16_t {
     // From glfw3.h
     Space = 32,
     Apostrophe = 39, /* ' */
@@ -139,4 +140,49 @@ enum : KeyCode {
     RightSuper = 347,
     Menu = 348
 };
+
+static std::map<std::string, KeyCode> mapping;
+
+static inline void default_keys() {
+    mapping["Esc"] = KeyCode::Escape;
+    mapping["1"] = KeyCode::D0;
+    mapping["2"] = KeyCode::D1;
+    mapping["Left"] = KeyCode::A;
+    mapping["Right"] = KeyCode::D;
+    mapping["Up"] = KeyCode::W;
+    mapping["Down"] = KeyCode::S;
 }
+
+static void load_keys() {
+    // load default keys
+    default_keys();
+    // load keybindings from file
+    std::ifstream ifs("../resources/keybindings.ini");
+    if (!ifs.is_open()) {
+        log_warn("failed to find keybindings file");
+        return;
+    }
+    std::string line;
+    while (getline(ifs, line)) {
+        auto tokens = split(line, ",");
+        mapping[tokens[0]] = static_cast<KeyCode>(std::stoi(tokens[1]));
+    }
+    ifs.close();
+}
+
+static void export_keys() {
+    std::ofstream ofs("../resources/keybindings.ini");
+    if (!ofs.is_open()) {
+        // TODO add error message
+        log_warn("failed to write to keybindings file");
+        return;
+    }
+
+    for (auto const& kv : mapping) {
+        ofs << kv.first << "," << kv.second << std::endl;
+    }
+
+    ofs.close();
+}
+
+}  // namespace Key

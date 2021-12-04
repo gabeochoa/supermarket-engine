@@ -46,3 +46,4 @@ struct OpenGLWindow : public Window {
     virtual void init(const WindowConfig& config);
     virtual void close() { glfwTerminate(); }
 };
+

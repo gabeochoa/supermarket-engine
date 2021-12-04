@@ -106,7 +106,7 @@ Window* Window::create(const WindowConfig& config) {
     return new OpenGLWindow(config);
 }
 
-bool Input::IsKeyPressed(const KeyCode key) {
+bool Input::IsKeyPressed(const Key::KeyCode key) {
     auto* window =
         static_cast<GLFWwindow*>(App::get().getWindow().getNativeWindow());
     auto state = glfwGetKey(window, static_cast<int32_t>(key));

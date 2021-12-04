@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include "layer.hpp"
 #include "log.h"
 #include "pch.hpp"
@@ -28,6 +30,14 @@ struct App {
         M_ASSERT(window, "failed to grab window");
         running = true;
         window->setEventCallback(M_BIND(onEvent));
+
+        Key::load_keys();
+    }
+
+    ~App() {
+        // TODO export keys,
+        // i have it off since the folder doesnt exist anyway
+        // Key::export_keys();
     }
 
     bool onWindowClose(WindowCloseEvent& event) {
@@ -38,7 +48,7 @@ struct App {
     bool onKeyPressed(KeyPressedEvent& event) {
         // TODO should i be creating a window close event instead of just
         // stopping run?
-        if (event.keycode == Key::Escape) {
+        if (event.keycode == Key::mapping["Esc"]) {
             running = false;
         }
         return true;

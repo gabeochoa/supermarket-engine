@@ -6,8 +6,11 @@
 #include <string>
 
 inline void log(const std::string &line) { std::cout << line << std::endl; }
+inline void log_warn(const std::string &s) {
+    log(fmt::format("WARN: {}", s));
+}
 inline void log_error(const std::string &s) {
-    log(s);
+    log(fmt::format("ERROR: {}", s));
     assert(false);
 }
 
