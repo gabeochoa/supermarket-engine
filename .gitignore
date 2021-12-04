@@ -2,6 +2,8 @@
 *.swp
 SFML/*
 windows_build/*
-main.exe
-main.o
+*.o
+*.exe
 *.zip
+*.gch
+old/*
