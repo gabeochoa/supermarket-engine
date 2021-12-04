@@ -131,13 +131,62 @@ struct VertexBuffer {
 };
 
 struct IndexBuffer {
+    unsigned int count;
+
     virtual ~IndexBuffer() {}
     virtual void bind() const = 0;
     virtual void unbind() const = 0;
     virtual unsigned int getCount() const { return count; }
-    unsigned int count;
 
     static IndexBuffer* create(unsigned int* i_s, unsigned int count);
+};
+
+struct VertexArray {
+    unsigned int rendererID;
+    std::vector<std::shared_ptr<VertexBuffer>> vertexBuffers;
+    std::shared_ptr<IndexBuffer> indexBuffer;
+
+    virtual ~VertexArray() {}
+    virtual void bind() const = 0;
+    virtual void unbind() const = 0;
+    virtual void addVertexBuffer(const std::shared_ptr<VertexBuffer>& vb) = 0;
+    virtual void setIndexBuffer(const std::shared_ptr<IndexBuffer>& ib) = 0;
+    static VertexArray* create();
+};
+
+struct OpenGLVertexArray : public VertexArray {
+    OpenGLVertexArray() {
+        glGenVertexArrays(1, &rendererID);
+        glBindVertexArray(rendererID);
+    }
+    virtual void addVertexBuffer(
+        const std::shared_ptr<VertexBuffer>& vb) override {
+        M_ASSERT(vb->layout.elements.size(), "Layout cannot be empty");
+
+        glBindVertexArray(rendererID);
+        vb->bind();
+
+        int index = 0;
+        for (const auto& elem : vb->layout) {
+            glEnableVertexAttribArray(index);
+            glVertexAttribPointer(index, elem.getCount(),
+                                  elem.typeToOpenGLType(),
+                                  elem.normalized ? GL_TRUE : GL_FALSE,
+                                  vb->layout.stride, (const void*)elem.offset);
+            index++;
+        }
+        vertexBuffers.push_back(vb);
+    }
+
+    virtual void setIndexBuffer(
+        const std::shared_ptr<IndexBuffer>& ib) override {
+        glBindVertexArray(rendererID);
+        ib->bind();
+        indexBuffer = ib;
+    }
+    virtual ~OpenGLVertexArray() { glDeleteVertexArrays(1, &rendererID); }
+    virtual void bind() const override { glBindVertexArray(rendererID); }
+    virtual void unbind() const override { glBindVertexArray(0); }
 };
 
 struct OpenGLVertexBuffer : public VertexBuffer {

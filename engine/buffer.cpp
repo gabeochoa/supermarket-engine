@@ -2,6 +2,7 @@
 
 #include "pch.hpp"
 
+VertexArray* VertexArray::create() { return new OpenGLVertexArray(); }
 VertexBuffer* VertexBuffer::create(float* verts, int size) {
     return new OpenGLVertexBuffer(verts, size);
 }

@@ -15,12 +15,14 @@
 struct App {
     std::unique_ptr<Window> window;
     std::unique_ptr<Shader> shader;
-    std::unique_ptr<VertexBuffer> vertexBuffer;
-    std::unique_ptr<IndexBuffer> indexBuffer;
+    std::unique_ptr<Shader> shader2;
+
+    std::shared_ptr<VertexArray> vertexArray;
+
+    std::shared_ptr<VertexArray> squareVA;
+
     bool running;
     LayerStack layerstack;
-
-    unsigned int vertexArray;
 
     inline static App& get() {
         static App app;
@@ -41,39 +43,31 @@ struct App {
         running = true;
         window->setEventCallback(M_BIND(onEvent));
 
-        // float vertices[] = {
-        // -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f,
-        // };
-        float vertices[] = {
-            -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.5f, -0.5f, 0.0f, 1.0f,
-            0.0f,  1.0f,  1.0f, 0.0f, 0.5f, 0.0f, 1.f,  0.f,  1.f,   1.f,
-        };
-        vertexBuffer.reset(VertexBuffer::create(vertices, sizeof(vertices)));
+        {
+            vertexArray.reset(VertexArray::create());
+            std::shared_ptr<VertexBuffer> vertexBuffer;
+            std::shared_ptr<IndexBuffer> indexBuffer;
 
-        glGenVertexArrays(1, &vertexArray);
-        glBindVertexArray(vertexArray);
+            float vertices[] = {
+                -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+                0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+                0.0f,  0.5f,  0.0f, 1.f,  0.f,  1.f,  1.f,
+            };
+            vertexBuffer.reset(
+                VertexBuffer::create(vertices, sizeof(vertices)));
 
-        BufferLayout layout = {
-            {"vp", BufferType::Float3},
-            {"color", BufferType::Float4},
-        };
+            BufferLayout layout = {
+                {"vp", BufferType::Float3},
+                {"color", BufferType::Float4},
+            };
+            vertexBuffer->setLayout(layout);
+            vertexArray->addVertexBuffer(vertexBuffer);
 
-        int index = 0;
-        for (const auto& elem : layout) {
-            glEnableVertexAttribArray(index);
-            glVertexAttribPointer(index, elem.getCount(),
-                                  elem.typeToOpenGLType(),
-                                  elem.normalized ? GL_TRUE : GL_FALSE,
-                                  layout.stride, (const void*)elem.offset);
-            index++;
-        }
+            unsigned int indices[3] = {0, 1, 2};
+            indexBuffer.reset(IndexBuffer::create(indices, 3));
+            vertexArray->setIndexBuffer(indexBuffer);
 
-        vertexBuffer->setLayout(layout);
-
-        unsigned int indices[3] = {0, 1, 2};
-        indexBuffer.reset(IndexBuffer::create(indices, 3));
-
-        std::string vertex_shader = R"(
+            std::string vertex_shader = R"(
             #version 400
             in vec3 vp;
             in vec4 color;
@@ -82,13 +76,13 @@ struct App {
             out vec4 oc;
 
             void main(){
-            op = vp;
+                op = vp;
                 gl_Position = vec4(vp, 1.0);
                 oc = color;
             }
         )";
 
-        std::string fragment_shader = R"(
+            std::string fragment_shader = R"(
             #version 400
             in vec3 op;
             in vec4 oc;
@@ -101,7 +95,56 @@ struct App {
             }
         )";
 
-        shader.reset(new Shader(vertex_shader, fragment_shader));
+            shader.reset(new Shader(vertex_shader, fragment_shader));
+        }
+        {
+            std::shared_ptr<VertexBuffer> squareVB;
+            std::shared_ptr<IndexBuffer> squareIB;
+            squareVA.reset(VertexArray::create());
+
+            float squareVerts[] = {
+                -0.5f, -0.5f, 0.0f,  // one
+                0.5f,  -0.5f, 0.0f,  // two
+                0.5f,  0.5f,  0.f,   //
+                -0.5f, 0.0f,  0.f,   //
+            };
+            squareVB.reset(
+                VertexBuffer::create(squareVerts, sizeof(squareVerts)));
+            squareVB->setLayout(BufferLayout{
+                {"vp", BufferType::Float3},
+            });
+            squareVA->addVertexBuffer(squareVB);
+
+            unsigned int squareIs[] = {0, 1, 2, 2, 3, 0};
+            squareIB.reset(IndexBuffer::create(
+                squareIs, sizeof(squareIs) / sizeof(unsigned int)));
+            squareVA->setIndexBuffer(squareIB);
+
+            std::string vertex_shader2 = R"(
+            #version 400
+            in vec3 vp;
+
+            out vec3 op;
+
+            void main(){
+                op = vp;
+                gl_Position = vec4(vp, 1.0);
+            }
+        )";
+
+            std::string fragment_shader2 = R"(
+            #version 400
+            in vec3 op;
+
+            out vec4 frag_color;
+
+            void main(){
+                frag_color = vec4(op*0.5 + 0.5, 1.0);
+            }
+        )";
+
+            shader2.reset(new Shader(vertex_shader2, fragment_shader2));
+        }
     }
 
     ~App() { Key::export_keys(); }
@@ -149,9 +192,13 @@ struct App {
             glClear(GL_COLOR_BUFFER_BIT |
                     GL_DEPTH_BUFFER_BIT);  // Clear the buffers
 
+            shader2->bind();
+            squareVA->bind();
+            glDrawArrays(GL_TRIANGLES, 0, squareVA->indexBuffer->getCount());
+
             shader->bind();
-            glBindVertexArray(vertexArray);
-            glDrawArrays(GL_TRIANGLES, 0, indexBuffer->getCount());
+            vertexArray->bind();
+            glDrawArrays(GL_TRIANGLES, 0, vertexArray->indexBuffer->getCount());
 
             for (Layer* layer : layerstack) {
                 layer->onUpdate();
