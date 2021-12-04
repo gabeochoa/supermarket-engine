@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <functional>
 #include <glm/glm.hpp>
+#include <initializer_list>
 #include <iostream>
 #include <string>
 #include <vector>

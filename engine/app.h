@@ -46,6 +46,22 @@ struct App {
         };
         vertexBuffer.reset(VertexBuffer::create(vertices, sizeof(vertices)));
 
+        BufferLayout layout = {
+            {"vp", BufferType::Float3},
+        };
+
+        int index = 0;
+        for (const auto& elem : layout) {
+            glEnableVertexAttribArray(index);
+            glVertexAttribPointer(index, elem.getCount(),
+                                  elem.typeToOpenGLType(),
+                                  elem.normalized ? GL_TRUE : GL_FALSE,
+                                  layout.stride, (const void*)elem.offset);
+            index++;
+        }
+
+        vertexBuffer->setLayout(layout);
+
         glGenVertexArrays(1, &vertexArray);
         glBindVertexArray(vertexArray);
         glEnableVertexAttribArray(0);
