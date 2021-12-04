@@ -6,13 +6,14 @@
 #include <string>
 
 enum LogLevel : int {
-    TRACE = 0,
+    ALL = 0,
+    TRACE,
     INFO,
     WARN,
     ERROR,
 };
 
-#define LOG_LEVEL LogLevel::TRACE
+constexpr auto LOG_LEVEL = LogLevel::TRACE;
 #define M_SHOULD_LOG(x)             \
     {                               \
         if (x <= LOG_LEVEL) return; \

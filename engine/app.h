@@ -6,14 +6,18 @@
 #include "layer.hpp"
 #include "log.h"
 #include "pch.hpp"
+#include "shader.h"
 #include "window.h"
 
 #define M_BIND(x) std::bind(&App::x, this, std::placeholders::_1)
 
 struct App {
     std::unique_ptr<Window> window;
+    std::unique_ptr<Shader> shader;
     bool running;
     LayerStack layerstack;
+
+    unsigned int vertexArray, vertexBuffer, indexBuffer, shaderProgram;
 
     inline static App& get() {
         static App app;
@@ -28,10 +32,58 @@ struct App {
 
         window = std::unique_ptr<Window>(Window::create(config));
         M_ASSERT(window, "failed to grab window");
+
+        Key::load_keys();
+
         running = true;
         window->setEventCallback(M_BIND(onEvent));
 
-        Key::load_keys();
+        glGenBuffers(1, &vertexBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+
+        float vertices[9] = {
+            -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f,
+        };
+
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
+                     GL_STATIC_DRAW);
+
+        glGenVertexArrays(1, &vertexArray);
+        glBindVertexArray(vertexArray);
+        glEnableVertexAttribArray(0);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+        glGenBuffers(1, &indexBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+        int indices[3] = {0, 1, 2};
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                     GL_STATIC_DRAW);
+
+        std::string vertex_shader = R"(
+            #version 400
+            in vec3 vp;
+
+            out vec3 op;
+
+            void main(){
+            op = vp;
+                gl_Position = vec4(vp, 1.0);
+            }
+        )";
+
+        std::string fragment_shader = R"(
+            #version 400
+            in vec3 op;
+            out vec4 frag_color;
+
+            void main(){
+                frag_color = vec4(op*0.5 + 0.5, 1.0);
+            }
+        )";
+
+        shader.reset(new Shader(vertex_shader, fragment_shader));
     }
 
     ~App() { Key::export_keys(); }
@@ -78,6 +130,9 @@ struct App {
         while (running) {
             glClear(GL_COLOR_BUFFER_BIT |
                     GL_DEPTH_BUFFER_BIT);  // Clear the buffers
+            shader->bind();
+            glBindVertexArray(vertexArray);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
 
             for (Layer* layer : layerstack) {
                 layer->onUpdate();
