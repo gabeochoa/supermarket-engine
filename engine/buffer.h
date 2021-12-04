@@ -50,22 +50,20 @@ struct BufferElem {
 
     inline int getDataTypeSize(BufferType t) const {
         switch (t) {
-            case BufferType::None:
-                return 0;
             case BufferType::Float:
-                return sizeof(float);
+                return 4;
             case BufferType::Float2:
-                return 2 * sizeof(float);
+                return 2 * 4;
             case BufferType::Float3:
-                return 3 * sizeof(float);
+                return 3 * 4;
             case BufferType::Float4:
-                return 4 * sizeof(float);
+                return 4 * 4;
             case BufferType::Mat3:
-                return 3 * 3 * sizeof(float);
+                return 3 * 3 * 4;
             case BufferType::Mat4:
-                return 4 * 4 * sizeof(float);
+                return 4 * 4 * 4;
             case BufferType::Bool:
-                return sizeof(bool);
+                return 1;
             default:
                 log_error(fmt::format("Missing buffer type size for {}", t));
                 return -1;
@@ -74,8 +72,6 @@ struct BufferElem {
 
     int getCount() const {
         switch (type) {
-            case BufferType::None:
-                return 0;
             case BufferType::Bool:
             case BufferType::Float:
                 return 1;
@@ -86,9 +82,9 @@ struct BufferElem {
             case BufferType::Float4:
                 return 4;
             case BufferType::Mat3:
-                return 3 * 3;
+                return 3;
             case BufferType::Mat4:
-                return 4 * 4;
+                return 4;
             default:
                 log_error(fmt::format("Missing count for {}", type));
                 return -1;
@@ -100,6 +96,13 @@ struct BufferLayout {
 
     std::vector<BufferElem>::iterator begin() { return elements.begin(); }
     std::vector<BufferElem>::iterator end() { return elements.end(); }
+
+    std::vector<BufferElem>::const_iterator begin() const {
+        return elements.begin();
+    }
+    std::vector<BufferElem>::const_iterator end() const {
+        return elements.end();
+    }
 
     int stride;
 

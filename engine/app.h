@@ -41,13 +41,21 @@ struct App {
         running = true;
         window->setEventCallback(M_BIND(onEvent));
 
+        // float vertices[] = {
+        // -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f,
+        // };
         float vertices[] = {
-            -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f,
+            -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.5f, -0.5f, 0.0f, 1.0f,
+            0.0f,  1.0f,  1.0f, 0.0f, 0.5f, 0.0f, 1.f,  0.f,  1.f,   1.f,
         };
         vertexBuffer.reset(VertexBuffer::create(vertices, sizeof(vertices)));
 
+        glGenVertexArrays(1, &vertexArray);
+        glBindVertexArray(vertexArray);
+
         BufferLayout layout = {
             {"vp", BufferType::Float3},
+            {"color", BufferType::Float4},
         };
 
         int index = 0;
@@ -62,33 +70,34 @@ struct App {
 
         vertexBuffer->setLayout(layout);
 
-        glGenVertexArrays(1, &vertexArray);
-        glBindVertexArray(vertexArray);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
         unsigned int indices[3] = {0, 1, 2};
         indexBuffer.reset(IndexBuffer::create(indices, 3));
 
         std::string vertex_shader = R"(
             #version 400
             in vec3 vp;
+            in vec4 color;
 
             out vec3 op;
+            out vec4 oc;
 
             void main(){
             op = vp;
                 gl_Position = vec4(vp, 1.0);
+                oc = color;
             }
         )";
 
         std::string fragment_shader = R"(
             #version 400
             in vec3 op;
+            in vec4 oc;
+
             out vec4 frag_color;
 
             void main(){
                 frag_color = vec4(op*0.5 + 0.5, 1.0);
+                frag_color = oc;
             }
         )";
 
