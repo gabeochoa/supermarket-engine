@@ -10,11 +10,10 @@
 #include <GLFW/glfw3.h>
 
 #include <cstdint>
+#include <functional>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <string>
 
 #define FMT_HEADER_ONLY
-#include "event.hpp"
 #include "fmt/format.h"
-#include "log.h"

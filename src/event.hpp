@@ -57,7 +57,7 @@ struct Event {
     }
 };
 
-std::ostream& operator<<(std::ostream& os, Event const& e) {
+inline std::ostream& operator<<(std::ostream& os, Event const& e) {
     return os << e.toString();
 }
 
