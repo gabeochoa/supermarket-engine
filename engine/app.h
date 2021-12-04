@@ -52,7 +52,7 @@ struct App {
     }
 
     void onEvent(Event& e) {
-        log(e.toString());
+        log_trace(e.toString());
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowCloseEvent>(M_BIND(onWindowClose));
         dispatcher.dispatch<KeyPressedEvent>(M_BIND(onKeyPressed));
