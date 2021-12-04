@@ -46,7 +46,7 @@ enum EventCategory {
 struct Event {
     bool handled = false;
 
-    friend class EventDispatcher;
+    friend struct EventDispatcher;
 
     virtual EventType getEventType() const = 0;
     virtual const char* getName() const = 0;

@@ -2,6 +2,7 @@
 #pragma once
 #include "app.h"
 #include "event.h"
+#include "graphicscontext.h"
 #include "input.h"
 #include "keycodes.h"
 #include "log.h"
@@ -10,6 +11,8 @@
 
 struct OpenGLWindow : public Window {
     GLFWwindow* window;
+    GraphicsContext* context;
+
     struct WindowInfo {
         std::string title;
         int width, height;
@@ -19,7 +22,10 @@ struct OpenGLWindow : public Window {
     WindowInfo info;
 
     OpenGLWindow(const WindowConfig& config) { init(config); }
-    virtual ~OpenGLWindow() { close(); }
+    virtual ~OpenGLWindow() {
+        delete context;
+        close();
+    }
     inline virtual int width() const override { return info.width; }
     inline virtual int height() const override { return info.height; }
     inline virtual bool isVSync() const override { return info.vsync; }
@@ -31,7 +37,7 @@ struct OpenGLWindow : public Window {
 
     virtual void update() override {
         glfwPollEvents();
-        glfwSwapBuffers(window);
+        context->swapBuffers();
     }
 
     virtual void setVSync(bool enabled) override {

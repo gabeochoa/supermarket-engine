@@ -1,6 +1,6 @@
 
 
-FLAGS = -std=c++11 -stdlib=libc++
+FLAGS = -std=c++11 -stdlib=libc++ -Wall -Wextra
 LIBS = -lglfw -lGLEW 
 FRAMEWORKS = -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon 
 CPPS = engine/openglwindow.cpp engine/main.cpp 

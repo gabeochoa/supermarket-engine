@@ -157,7 +157,7 @@ static void load_keys() {
     // load default keys
     default_keys();
     // load keybindings from file
-    std::ifstream ifs("../resources/keybindings.ini");
+    std::ifstream ifs("./resources/keybindings.ini");
     if (!ifs.is_open()) {
         log_warn("failed to find keybindings file");
         return;
@@ -171,9 +171,8 @@ static void load_keys() {
 }
 
 static void export_keys() {
-    std::ofstream ofs("../resources/keybindings.ini");
+    std::ofstream ofs("./resources/keybindings.ini");
     if (!ofs.is_open()) {
-        // TODO add error message
         log_warn("failed to write to keybindings file");
         return;
     }

@@ -26,7 +26,9 @@ void OpenGLWindow::init(const WindowConfig& config) {
     window = glfwCreateWindow(info.width, info.height, info.title.c_str(), NULL,
                               NULL);
     M_ASSERT(window, "Failed to create wwindow");
-    glfwMakeContextCurrent(window);
+
+    context = new OpenGLContext(window);
+    context->init();
 
     glfwSetWindowUserPointer(window, &info);
     setVSync(true);
@@ -50,6 +52,8 @@ void OpenGLWindow::init(const WindowConfig& config) {
 
     glfwSetKeyCallback(
         window, [](GLFWwindow* w, int key, int scancode, int action, int mods) {
+            (void)scancode;
+            (void)mods;
             WindowInfo& info = *(WindowInfo*)glfwGetWindowUserPointer(w);
             switch (action) {
                 case GLFW_PRESS: {
@@ -69,6 +73,7 @@ void OpenGLWindow::init(const WindowConfig& config) {
 
     glfwSetMouseButtonCallback(
         window, [](GLFWwindow* w, int button, int action, int mods) {
+            (void)mods;
             WindowInfo& info = *(WindowInfo*)glfwGetWindowUserPointer(w);
 
             switch (action) {

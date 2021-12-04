@@ -7,12 +7,12 @@
 #include "window.h"
 
 struct Layer {
-    Layer(const std::string& name = "layer") {}
+    Layer(const std::string& n = "layer"): name(n) {}
     virtual ~Layer() {}
     virtual void onAttach() {}
     virtual void onDetach() {}
     virtual void onUpdate() {}
-    virtual void onEvent(Event& event) {}
+    virtual void onEvent(Event& event) = 0;
 
     const std::string& getname() const { return name; }
     std::string name;

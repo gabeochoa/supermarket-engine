@@ -34,13 +34,10 @@ struct App {
         Key::load_keys();
     }
 
-    ~App() {
-        // TODO export keys,
-        // i have it off since the folder doesnt exist anyway
-        // Key::export_keys();
-    }
+    ~App() { Key::export_keys(); }
 
     bool onWindowClose(WindowCloseEvent& event) {
+        (void)event;
         running = false;
         return true;
     }
