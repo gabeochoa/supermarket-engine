@@ -1,39 +1,43 @@
 
+#include <functional>
+
 #include "pch.hpp"
-#include "ogl.h"
+#include "window.hpp"
 
+#define M_BIND(x) std::bind(&App::x, this, std::placeholders::_1)
 struct App {
-    App() {}
+    std::unique_ptr<Window> window;
+    bool running;
+    App() {
+        WindowConfig config;
+        config.width = 1920;
+        config.height = 1080;
+        config.title = "test tile";
+
+        window = std::unique_ptr<Window>(Window::create(config));
+        M_ASSERT(window, "failed to grab window");
+        running = true;
+        window->setEventCallback(M_BIND(onEvent));
+    }
+
+    bool onWindowClose(WindowCloseEvent& event) {
+        running = false;
+        return true;
+    }
+
+    void onEvent(Event& e) {
+        log(e);
+        EventDispatcher dispatcher(e);
+        dispatcher.dispatch<WindowCloseEvent>(M_BIND(onWindowClose));
+    }
+
     int run() {
-        GLFWwindow* window = init_opengl();
-        if (window == nullptr) {
-            std::cout << "Failed to grab window" << std::endl;
-            return -1;
-        }
-
-        double last = glfwGetTime();
-        /* Loop until the user closes the window */
-        while (!glfwWindowShouldClose(window)) {
-            double now = glfwGetTime();
-            double elapsed = now - last;
-            last = now;
-
-            /* Render here */
+        while (running) {
             glClear(GL_COLOR_BUFFER_BIT |
                     GL_DEPTH_BUFFER_BIT);  // Clear the buffers
 
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-
-            tick(elapsed);
-
-            /* Swap front and back buffers */
-            glfwSwapBuffers(window);
-
-            /* Poll for and process events */
-            glfwPollEvents();
+            window->update();
         }
-
-        glfwTerminate();
         return 0;
     }
 
