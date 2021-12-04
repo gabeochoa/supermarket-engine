@@ -3,6 +3,7 @@
 
 #include <functional>
 
+#include "buffer.h"
 #include "layer.hpp"
 #include "log.h"
 #include "pch.hpp"
@@ -14,10 +15,12 @@
 struct App {
     std::unique_ptr<Window> window;
     std::unique_ptr<Shader> shader;
+    std::unique_ptr<VertexBuffer> vertexBuffer;
+    std::unique_ptr<IndexBuffer> indexBuffer;
     bool running;
     LayerStack layerstack;
 
-    unsigned int vertexArray, vertexBuffer, indexBuffer, shaderProgram;
+    unsigned int vertexArray;
 
     inline static App& get() {
         static App app;
@@ -38,28 +41,18 @@ struct App {
         running = true;
         window->setEventCallback(M_BIND(onEvent));
 
-        glGenBuffers(1, &vertexBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-
-        float vertices[9] = {
+        float vertices[] = {
             -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f,
         };
-
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
-                     GL_STATIC_DRAW);
+        vertexBuffer.reset(VertexBuffer::create(vertices, sizeof(vertices)));
 
         glGenVertexArrays(1, &vertexArray);
         glBindVertexArray(vertexArray);
         glEnableVertexAttribArray(0);
-
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-        glGenBuffers(1, &indexBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-        int indices[3] = {0, 1, 2};
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                     GL_STATIC_DRAW);
+        unsigned int indices[3] = {0, 1, 2};
+        indexBuffer.reset(IndexBuffer::create(indices, 3));
 
         std::string vertex_shader = R"(
             #version 400
@@ -130,9 +123,10 @@ struct App {
         while (running) {
             glClear(GL_COLOR_BUFFER_BIT |
                     GL_DEPTH_BUFFER_BIT);  // Clear the buffers
+
             shader->bind();
             glBindVertexArray(vertexArray);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+            glDrawArrays(GL_TRIANGLES, 0, indexBuffer->getCount());
 
             for (Layer* layer : layerstack) {
                 layer->onUpdate();
