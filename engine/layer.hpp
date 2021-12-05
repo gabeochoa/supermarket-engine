@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "pch.hpp"
+#include "time.h"
 #include "window.h"
 
 struct Layer {
@@ -11,7 +12,7 @@ struct Layer {
     virtual ~Layer() {}
     virtual void onAttach() {}
     virtual void onDetach() {}
-    virtual void onUpdate() {}
+    virtual void onUpdate(Time elapsed) = 0;
     virtual void onEvent(Event& event) = 0;
 
     const std::string& getname() const { return name; }

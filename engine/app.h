@@ -10,12 +10,14 @@
 #include "pch.hpp"
 #include "renderer.h"
 #include "shader.h"
+#include "time.h"
 #include "window.h"
 
 #define M_BIND(x) std::bind(&App::x, this, std::placeholders::_1)
 
 struct App {
     std::unique_ptr<Window> window;
+    Time time;
 
     bool running;
     LayerStack layerstack;
@@ -32,6 +34,7 @@ struct App {
         config.title = "test tile";
 
         window = std::unique_ptr<Window>(Window::create(config));
+
         M_ASSERT(window, "failed to grab window");
 
         Key::load_keys();
@@ -53,6 +56,7 @@ struct App {
         // stopping run?
         if (event.keycode == Key::mapping["Esc"]) {
             running = false;
+            return true;
         }
         return false;
     }
@@ -81,9 +85,12 @@ struct App {
     Window& getWindow() { return *window; }
 
     int run() {
+        time.start();
         while (running) {
+            time.end();
+
             for (Layer* layer : layerstack) {
-                layer->onUpdate();
+                layer->onUpdate(time);
             }
 
             window->update();

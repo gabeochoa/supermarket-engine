@@ -19,8 +19,8 @@ struct SuperLayer : public Layer {
         : Layer("Supermarket"),
           camera(-1.6f, 1.6f, -0.9f, 0.9f),
           camPosition(0.0f),
-          camSpeed(0.01f),
-          rotSpeed(0.1f) {
+          camSpeed(5.f),
+          rotSpeed(180.f) {
         {
             vertexArray.reset(VertexArray::create());
             std::shared_ptr<VertexBuffer> vertexBuffer;
@@ -132,24 +132,26 @@ struct SuperLayer : public Layer {
     virtual void onAttach() override {}
     virtual void onDetach() override {}
 
-    virtual void onUpdate() override {
+    virtual void onUpdate(Time dt) override {
+        log_trace(
+            fmt::format("{:.2}s ({:.2} ms) since last frame", dt.s(), dt.ms()));
         if (Input::isKeyPressed(Key::mapping["Left"])) {
-            camera.position.x -= camSpeed;
+            camera.position.x -= camSpeed * dt;
         }
         if (Input::isKeyPressed(Key::mapping["Right"])) {
-            camera.position.x += camSpeed;
+            camera.position.x += camSpeed * dt;
         }
         if (Input::isKeyPressed(Key::mapping["Down"])) {
-            camera.position.y -= camSpeed;
+            camera.position.y -= camSpeed * dt;
         }
         if (Input::isKeyPressed(Key::mapping["Up"])) {
-            camera.position.y += camSpeed;
+            camera.position.y += camSpeed * dt;
         }
         if (Input::isKeyPressed(Key::mapping["Rotate Clockwise"])) {
-            camera.rotation += rotSpeed;
+            camera.rotation += rotSpeed * dt;
         }
         if (Input::isKeyPressed(Key::mapping["Rotate Counterclockwise"])) {
-            camera.rotation -= rotSpeed;
+            camera.rotation -= rotSpeed * dt;
         }
         camera.updateViewMat();
 
