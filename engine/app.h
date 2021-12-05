@@ -4,6 +4,7 @@
 #include <functional>
 
 #include "buffer.h"
+#include "camera.h"
 #include "layer.hpp"
 #include "log.h"
 #include "pch.hpp"
@@ -19,8 +20,8 @@ struct App {
     std::unique_ptr<Shader> shader2;
 
     std::shared_ptr<VertexArray> vertexArray;
-
     std::shared_ptr<VertexArray> squareVA;
+    OrthoCamera camera;
 
     bool running;
     LayerStack layerstack;
@@ -30,7 +31,7 @@ struct App {
         return app;
     }
 
-    App() {
+    App() : camera(-2.f, 2.f, -2.f, 2.f) {
         WindowConfig config;
         config.width = 1920;
         config.height = 1080;
@@ -70,16 +71,18 @@ struct App {
 
             std::string vertex_shader = R"(
             #version 400
+
             in vec3 vp;
             in vec4 color;
+            uniform mat4 viewProjection;
 
             out vec3 op;
             out vec4 oc;
 
             void main(){
                 op = vp;
-                gl_Position = vec4(vp, 1.0);
                 oc = color;
+                gl_Position = viewProjection * vec4(vp, 1.0);
             }
         )";
 
@@ -124,12 +127,13 @@ struct App {
             std::string vertex_shader2 = R"(
             #version 400
             in vec3 vp;
+            uniform mat4 viewProjection;
 
             out vec3 op;
 
             void main(){
                 op = vp;
-                gl_Position = vec4(vp, 1.0);
+                gl_Position = viewProjection * vec4(vp, 1.0);
             }
         )";
 
@@ -194,9 +198,11 @@ struct App {
             Renderer::begin();
 
             shader2->bind();
+            shader2->uploadUniformMat4("viewProjection", camera.viewProjection);
             Renderer::submit(squareVA);
 
             shader->bind();
+            shader->uploadUniformMat4("viewProjection", camera.viewProjection);
             Renderer::submit(vertexArray);
 
             Renderer::end();
