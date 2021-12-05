@@ -43,4 +43,3 @@ struct Renderer {
         glDrawArrays(GL_TRIANGLES, 0, vertexArray->indexBuffer->getCount());
     }
 };
-

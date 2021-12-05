@@ -27,7 +27,7 @@ super: pch $(LIBRARY) $(OBJ_FILES)
 	./$(EXE)
 
 pch: $(LIB_H_FILES)
-	clang++ -c engine/pch.hpp $(FLAGS) 
+	clang++ -c engine/pch.hpp -o ./output/pch.d $(FLAGS) 
 
 $(LIBRARY): $(LIB_OBJ_FILES) 
 	ar rcs $(LIBRARY) $(LIB_OBJ_FILES)
