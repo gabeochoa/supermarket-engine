@@ -12,6 +12,7 @@ struct SuperLayer : public Layer {
 
     std::shared_ptr<Shader> shader;
     std::shared_ptr<Shader> shader2;
+
     std::shared_ptr<VertexArray> vertexArray;
     std::shared_ptr<VertexArray> squareVA;
 
@@ -50,6 +51,7 @@ struct SuperLayer : public Layer {
                 in vec3 vp;
                 in vec4 color;
                 uniform mat4 viewProjection;
+                uniform mat4 transformMatrix;
 
                 out vec3 op;
                 out vec4 oc;
@@ -57,7 +59,7 @@ struct SuperLayer : public Layer {
                 void main(){
                     op = vp;
                     oc = color;
-                    gl_Position = viewProjection * vec4(vp, 1.0);
+                    gl_Position = viewProjection * transformMatrix * vec4(vp, 1.0);
                 }
             )";
 
@@ -104,12 +106,13 @@ struct SuperLayer : public Layer {
                 #version 400
                 in vec3 vp;
                 uniform mat4 viewProjection;
+                uniform mat4 transformMatrix;
 
                 out vec3 op;
 
                 void main(){
                     op = vp;
-                    gl_Position = viewProjection * vec4(vp, 1.0);
+                    gl_Position = viewProjection * transformMatrix * vec4(vp, 1.0);
                 }
             )";
 
