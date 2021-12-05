@@ -111,21 +111,21 @@ Window* Window::create(const WindowConfig& config) {
     return new OpenGLWindow(config);
 }
 
-bool Input::IsKeyPressed(const Key::KeyCode key) {
+bool Input::isKeyPressed(const Key::KeyCode key) {
     auto* window =
         static_cast<GLFWwindow*>(App::get().getWindow().getNativeWindow());
     auto state = glfwGetKey(window, static_cast<int32_t>(key));
     return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
 
-bool Input::IsMouseButtonPressed(const MouseCode button) {
+bool Input::isMouseButtonPressed(const MouseCode button) {
     auto* window =
         static_cast<GLFWwindow*>(App::get().getWindow().getNativeWindow());
     auto state = glfwGetMouseButton(window, static_cast<int32_t>(button));
     return state == GLFW_PRESS;
 }
 
-glm::vec2 Input::GetMousePosition() {
+glm::vec2 Input::getMousePosition() {
     auto* window =
         static_cast<GLFWwindow*>(App::get().getWindow().getNativeWindow());
     double xpos, ypos;
@@ -134,6 +134,6 @@ glm::vec2 Input::GetMousePosition() {
     return {(float)xpos, (float)ypos};
 }
 
-float Input::GetMouseX() { return GetMousePosition().x; }
+float Input::getMouseX() { return getMousePosition().x; }
 
-float Input::GetMouseY() { return GetMousePosition().y; }
+float Input::getMouseY() { return getMousePosition().y; }

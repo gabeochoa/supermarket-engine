@@ -151,6 +151,8 @@ static inline void default_keys() {
     mapping["Right"] = KeyCode::D;
     mapping["Up"] = KeyCode::W;
     mapping["Down"] = KeyCode::S;
+    mapping["Rotate Clockwise"] = KeyCode::E;
+    mapping["Rotate Counterclockwise"] = KeyCode::Q;
 }
 
 static void load_keys() {

@@ -30,4 +30,3 @@ mac:
 	clang++ $(FLAGS) $(LIBS) $(FRAMEWORKS) -o ./output/openapp.exe $(CPPS)
 	./output/openapp.exe
 
-

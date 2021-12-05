@@ -5,10 +5,10 @@
 #include "pch.hpp"
 
 struct Input {
-    static bool IsKeyPressed(Key::KeyCode key);
-    static bool IsMouseButtonPressed(Mouse::MouseCode button);
-    static glm::vec2 GetMousePosition();
-    static float GetMouseX();
-    static float GetMouseY();
+    static bool isKeyPressed(Key::KeyCode key);
+    static bool isMouseButtonPressed(Mouse::MouseCode button);
+    static glm::vec2 getMousePosition();
+    static float getMouseX();
+    static float getMouseY();
 };
 

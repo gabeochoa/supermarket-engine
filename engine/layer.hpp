@@ -7,7 +7,7 @@
 #include "window.h"
 
 struct Layer {
-    Layer(const std::string& n = "layer"): name(n) {}
+    Layer(const std::string& n = "layer") : name(n) {}
     virtual ~Layer() {}
     virtual void onAttach() {}
     virtual void onDetach() {}

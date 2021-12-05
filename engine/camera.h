@@ -18,12 +18,8 @@ struct OrthoCamera : public Camera {
         : projection(glm::ortho(left, right, bottom, top, -1.f, 1.f)),
 
           view(1.0f),
-          position(0.0f) {
-        viewProjection = projection * view;
-    }
-
-    void move(glm::vec3 dir){
-        position += dir;
+          position(0.0f),
+          rotation(0.0f) {
         updateViewMat();
     }
 
