@@ -61,7 +61,7 @@ struct SuperLayer : public Layer {
             textureShader->uploadUniformInt("u_texture", 0);
 
             screenTexture.reset(new Texture2D("./resources/screen.png"));
-            faceTexture.reset(new Texture2D("./resources/face.png"));
+            // faceTexture.reset(new Texture2D("./resources/face.png"));
         }
     }
 
@@ -103,10 +103,10 @@ struct SuperLayer : public Layer {
         flatShader->uploadUniformFloat4("u_color",
                                         glm::vec4(0.8f, 0.2f, 0.3f, 1.0f));
 
-        screenTexture->bind();
-        Renderer::submit(squareVA, textureShader);
+        // faceTexture->bind();
+        // Renderer::submit(squareVA, textureShader);
 
-        faceTexture->bind();
+        screenTexture->bind();
         Renderer::submit(squareVA, textureShader);
 
         Renderer::end();

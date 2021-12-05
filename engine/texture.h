@@ -42,7 +42,7 @@ struct Texture2D : public Texture {
         height = h;
 
         glGenTextures(1, &rendererID);
-        glBindTexture(GL_TEXTURE_2D, rendererID);
+        // glBindTexture(GL_TEXTURE_2D, rendererID);
 
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0,
                      dataFormat, GL_UNSIGNED_BYTE, data);
