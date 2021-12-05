@@ -7,6 +7,7 @@
 #include "layer.hpp"
 #include "log.h"
 #include "pch.hpp"
+#include "renderer.h"
 #include "shader.h"
 #include "window.h"
 
@@ -189,16 +190,16 @@ struct App {
 
     int run() {
         while (running) {
-            glClear(GL_COLOR_BUFFER_BIT |
-                    GL_DEPTH_BUFFER_BIT);  // Clear the buffers
+            Renderer::clear({0.1f, 0.1f, 0.1f, 1.0f});
+            Renderer::begin();
 
             shader2->bind();
-            squareVA->bind();
-            glDrawArrays(GL_TRIANGLES, 0, squareVA->indexBuffer->getCount());
+            Renderer::submit(squareVA);
 
             shader->bind();
-            vertexArray->bind();
-            glDrawArrays(GL_TRIANGLES, 0, vertexArray->indexBuffer->getCount());
+            Renderer::submit(vertexArray);
+
+            Renderer::end();
 
             for (Layer* layer : layerstack) {
                 layer->onUpdate();
