@@ -41,6 +41,8 @@ struct App {
 
         running = true;
         window->setEventCallback(M_BIND(onEvent));
+
+        Renderer::init();
     }
 
     ~App() { Key::export_keys(); }

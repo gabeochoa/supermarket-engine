@@ -12,7 +12,9 @@ struct SuperLayer : public Layer {
     std::shared_ptr<Shader> shader;
     std::shared_ptr<Shader> flatShader;
     std::shared_ptr<Shader> textureShader;
-    std::shared_ptr<Texture2D> texture;
+
+    std::shared_ptr<Texture> screenTexture;
+    std::shared_ptr<Texture> faceTexture;
 
     std::shared_ptr<VertexArray> vertexArray;
     std::shared_ptr<VertexArray> squareVA;
@@ -54,11 +56,12 @@ struct SuperLayer : public Layer {
             squareIB.reset(IndexBuffer::create(squareIs, 6));
             squareVA->setIndexBuffer(squareIB);
             flatShader.reset(new Shader(flat_vert_s, flat_frag_s));
-            textureShader.reset(new Shader(tex_vert_s, tex_frag_s));
 
-            texture.reset(new Texture2D("./resources/screen.png"));
-            texture->bind();
+            textureShader.reset(new Shader(tex_vert_s, tex_frag_s));
             textureShader->uploadUniformInt("u_texture", 0);
+
+            screenTexture.reset(new Texture2D("./resources/screen.png"));
+            faceTexture.reset(new Texture2D("./resources/face.png"));
         }
     }
 
@@ -99,7 +102,13 @@ struct SuperLayer : public Layer {
         flatShader->bind();
         flatShader->uploadUniformFloat4("u_color",
                                         glm::vec4(0.8f, 0.2f, 0.3f, 1.0f));
+
+        screenTexture->bind();
         Renderer::submit(squareVA, textureShader);
+
+        faceTexture->bind();
+        Renderer::submit(squareVA, textureShader);
+
         Renderer::end();
     }
 

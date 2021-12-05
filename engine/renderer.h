@@ -17,6 +17,8 @@ struct Renderer {
 
     static SceneData* sceneData;
 
+    static void init() { glEnable(GL_BLEND); }
+
     static void begin(OrthoCamera& cam) {
         sceneData->viewProjection = cam.viewProjection;
     }
