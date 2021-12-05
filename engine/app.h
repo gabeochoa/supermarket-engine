@@ -5,7 +5,7 @@
 
 #include "buffer.h"
 #include "camera.h"
-#include "layer.hpp"
+#include "layer.h"
 #include "log.h"
 #include "pch.hpp"
 #include "renderer.h"
@@ -66,7 +66,6 @@ struct App {
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowCloseEvent>(M_BIND(onWindowClose));
         dispatcher.dispatch<KeyPressedEvent>(M_BIND(onKeyPressed));
-
         // Have the top most layers get the event first,
         // if they handle it then no need for the lower ones to get the rest
         // eg imagine UI pause menu blocking game UI elements
@@ -88,11 +87,9 @@ struct App {
         time.start();
         while (running) {
             time.end();
-
             for (Layer* layer : layerstack) {
                 layer->onUpdate(time);
             }
-
             window->update();
         }
         return 0;

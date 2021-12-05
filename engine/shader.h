@@ -5,6 +5,38 @@
 
 #include "pch.hpp"
 
+////// ////// ////// ////// ////// ////// ////// //////
+//              Flat Color Shader
+////// ////// ////// ////// ////// ////// ////// //////
+
+static std::string flat_vert_s = R"(
+    #version 400
+    in vec3 i_pos;
+    uniform mat4 viewProjection;
+    uniform mat4 transformMatrix;
+
+    out vec3 o_pos;
+
+    void main(){
+        o_pos = i_pos;
+        gl_Position = viewProjection * transformMatrix * vec4(i_pos, 1.0);
+    }
+)";
+
+static std::string flat_frag_s = R"(
+    #version 400
+    in vec3 position;
+    uniform vec4 u_color;
+
+    out vec4 frag_color;
+    void main(){
+        frag_color = vec4(0.3, 0.8, 0.3, 1.0);
+        frag_color = u_color;
+    }
+)";
+
+////// ////// ////// ////// ////// ////// ////// //////
+
 // https://www.khronos.org/opengl/wiki/Shader_Compilation
 struct Shader {
     int rendererID;
@@ -121,9 +153,12 @@ struct Shader {
 
     void bind() const { glUseProgram(rendererID); }
     void unbind() const { glUseProgram(0); }
+    void uploadUniformFloat4(const std::string &name, const glm::vec4 &values) {
+        GLint location = glGetUniformLocation(rendererID, name.c_str());
+        glUniform4f(location, values.x, values.y, values.z, values.w);
+    }
     void uploadUniformMat4(const std::string &name, const glm::mat4 &matrix) {
         GLint location = glGetUniformLocation(rendererID, name.c_str());
         glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
     }
 };
-

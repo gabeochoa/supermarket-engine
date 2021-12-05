@@ -11,7 +11,7 @@ struct SuperLayer : public Layer {
     float rotSpeed;
 
     std::shared_ptr<Shader> shader;
-    std::shared_ptr<Shader> shader2;
+    std::shared_ptr<Shader> flatShader;
 
     std::shared_ptr<VertexArray> vertexArray;
     std::shared_ptr<VertexArray> squareVA;
@@ -93,7 +93,7 @@ struct SuperLayer : public Layer {
             squareVB.reset(
                 VertexBuffer::create(squareVerts, sizeof(squareVerts)));
             squareVB->setLayout(BufferLayout{
-                {"vp", BufferType::Float3},
+                {"i_pos", BufferType::Float3},
             });
             squareVA->addVertexBuffer(squareVB);
 
@@ -101,33 +101,7 @@ struct SuperLayer : public Layer {
             squareIB.reset(IndexBuffer::create(
                 squareIs, sizeof(squareIs) / sizeof(unsigned int)));
             squareVA->setIndexBuffer(squareIB);
-
-            std::string vertex_shader2 = R"(
-                #version 400
-                in vec3 vp;
-                uniform mat4 viewProjection;
-                uniform mat4 transformMatrix;
-
-                out vec3 op;
-
-                void main(){
-                    op = vp;
-                    gl_Position = viewProjection * transformMatrix * vec4(vp, 1.0);
-                }
-            )";
-
-            std::string fragment_shader2 = R"(
-                #version 400
-                in vec3 op;
-
-                out vec4 frag_color;
-
-                void main(){
-                    frag_color = vec4(op*0.5 + 0.5, 1.0);
-                }
-            )";
-
-            shader2.reset(new Shader(vertex_shader2, fragment_shader2));
+            flatShader.reset(new Shader(flat_vert_s, flat_frag_s));
         }
     }
 
@@ -135,9 +109,7 @@ struct SuperLayer : public Layer {
     virtual void onAttach() override {}
     virtual void onDetach() override {}
 
-    virtual void onUpdate(Time dt) override {
-        log_trace(
-            fmt::format("{:.2}s ({:.2} ms) since last frame", dt.s(), dt.ms()));
+    void handleLiveInput(Time dt) {
         if (Input::isKeyPressed(Key::mapping["Left"])) {
             camera.position.x -= camSpeed * dt;
         }
@@ -157,10 +129,20 @@ struct SuperLayer : public Layer {
             camera.rotation -= rotSpeed * dt;
         }
         camera.updateViewMat();
+    }
+
+    virtual void onUpdate(Time dt) override {
+        log_trace(fmt::format("{:.2}s ({:.2} ms) ", dt.s(), dt.ms()));
+
+        handleLiveInput(dt);
 
         Renderer::clear({0.1f, 0.1f, 0.1f, 1.0f});
         Renderer::begin(camera);
-        Renderer::submit(squareVA, shader2);
+
+        flatShader->bind();
+        flatShader->uploadUniformFloat4("u_color",
+                                        glm::vec4(0.8f, 0.2f, 0.3f, 1.0f));
+        Renderer::submit(squareVA, flatShader);
         Renderer::submit(vertexArray, shader);
         Renderer::end();
     }
