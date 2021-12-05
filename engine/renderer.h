@@ -1,14 +1,25 @@
 
 
 #pragma once
-#include "buffer.h"
+//
 #include "pch.hpp"
+//
+#include "buffer.h"
+#include "camera.h"
+#include "shader.h"
 
+// TODO if there are ever any other renderers (directx vulcan metal)
+// then have to subclass this for each one
 struct Renderer {
-    // TODO if there are ever any other renderers (directx vulcan metal)
-    // then have to subclass this for each one
+    struct SceneData {
+        glm::mat4 viewProjection;
+    };
 
-    static void begin() {}
+    static SceneData* sceneData;
+
+    static void begin(OrthoCamera& cam) {
+        sceneData->viewProjection = cam.viewProjection;
+    }
     static void end() {}
 
     static void clear(const glm::vec4& color) {
@@ -17,7 +28,10 @@ struct Renderer {
                 GL_DEPTH_BUFFER_BIT);  // Clear the buffers
     }
 
-    static void submit(const std::shared_ptr<VertexArray>& vertexArray) {
+    static void submit(const std::shared_ptr<VertexArray>& vertexArray,
+                       const std::shared_ptr<Shader>& shader) {
+        shader->bind();
+        shader->uploadUniformMat4("viewProjection", sceneData->viewProjection);
         vertexArray->bind();
         Renderer::draw(vertexArray);
     }
@@ -26,3 +40,4 @@ struct Renderer {
         glDrawArrays(GL_TRIANGLES, 0, vertexArray->indexBuffer->getCount());
     }
 };
+

@@ -16,8 +16,8 @@
 
 struct App {
     std::unique_ptr<Window> window;
-    std::unique_ptr<Shader> shader;
-    std::unique_ptr<Shader> shader2;
+    std::shared_ptr<Shader> shader;
+    std::shared_ptr<Shader> shader2;
 
     std::shared_ptr<VertexArray> vertexArray;
     std::shared_ptr<VertexArray> squareVA;
@@ -31,7 +31,7 @@ struct App {
         return app;
     }
 
-    App() : camera(-2.f, 2.f, -2.f, 2.f) {
+    App() : camera(-1.6f, 1.6f, -0.9f, 0.9f) {
         WindowConfig config;
         config.width = 1920;
         config.height = 1080;
@@ -166,6 +166,16 @@ struct App {
         if (event.keycode == Key::mapping["Esc"]) {
             running = false;
         }
+
+        glm::vec3 cam_movement;
+        if (event.keycode == Key::mapping["Left"]) {
+            cam_movement.x -= 0.1f;
+        }
+        if (event.keycode == Key::mapping["Right"]) {
+            cam_movement.x += 0.1f;
+        }
+
+        camera.move(cam_movement);
         return true;
     }
 
@@ -195,16 +205,9 @@ struct App {
     int run() {
         while (running) {
             Renderer::clear({0.1f, 0.1f, 0.1f, 1.0f});
-            Renderer::begin();
-
-            shader2->bind();
-            shader2->uploadUniformMat4("viewProjection", camera.viewProjection);
-            Renderer::submit(squareVA);
-
-            shader->bind();
-            shader->uploadUniformMat4("viewProjection", camera.viewProjection);
-            Renderer::submit(vertexArray);
-
+            Renderer::begin(camera);
+            Renderer::submit(squareVA, shader2);
+            Renderer::submit(vertexArray, shader);
             Renderer::end();
 
             for (Layer* layer : layerstack) {
