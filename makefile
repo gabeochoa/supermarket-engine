@@ -2,31 +2,46 @@
 FLAGS = -std=c++11 -stdlib=libc++ -Wall -Wextra
 LIBS = -lglfw -lGLEW 
 FRAMEWORKS = -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon
-SRC_DIR := ./engine
-OBJ_DIR := ./output
-SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
-OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC_FILES))
+
+LIB_SRC_DIR := ./engine
+LIB_SRC_FILES := $(wildcard $(LIB_SRC_DIR)/*.cpp)
+LIB_OBJ_DIR:= ./output/engine
+LIB_OBJ_FILES := $(patsubst $(LIB_SRC_DIR)/%.cpp, $(LIB_OBJ_DIR)/%.o, $(LIB_SRC_FILES))
+LIB_H_FILES := $(wildcard $(LIB_SRC_DIR)/*.h)
+LIB_D_FILES := $(patsubst $(LIB_SRC_DIR)/%.h,$(LIB_OBJ_DIR)/%.d,$(LIB_SRC_FILES))
 LIBRARY := ./output/libengine.a
 
+SRC_DIR := ./super
+OBJ_DIR := ./output/super
+SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
+OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC_FILES))
+DEPENDS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.d,$(SRC_FILES))
 
-all: pch $(LIBRARY) super
+EXE_DIR := $(OBJ_DIR)
+EXE := $(OBJ_DIR)/super.exe
 
-pch:
+all: super
+
+super: pch $(LIBRARY) $(OBJ_FILES)
+	clang++ $(FLAGS) $(LIBS) $(FRAMEWORKS) -o $(EXE) ./super/main.cpp $(LIBRARY)
+	./$(EXE)
+
+pch: $(LIB_H_FILES)
 	clang++ -c engine/pch.hpp $(FLAGS) 
 
-$(LIBRARY): $(OBJ_FILES) 
-	ar rcs $(LIBRARY) $(OBJ_FILES)
+$(LIBRARY): $(LIB_OBJ_FILES) 
+	ar rcs $(LIBRARY) $(LIB_OBJ_FILES)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	clang++ $(FLAGS) -c -o $@ $<
+$(LIB_OBJ_DIR)/%.o: $(LIB_SRC_DIR)/%.cpp 
+	clang++ $(FLAGS) -MMD -MP -c $< -o $@ 
 
+$(LIB_OBJ_DIR)/%.d: $(LIB_SRC_DIR)/%.h
+	clang++ $(FLAGS) -MMD -MP -c $< -o $@ 
 
-super: $(LIBRARY)
-	clang++ $(FLAGS) $(LIBS) $(FRAMEWORKS) -o ./output/super.exe ./super/main.cpp ./output/libengine.a
-	./output/super.exe
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp 
+	clang++ $(FLAGS) -MMD -MP -c $< -o $@ 
 
-mac:
-	clang++ -c engine/pch.hpp $(FLAGS) 
-	clang++ $(FLAGS) $(LIBS) $(FRAMEWORKS) -o ./output/openapp.exe $(CPPS)
-	./output/openapp.exe
+clean:
+	$(RM) $(OBJ_FILES) $(LIB_OBJ_FILES) $(DEPENDS)
 
+.PHONY: all clean

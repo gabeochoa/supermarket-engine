@@ -6,4 +6,5 @@ windows_build/*
 *.exe
 *.zip
 *.gch
+*.d
 old/*
