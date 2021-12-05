@@ -1,8 +1,7 @@
 
 #pragma once
 #include "keycodes.h"
-#define FMT_HEADER_ONLY
-#include "fmt/format.h"
+#include "pch.hpp"
 
 enum class EventType {
     None = 0,

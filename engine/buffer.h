@@ -206,8 +206,9 @@ struct OpenGLVertexBuffer : public VertexBuffer {
 
 struct OpenGLIndexBuffer : public IndexBuffer {
     unsigned int rendererID;
-    OpenGLIndexBuffer(unsigned int* i_s, unsigned int count) {
-        this->count = count;
+    OpenGLIndexBuffer(unsigned int* i_s, unsigned int c) {
+        count = c;
+
         glGenBuffers(1, &rendererID);
         glBindBuffer(GL_ARRAY_BUFFER, rendererID);
         glBufferData(GL_ARRAY_BUFFER, count * sizeof(unsigned int), i_s,

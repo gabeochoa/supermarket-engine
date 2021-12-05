@@ -40,6 +40,7 @@ struct Renderer {
     }
 
     static void draw(const std::shared_ptr<VertexArray>& vertexArray) {
-        glDrawArrays(GL_TRIANGLES, 0, vertexArray->indexBuffer->getCount());
+        glDrawElements(GL_TRIANGLES, vertexArray->indexBuffer->getCount(),
+                       GL_UNSIGNED_INT, nullptr);
     }
 };

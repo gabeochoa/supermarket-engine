@@ -1,7 +1,7 @@
 
-FLAGS = -std=c++11 -stdlib=libc++ -Wall -Wextra
-LIBS = -lglfw -lGLEW 
-FRAMEWORKS = -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon
+FLAGS = -std=c++11 -stdlib=libc++ -Wall -Wextra -g
+LIBS = -lglfw -lGLEW  
+FRAMEWORKS = -Ivendor/ -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon
 
 LIB_SRC_DIR := ./engine
 LIB_SRC_FILES := $(wildcard $(LIB_SRC_DIR)/*.cpp)

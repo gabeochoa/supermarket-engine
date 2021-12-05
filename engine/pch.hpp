@@ -17,10 +17,30 @@
 #include <string>
 #include <vector>
 
+// Vendor stuff
+
+#ifdef __APPLE__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wall"
+#else
+#pragma disable_warn
+#endif
+
+#define STB_IMAGE_STATIC
+#define STB_IMAGE_IMPLEMENTATION
+#include "../vendor/stb_image.h"
 #define FMT_HEADER_ONLY
-#include "fmt/format.h"
+#include "../vendor/fmt/format.h"
+
+#ifdef __APPLE__
+#pragma clang diagnostic pop
+#else
+#pragma enable_warn
+#endif
 
 // All of these files should not rely on any other header
 // if they do we will run into duplicate symbol issues
 #include "log.h"
 #include "strutil.h"
+#include "texture.h"
+#include "time.h"
