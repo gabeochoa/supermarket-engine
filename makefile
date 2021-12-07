@@ -1,5 +1,5 @@
 
-FLAGS = -std=c++11 -stdlib=libc++ -Wall -Wextra -g
+FLAGS = -std=c++11 -stdlib=libc++ -Wall -Wextra -g -fsanitize=address
 LIBS = -lglfw -lGLEW  
 FRAMEWORKS = -Ivendor/ -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon
 
@@ -24,7 +24,7 @@ all: super
 
 super: pch $(LIBRARY) $(OBJ_FILES)
 	clang++ $(FLAGS) $(LIBS) $(FRAMEWORKS) -o $(EXE) ./super/main.cpp $(LIBRARY)
-	./$(EXE)
+	DEBUG=123 ./$(EXE)
 
 pch: $(LIB_H_FILES)
 	clang++ -c engine/pch.hpp -o ./output/pch.d $(FLAGS) 
