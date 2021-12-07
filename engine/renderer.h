@@ -62,6 +62,10 @@ struct Renderer {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
+    static void resize(int width, int height) {
+        glViewport(0, 0, width, height);
+    }
+
     static void begin(OrthoCamera& cam) {
         sceneData->viewProjection = cam.viewProjection;
     }

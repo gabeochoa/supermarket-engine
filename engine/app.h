@@ -65,10 +65,11 @@ struct App {
     }
 
     bool onWindowResized(WindowResizeEvent& event) {
-        if(event.width() == 0 || event.height() == 0){
+        if (event.width() == 0 || event.height() == 0) {
             isMinimized = true;
         }
         isMinimized = false;
+        Renderer::resize(event.width(), event.height());
         return false;
     }
 
@@ -77,8 +78,7 @@ struct App {
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowCloseEvent>(M_BIND(onWindowClose));
         dispatcher.dispatch<KeyPressedEvent>(M_BIND(onKeyPressed));
-        dispatcher.dispatch<WindowResizeEvent>(
-                M_BIND(onWindowResized));
+        dispatcher.dispatch<WindowResizeEvent>(M_BIND(onWindowResized));
         // Have the top most layers get the event first,
         // if they handle it then no need for the lower ones to get the rest
         // eg imagine UI pause menu blocking game UI elements
@@ -101,7 +101,7 @@ struct App {
         while (running) {
             time.end();
 
-            if(isMinimized){
+            if (isMinimized) {
                 continue;
             }
 
