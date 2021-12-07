@@ -18,16 +18,17 @@ struct SuperLayer : public Layer {
 
     std::shared_ptr<VertexArray> vertexArray;
     std::shared_ptr<VertexArray> squareVA;
+    std::shared_ptr<VertexArray> squareVA2;
 
     SuperLayer()
         : Layer("Supermarket"),
           camera(-1.6f, 1.6f, -0.9f, 0.9f),
           camSpeed(5.f),
           rotSpeed(180.f) {
-        {
-            camera.position.x += 0.5f;
-            camera.position.y += 0.5f;
+        camera.position.x += 0.5f;
+        camera.position.y += 0.5f;
 
+        {
             std::shared_ptr<VertexBuffer> squareVB;
             std::shared_ptr<IndexBuffer> squareIB;
             squareVA.reset(VertexArray::create());
@@ -55,14 +56,37 @@ struct SuperLayer : public Layer {
             unsigned int squareIs[] = {0, 1, 2, 0, 2, 3};
             squareIB.reset(IndexBuffer::create(squareIs, 6));
             squareVA->setIndexBuffer(squareIB);
-            flatShader.reset(new Shader(flat_vert_s, flat_frag_s));
-
-            textureShader.reset(new Shader(tex_vert_s, tex_frag_s));
-            textureShader->uploadUniformInt("u_texture", 0);
-
-            screenTexture.reset(new Texture2D("./resources/screen.png"));
-            // faceTexture.reset(new Texture2D("./resources/face.png"));
         }
+
+        {
+            std::shared_ptr<VertexBuffer> squareVB;
+            std::shared_ptr<IndexBuffer> squareIB;
+            squareVA2.reset(VertexArray::create());
+            float squareVerts[5 * 4] = {
+                0.f, 0.f, 0.f, 0.0f, 0.0f,  //
+                1.f, 0.f, 0.f, 1.0f, 0.0f,  //
+                1.f, 1.f, 0.f, 1.0f, 1.0f,  //
+                0.f, 1.f, 0.f, 0.0f, 1.0f,  //
+            };
+            squareVB.reset(
+                VertexBuffer::create(squareVerts, sizeof(squareVerts)));
+            squareVB->setLayout(BufferLayout{
+                {"i_pos", BufferType::Float3},
+                {"i_texcoord", BufferType::Float2},
+            });
+            squareVA2->addVertexBuffer(squareVB);
+
+            unsigned int squareIs[] = {0, 1, 2, 0, 2, 3};
+            squareIB.reset(IndexBuffer::create(squareIs, 6));
+            squareVA2->setIndexBuffer(squareIB);
+        }
+
+        flatShader.reset(new Shader(flat_vert_s, flat_frag_s));
+
+        textureShader.reset(new Shader(tex_vert_s, tex_frag_s));
+
+        faceTexture.reset(new Texture2D("./resources/face.png"));
+        screenTexture.reset(new Texture2D("./resources/screen.png", 1));
     }
 
     virtual ~SuperLayer() {}
@@ -92,6 +116,9 @@ struct SuperLayer : public Layer {
     }
 
     virtual void onUpdate(Time dt) override {
+        // flatShader->bind();
+        // flatShader->uploadUniformFloat4("u_color",
+        // glm::vec4(0.8f, 0.2f, 0.3f, 1.0f));
         log_trace(fmt::format("{:.2}s ({:.2} ms) ", dt.s(), dt.ms()));
 
         handleLiveInput(dt);
@@ -99,14 +126,14 @@ struct SuperLayer : public Layer {
         Renderer::clear({0.1f, 0.1f, 0.1f, 1.0f});
         Renderer::begin(camera);
 
-        flatShader->bind();
-        flatShader->uploadUniformFloat4("u_color",
-                                        glm::vec4(0.8f, 0.2f, 0.3f, 1.0f));
+        textureShader->bind();
+        screenTexture->bind(1);
+        textureShader->uploadUniformInt("u_texture", 1);
+        Renderer::submit(squareVA2, textureShader);
 
-        // faceTexture->bind();
-        // Renderer::submit(squareVA, textureShader);
-
-        screenTexture->bind();
+        textureShader->bind();
+        faceTexture->bind(0);
+        textureShader->uploadUniformInt("u_texture", 0);
         Renderer::submit(squareVA, textureShader);
 
         Renderer::end();

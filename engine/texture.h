@@ -18,7 +18,7 @@ struct Texture {
 struct Texture2D : public Texture {
     unsigned int rendererID;
 
-    Texture2D(const std::string& path) : Texture() {
+    Texture2D(const std::string& path, int i = 0) : Texture() {
         log_info(fmt::format("Loading texture: {}", path));
 
         int w, h, channels;
@@ -42,13 +42,17 @@ struct Texture2D : public Texture {
         height = h;
 
         glGenTextures(1, &rendererID);
-        // glBindTexture(GL_TEXTURE_2D, rendererID);
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, rendererID);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0,
-                     dataFormat, GL_UNSIGNED_BYTE, data);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0,
+                     dataFormat, GL_UNSIGNED_BYTE, data);
 
         stbi_image_free(data);
     }
