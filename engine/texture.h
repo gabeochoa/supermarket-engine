@@ -19,7 +19,7 @@ struct Texture2D : public Texture {
     unsigned int rendererID;
 
     Texture2D(const std::string& path, int i = 0) : Texture() {
-        log_info(fmt::format("Loading texture: {}", path));
+        log_trace(fmt::format("Loading texture: {}", path));
 
         int w, h, channels;
         stbi_set_flip_vertically_on_load(1);
@@ -36,7 +36,7 @@ struct Texture2D : public Texture {
         }
         M_ASSERT(internalFormat,
                  fmt::format("image format not supported: {}", channels));
-        log_info(fmt::format("texture {} has {} channels", path, channels));
+        log_trace(fmt::format("texture {} has {} channels", path, channels));
 
         width = w;
         height = h;

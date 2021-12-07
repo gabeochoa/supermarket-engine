@@ -81,7 +81,7 @@ struct SuperLayer : public Layer {
             squareVA2->setIndexBuffer(squareIB);
         }
 
-        flatShader.reset(new Shader(flat_vert_s, flat_frag_s));
+        flatShader.reset(new Shader("./engine/shaders/flat.glsl"));
 
         textureShader.reset(new Shader("./engine/shaders/texture.glsl"));
 
