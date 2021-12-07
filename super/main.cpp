@@ -83,7 +83,7 @@ struct SuperLayer : public Layer {
 
         flatShader.reset(new Shader(flat_vert_s, flat_frag_s));
 
-        textureShader.reset(new Shader(tex_vert_s, tex_frag_s));
+        textureShader.reset(new Shader("./engine/shaders/texture.glsl"));
 
         faceTexture.reset(new Texture2D("./resources/face.png"));
         screenTexture.reset(new Texture2D("./resources/screen.png", 1));
