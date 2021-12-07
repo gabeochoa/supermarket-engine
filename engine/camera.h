@@ -23,6 +23,11 @@ struct OrthoCamera : public Camera {
         updateViewMat();
     }
 
+    void setProjection(float left, float right, float bottom, float top) {
+        projection = glm::ortho(left, right, bottom, top, -1.f, 1.f);
+        updateViewMat();
+    }
+
     void updateViewMat() {
         glm::mat4 transform =
             glm::translate(glm::mat4(1.0f), position) *
@@ -31,5 +36,77 @@ struct OrthoCamera : public Camera {
 
         view = glm::inverse(transform);
         viewProjection = projection * view;
+    }
+};
+
+#include "event.hpp"
+#include "input.h"
+
+struct OrthoCameraController {
+    float aspectRatio;
+    float zoomLevel;
+    float camSpeed;
+    float rotSpeed;
+    bool rotationEnabled;
+    OrthoCamera camera;
+
+    OrthoCameraController(float ratio, bool rotation = true)
+        : aspectRatio(ratio),
+          zoomLevel(1.f),
+          camSpeed(5.f),
+          rotSpeed(180.f),
+          rotationEnabled(rotation),
+          camera(-ratio * zoomLevel, ratio * zoomLevel, -zoomLevel, zoomLevel) {
+    }
+
+    void onUpdate(Time dt) {
+        if (Input::isKeyPressed(Key::mapping["Left"])) {
+            camera.position.x -= camSpeed * dt;
+        }
+        if (Input::isKeyPressed(Key::mapping["Right"])) {
+            camera.position.x += camSpeed * dt;
+        }
+        if (Input::isKeyPressed(Key::mapping["Down"])) {
+            camera.position.y -= camSpeed * dt;
+        }
+        if (Input::isKeyPressed(Key::mapping["Up"])) {
+            camera.position.y += camSpeed * dt;
+        }
+        if (rotationEnabled) {
+            if (Input::isKeyPressed(Key::mapping["Rotate Clockwise"])) {
+                camera.rotation += rotSpeed * dt;
+            }
+            if (Input::isKeyPressed(Key::mapping["Rotate Counterclockwise"])) {
+                camera.rotation -= rotSpeed * dt;
+            }
+        }
+        camera.updateViewMat();
+    }
+
+    bool onMouseScrolled(Mouse::MouseScrolledEvent& event) {
+        zoomLevel =
+            fmin(fmax(zoomLevel - (event.GetYOffset() * 0.25), 0.5f), 20.f);
+        camera.setProjection(-aspectRatio * zoomLevel, aspectRatio * zoomLevel,
+                             -zoomLevel, zoomLevel);
+        camSpeed = zoomLevel;
+        return false;
+    }
+
+    bool onWindowResized(WindowResizeEvent& event) {
+        aspectRatio = event.width() / event.height();
+        camera.setProjection(-aspectRatio * zoomLevel, aspectRatio * zoomLevel,
+                             -zoomLevel, zoomLevel);
+        return false;
+    }
+
+    void onEvent(Event& event) {
+        log_trace(event.toString());
+        EventDispatcher dispatcher(event);
+        dispatcher.dispatch<Mouse::MouseScrolledEvent>(
+            std::bind(&OrthoCameraController::onMouseScrolled, this,
+                      std::placeholders::_1));
+        dispatcher.dispatch<WindowResizeEvent>(
+            std::bind(&OrthoCameraController::onWindowResized, this,
+                      std::placeholders::_1));
     }
 };

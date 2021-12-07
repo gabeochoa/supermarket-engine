@@ -5,10 +5,6 @@
 #include "../engine/pch.hpp"
 
 struct SuperLayer : public Layer {
-    OrthoCamera camera;
-    float camSpeed;
-    float rotSpeed;
-
     std::shared_ptr<VertexArray> vertexArray;
     std::shared_ptr<VertexArray> squareVA;
     std::shared_ptr<VertexArray> squareVA2;
@@ -16,14 +12,10 @@ struct SuperLayer : public Layer {
     ShaderLibrary shaderLibrary;
     TextureLibrary textureLibrary;
 
-    SuperLayer()
-        : Layer("Supermarket"),
-          camera(-1.6f, 1.6f, -0.9f, 0.9f),
-          camSpeed(5.f),
-          rotSpeed(180.f) {
-        camera.position.x += 0.5f;
-        camera.position.y += 0.5f;
+    OrthoCameraController cameraController;
 
+    SuperLayer()
+        : Layer("Supermarket"), cameraController(1920.f / 1080.f, true) {
         {
             std::shared_ptr<VertexBuffer> squareVB;
             std::shared_ptr<IndexBuffer> squareIB;
@@ -88,67 +80,32 @@ struct SuperLayer : public Layer {
     virtual void onAttach() override {}
     virtual void onDetach() override {}
 
-    void handleLiveInput(Time dt) {
-        if (Input::isKeyPressed(Key::mapping["Left"])) {
-            camera.position.x -= camSpeed * dt;
-        }
-        if (Input::isKeyPressed(Key::mapping["Right"])) {
-            camera.position.x += camSpeed * dt;
-        }
-        if (Input::isKeyPressed(Key::mapping["Down"])) {
-            camera.position.y -= camSpeed * dt;
-        }
-        if (Input::isKeyPressed(Key::mapping["Up"])) {
-            camera.position.y += camSpeed * dt;
-        }
-        if (Input::isKeyPressed(Key::mapping["Rotate Clockwise"])) {
-            camera.rotation += rotSpeed * dt;
-        }
-        if (Input::isKeyPressed(Key::mapping["Rotate Counterclockwise"])) {
-            camera.rotation -= rotSpeed * dt;
-        }
-        camera.updateViewMat();
-    }
-
     virtual void onUpdate(Time dt) override {
-        // flatShader->bind();
-        // flatShader->uploadUniformFloat4("u_color",
-        // glm::vec4(0.8f, 0.2f, 0.3f, 1.0f));
+        cameraController.onUpdate(dt);
+
         log_trace(fmt::format("{:.2}s ({:.2} ms) ", dt.s(), dt.ms()));
 
-        handleLiveInput(dt);
-
         Renderer::clear({0.1f, 0.1f, 0.1f, 1.0f});
-        Renderer::begin(camera);
+        Renderer::begin(cameraController.camera);
 
         auto textureShader = shaderLibrary.get("texture");
         textureShader->bind();
-
-        auto screenTexture = textureLibrary.get("screen");
-        screenTexture->bind(1);
         textureShader->uploadUniformInt("u_texture", 1);
+        textureLibrary.get("screen")->bind(1);
         Renderer::submit(squareVA2, textureShader);
 
         textureShader = shaderLibrary.get("texture");
         textureShader->bind();
-        auto faceTexture = textureLibrary.get("screen");
-        faceTexture->bind(0);
         textureShader->uploadUniformInt("u_texture", 0);
+        textureLibrary.get("face")->bind(0);
         Renderer::submit(squareVA, textureShader);
 
         Renderer::end();
     }
 
-    bool onKeyPressed(KeyPressedEvent& event) {
-        (void)event;
-        return false;
-    }
-
     virtual void onEvent(Event& event) override {
         log_trace(event.toString());
-        EventDispatcher dispatcher(event);
-        dispatcher.dispatch<KeyPressedEvent>(
-            std::bind(&SuperLayer::onKeyPressed, this, std::placeholders::_1));
+        cameraController.onEvent(event);
     }
 };
 
