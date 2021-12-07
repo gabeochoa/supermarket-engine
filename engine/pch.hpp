@@ -10,11 +10,15 @@
 #include <GLFW/glfw3.h>
 
 #include <cstdint>
+#include <fstream>
 #include <functional>
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <initializer_list>
 #include <iostream>
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // Vendor stuff

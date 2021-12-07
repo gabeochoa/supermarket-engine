@@ -1,11 +1,6 @@
 
 #pragma once
 
-#include <fstream>
-#include <glm/gtc/type_ptr.hpp>
-#include <memory>
-#include <unordered_map>
-
 #include "pch.hpp"
 
 // https://www.khronos.org/opengl/wiki/Shader_Compilation
@@ -64,15 +59,6 @@ struct Shader {
                     : source.substr(nextLinePos, pos - nextLinePos);
         }
         return shaderSources;
-    }
-
-    std::string nameFromFilePath(const std::string &filepath) {
-        auto lastSlash = filepath.find_last_of("/\\");
-        lastSlash = lastSlash == std::string::npos ? 0 : lastSlash + 1;
-        auto lastDot = filepath.rfind(".");
-        auto count = lastDot == std::string::npos ? filepath.size() - lastSlash
-                                                  : lastDot - lastSlash;
-        return filepath.substr(lastSlash, count);
     }
 
     GLenum typeFromString(const std::string &type) {
@@ -212,7 +198,6 @@ struct ShaderLibrary {
     std::unordered_map<std::string, std::shared_ptr<Shader>> shaders;
 
     void add(const std::shared_ptr<Shader> &shader) {
-        auto shader_ptr = get(shader->name);
         if (shaders.find(shader->name) != shaders.end()) {
             log_warn(
                 fmt::format("Failed to add shader to library, shader with name "
@@ -220,6 +205,8 @@ struct ShaderLibrary {
                             shader->name));
             return;
         }
+        log_trace(
+            fmt::format("Adding Shader \"{}\" to our library", shader->name));
         shaders[shader->name] = shader;
     }
     std::shared_ptr<Shader> load(const std::string &path) {

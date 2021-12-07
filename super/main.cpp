@@ -9,16 +9,12 @@ struct SuperLayer : public Layer {
     float camSpeed;
     float rotSpeed;
 
-    std::shared_ptr<Shader> shader;
-    std::shared_ptr<Shader> flatShader;
-    std::shared_ptr<Shader> textureShader;
-
-    std::shared_ptr<Texture> screenTexture;
-    std::shared_ptr<Texture> faceTexture;
-
     std::shared_ptr<VertexArray> vertexArray;
     std::shared_ptr<VertexArray> squareVA;
     std::shared_ptr<VertexArray> squareVA2;
+
+    ShaderLibrary shaderLibrary;
+    TextureLibrary textureLibrary;
 
     SuperLayer()
         : Layer("Supermarket"),
@@ -81,12 +77,11 @@ struct SuperLayer : public Layer {
             squareVA2->setIndexBuffer(squareIB);
         }
 
-        flatShader.reset(new Shader("./engine/shaders/flat.glsl"));
+        shaderLibrary.load("./engine/shaders/flat.glsl");
+        shaderLibrary.load("./engine/shaders/texture.glsl");
 
-        textureShader.reset(new Shader("./engine/shaders/texture.glsl"));
-
-        faceTexture.reset(new Texture2D("./resources/face.png"));
-        screenTexture.reset(new Texture2D("./resources/screen.png", 1));
+        textureLibrary.load("./resources/face.png");
+        textureLibrary.load("./resources/screen.png", 1);
     }
 
     virtual ~SuperLayer() {}
@@ -126,12 +121,17 @@ struct SuperLayer : public Layer {
         Renderer::clear({0.1f, 0.1f, 0.1f, 1.0f});
         Renderer::begin(camera);
 
+        auto textureShader = shaderLibrary.get("texture");
         textureShader->bind();
+
+        auto screenTexture = textureLibrary.get("screen");
         screenTexture->bind(1);
         textureShader->uploadUniformInt("u_texture", 1);
         Renderer::submit(squareVA2, textureShader);
 
+        textureShader = shaderLibrary.get("texture");
         textureShader->bind();
+        auto faceTexture = textureLibrary.get("screen");
         faceTexture->bind(0);
         textureShader->uploadUniformInt("u_texture", 0);
         Renderer::submit(squareVA, textureShader);
