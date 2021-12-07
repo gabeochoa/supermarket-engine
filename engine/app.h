@@ -18,6 +18,7 @@
 struct App {
     std::unique_ptr<Window> window;
     Time time;
+    bool isMinimized;
 
     bool running;
     LayerStack layerstack;
@@ -63,11 +64,21 @@ struct App {
         return false;
     }
 
+    bool onWindowResized(WindowResizeEvent& event) {
+        if(event.width() == 0 || event.height() == 0){
+            isMinimized = true;
+        }
+        isMinimized = false;
+        return false;
+    }
+
     void onEvent(Event& e) {
         log_trace(e.toString());
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowCloseEvent>(M_BIND(onWindowClose));
         dispatcher.dispatch<KeyPressedEvent>(M_BIND(onKeyPressed));
+        dispatcher.dispatch<WindowResizeEvent>(
+                M_BIND(onWindowResized));
         // Have the top most layers get the event first,
         // if they handle it then no need for the lower ones to get the rest
         // eg imagine UI pause menu blocking game UI elements
@@ -89,6 +100,11 @@ struct App {
         time.start();
         while (running) {
             time.end();
+
+            if(isMinimized){
+                continue;
+            }
+
             for (Layer* layer : layerstack) {
                 layer->onUpdate(time);
             }

@@ -2,6 +2,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "event.h"
+#include "input.h"
 #include "pch.hpp"
 
 struct Camera {};
@@ -39,8 +41,6 @@ struct OrthoCamera : public Camera {
     }
 };
 
-#include "event.hpp"
-#include "input.h"
 
 struct OrthoCameraController {
     float aspectRatio;
@@ -100,7 +100,6 @@ struct OrthoCameraController {
     }
 
     void onEvent(Event& event) {
-        log_trace(event.toString());
         EventDispatcher dispatcher(event);
         dispatcher.dispatch<Mouse::MouseScrolledEvent>(
             std::bind(&OrthoCameraController::onMouseScrolled, this,
