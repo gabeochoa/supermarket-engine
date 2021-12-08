@@ -28,10 +28,10 @@ struct App {
         return app;
     }
 
-    App() {
+    App(int width = 1920, int height = 1080) {
         WindowConfig config;
-        config.width = 1920;
-        config.height = 1080;
+        config.width = width;
+        config.height = height;
         config.title = "test tile";
 
         window = std::unique_ptr<Window>(Window::create(config));
