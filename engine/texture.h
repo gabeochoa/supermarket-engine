@@ -7,22 +7,45 @@ struct Texture {
     std::string name;
     int width;
     int height;
+    int textureIndex;
 
-    Texture() : name("TEXTURE_HAS_NO_NAME"), width(0), height(0) {}
+    Texture()
+        : name("TEXTURE_HAS_NO_NAME"), width(0), height(0), textureIndex(0) {}
+    Texture(const std::string &n, int w, int h, int texIndex)
+        : name(n), width(w), height(h), textureIndex(texIndex) {}
+    virtual void setData(void *data) { (void)data; }
 
     virtual ~Texture() {}
     // its const from a C++ pov but
     // its not really const if you know what i mean
-    virtual void bind(int slot = 0) const = 0;
+    virtual void bind() const = 0;
 };
 
 struct Texture2D : public Texture {
     unsigned int rendererID;
 
-    Texture2D(const std::string &path, int i = 0) : Texture() {
+    Texture2D(const std::string &name, int w, int h, int texIndex = 0)
+        : Texture(name, w, h, texIndex) {
+        glGenTextures(1, &rendererID);
+        glActiveTexture(GL_TEXTURE0 + textureIndex);
+        glBindTexture(GL_TEXTURE_2D, rendererID);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+    virtual void setData(void *data) override {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
+                     GL_UNSIGNED_BYTE, data);
+    }
+
+    Texture2D(const std::string &path, int texIndex = 0) : Texture() {
         log_trace(fmt::format("Loading texture: {}", path));
 
         name = nameFromFilePath(path);
+        textureIndex = texIndex;
 
         int w, h, channels;
         stbi_set_flip_vertically_on_load(1);
@@ -45,7 +68,7 @@ struct Texture2D : public Texture {
         height = h;
 
         glGenTextures(1, &rendererID);
-        glActiveTexture(GL_TEXTURE0 + i);
+        glActiveTexture(GL_TEXTURE0 + textureIndex);
         glBindTexture(GL_TEXTURE_2D, rendererID);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -61,8 +84,8 @@ struct Texture2D : public Texture {
     }
 
     virtual ~Texture2D() { glDeleteTextures(1, &rendererID); }
-    virtual void bind(int slot = 0) const override {
-        glBindTexture(slot, rendererID);
+    virtual void bind() const override {
+        glBindTexture(textureIndex, rendererID);
     }
 };
 

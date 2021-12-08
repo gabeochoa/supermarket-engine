@@ -15,8 +15,14 @@ struct SuperLayer : public Layer {
     OrthoCameraController cameraController;
 
     SuperLayer() : Layer("Supermarket"), cameraController(WIN_RATIO, true) {
-        textureLibrary.load("./resources/face.png");
-        textureLibrary.load("./resources/screen.png", 1);
+        std::shared_ptr<Texture> whiteTexture =
+            std::make_shared<Texture2D>("white", 1, 1, 0);
+        unsigned int data = 0xffffffff;
+        whiteTexture->setData(&data);
+        textureLibrary.add(whiteTexture);
+
+        textureLibrary.load("./resources/face.png", 1);
+        textureLibrary.load("./resources/screen.png", 2);
     }
 
     virtual ~SuperLayer() {}
@@ -24,6 +30,8 @@ struct SuperLayer : public Layer {
     virtual void onDetach() override {}
 
     virtual void onUpdate(Time dt) override {
+        prof(__PROFILE_FUNC__);
+
         cameraController.onUpdate(dt);
 
         log_trace(fmt::format("{:.2}s ({:.2} ms) ", dt.s(), dt.ms()));
@@ -32,7 +40,7 @@ struct SuperLayer : public Layer {
         Renderer::begin(cameraController.camera);
 
         Renderer::drawQuad(glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f},
-                           glm::vec4{0.8f, 0.3f, 0.2f, 1.0f},
+                           glm::vec4{1.0f, 1.0f, 1.0f, 1.0f},
                            textureLibrary.get("face"));
 
         Renderer::drawQuad(glm::vec2{0.5f, 1.f}, glm::vec2{0.8f, 0.8f},
@@ -47,11 +55,94 @@ struct SuperLayer : public Layer {
     }
 };
 
+struct ProfileLayer : public Layer {
+    bool showFilenames;
+    ProfileLayer() : Layer("Profiling"), showFilenames(false) {}
+
+    virtual ~ProfileLayer() {}
+    virtual void onAttach() override {}
+    virtual void onDetach() override {}
+
+    GLTtext* drawText(const std::string& content, int x, int y, float scale) {
+        GLTtext* text = gltCreateText();
+        gltSetText(text, content.c_str());
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2D(text, x, y, scale);
+        return text;
+    }
+
+    virtual void onUpdate(Time dt) override {
+        (void)dt;
+        if (isMinimized) {
+            return;
+        }
+
+        prof(__PROFILE_FUNC__);
+
+        gltInit();
+        int y = 0;
+        float scale = 1.f;
+        std::vector<GLTtext*> texts;
+        gltBeginDraw();
+
+        std::vector<SamplePair> pairs;
+        for (const auto& x : _acc) {
+            pairs.push_back(x);
+        }
+
+        sort(pairs.begin(), pairs.end(),
+             [](const SamplePair& a, const SamplePair& b) {
+                 return a.second.average() > b.second.average();
+             });
+
+        for (const auto& x : pairs) {
+            auto name = x.first;
+            auto stats = x.second;
+            auto filename = showFilenames ? stats.filename : "";
+            std::string t = fmt::format("{}{}: avg: {:.2f}ns", filename, name,
+                                        stats.average());
+            texts.push_back(drawText(t, 0, y, scale));
+            y += 30;
+        }
+
+        texts.push_back(
+            drawText(fmt::format("Press delete to toggle filenames {}",
+                                 showFilenames ? "off" : "on"),
+                     0, y, scale));
+        y += 30;
+
+        gltEndDraw();
+        for (auto text : texts) gltDeleteText(text);
+        gltTerminate();
+    }
+
+    bool onKeyPressed(KeyPressedEvent event) {
+        if (event.keycode == Key::mapping["Open Profiler"]) {
+            isMinimized = !isMinimized;
+        }
+
+        if (event.keycode == Key::mapping["Profiler Hide Filenames"]) {
+            showFilenames = !showFilenames;
+        }
+
+        return false;
+    }
+
+    virtual void onEvent(Event& event) override {
+        EventDispatcher dispatcher(event);
+        dispatcher.dispatch<KeyPressedEvent>(std::bind(
+            &ProfileLayer::onKeyPressed, this, std::placeholders::_1));
+    }
+};
+
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
     App::get();
+
+    Layer* profile = new ProfileLayer();
+    App::get().pushLayer(profile);
 
     Layer* super = new SuperLayer();
     App::get().pushLayer(super);

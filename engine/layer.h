@@ -8,6 +8,7 @@
 #include "window.h"
 
 struct Layer {
+    bool isMinimized;
     Layer(const std::string& n = "layer") : name(n) {}
     virtual ~Layer() {}
     virtual void onAttach() {}

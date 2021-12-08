@@ -101,6 +101,7 @@ struct Renderer {
     }
 
     static void begin(OrthoCamera& cam) {
+        prof(__PROFILE_FUNC__);
         sceneData->viewProjection = cam.viewProjection;
 
         auto flatShader = sceneData->shaderLibrary.get("flat");
@@ -114,23 +115,26 @@ struct Renderer {
                                          sceneData->viewProjection);
     }
 
-    static void end() {}
+    static void end() { prof(__PROFILE_FUNC__); }
 
     static void shutdown() { delete sceneData; }
 
     static void clear(const glm::vec4& color) {
+        prof(__PROFILE_FUNC__);
         glClearColor(color.r, color.g, color.b, color.a);
         glClear(GL_COLOR_BUFFER_BIT |
                 GL_DEPTH_BUFFER_BIT);  // Clear the buffers
     }
 
     static void draw(const std::shared_ptr<VertexArray>& vertexArray) {
+        prof(__PROFILE_FUNC__);
         glDrawElements(GL_TRIANGLES, vertexArray->indexBuffer->getCount(),
                        GL_UNSIGNED_INT, nullptr);
     }
 
     static void drawQuad(const glm::vec3& position, const glm::vec2& size,
                          const glm::vec4& color) {
+        prof(__PROFILE_FUNC__);
         auto transform = glm::translate(glm::mat4(1.f), position) *
                          glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
@@ -146,16 +150,17 @@ struct Renderer {
     static void drawQuad(const glm::vec3& position, const glm::vec2& size,
                          const glm::vec4& color,
                          const std::shared_ptr<Texture>& texture) {
+        prof(__PROFILE_FUNC__);
         auto transform = glm::translate(glm::mat4(1.f), position) *
                          glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
         auto textureShader = sceneData->shaderLibrary.get("texture");
         textureShader->bind();
         textureShader->uploadUniformMat4("transformMatrix", transform);
-        textureShader->uploadUniformInt("u_texture", 0);
+        textureShader->uploadUniformInt("u_texture", texture->textureIndex);
         textureShader->uploadUniformFloat4("u_color", color);
 
-        texture->bind(0);
+        texture->bind();
 
         sceneData->vertexArray->bind();
         Renderer::draw(sceneData->vertexArray);

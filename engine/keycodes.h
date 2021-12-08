@@ -153,6 +153,8 @@ static inline void default_keys() {
     mapping["Down"] = KeyCode::S;
     mapping["Rotate Clockwise"] = KeyCode::E;
     mapping["Rotate Counterclockwise"] = KeyCode::Q;
+    mapping["Open Profiler"] = KeyCode::GraveAccent;  // tilde
+    mapping["Profiler Hide Filenames"] = KeyCode::Delete;
 }
 
 static void load_keys() {

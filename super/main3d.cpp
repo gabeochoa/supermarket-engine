@@ -76,7 +76,7 @@ struct SuperLayer : public Layer {
         shaderLibrary.load("./engine/shaders/flat.glsl");
         shaderLibrary.load("./engine/shaders/texture.glsl");
 
-        textureLibrary.load("./resources/face.png");
+        textureLibrary.load("./resources/face.png", 0);
         textureLibrary.load("./resources/screen.png", 1);
     }
 
@@ -93,15 +93,17 @@ struct SuperLayer : public Layer {
         Renderer3D::begin(cameraController.camera);
 
         auto textureShader = shaderLibrary.get("texture");
+        auto screenTexture = textureLibrary.get("screen");
         textureShader->bind();
-        textureShader->uploadUniformInt("u_texture", 1);
-        textureLibrary.get("screen")->bind(1);
+        textureShader->uploadUniformInt("u_texture", screenTexture->textureIndex);
+        screenTexture->bind();
         Renderer3D::submit(squareVA2, textureShader);
 
         textureShader = shaderLibrary.get("texture");
         textureShader->bind();
-        textureShader->uploadUniformInt("u_texture", 0);
-        textureLibrary.get("face")->bind(0);
+        auto faceTexture = textureLibrary.get("face");
+        textureShader->uploadUniformInt("u_texture", faceTexture->textureIndex);
+        faceTexture->bind();
         Renderer3D::submit(squareVA, textureShader);
 
         Renderer3D::end();

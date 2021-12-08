@@ -35,6 +35,8 @@
 #include "../vendor/stb_image.h"
 #define FMT_HEADER_ONLY
 #include "../vendor/fmt/format.h"
+#define GLT_IMPLEMENTATION
+#include "../vendor/glText.h"
 
 #ifdef __APPLE__
 #pragma clang diagnostic pop
