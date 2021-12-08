@@ -41,7 +41,6 @@ struct OrthoCamera : public Camera {
     }
 };
 
-
 struct OrthoCameraController {
     float aspectRatio;
     float zoomLevel;
@@ -60,6 +59,7 @@ struct OrthoCameraController {
     }
 
     void onUpdate(Time dt) {
+        prof(__PROFILE_FUNC__);
         if (Input::isKeyPressed(Key::mapping["Left"])) {
             camera.position.x -= camSpeed * dt;
         }

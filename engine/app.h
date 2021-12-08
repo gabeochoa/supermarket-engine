@@ -99,6 +99,7 @@ struct App {
     int run() {
         time.start();
         while (running) {
+            prof(__PROFILE_FUNC__);
             time.end();
 
             if (isMinimized) {
