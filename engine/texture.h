@@ -120,7 +120,7 @@ struct TextureLibrary {
         return texture;
     }
 
-    std::shared_ptr<Texture> get(const std::string &name) {
+    std::shared_ptr<Texture> &get(const std::string &name) {
         return textures[name];
     }
 };

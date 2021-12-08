@@ -9,22 +9,85 @@ constexpr int WIN_W = 1920;
 constexpr int WIN_H = 1080;
 constexpr float WIN_RATIO = (WIN_W * 1.f) / WIN_H;
 
+struct Entity {
+    glm::vec2 position;
+    glm::vec2 size;
+    float angle;
+    glm::vec4 color;
+    std::string textureName;
+
+    Entity()
+        : position({0.f, 0.f}),
+          size({1.f, 1.f}),
+          angle(0.f),
+          color({1.f, 1.f, 1.f, 1.f}),
+          textureName("white") {}
+
+    Entity(const glm::vec2& position_, const glm::vec2& size_, float angle_,
+           const glm::vec4& color_, const std::string& textureName_)
+        : position(position_),
+          size(size_),
+          angle(angle_),
+          color(color_),
+          textureName(textureName_) {}
+
+    virtual ~Entity() {}
+
+    virtual void onUpdate(Time dt) {
+        (void)dt;
+        if (angle >= 360) {
+            angle -= 360;
+        }
+        if (angle < 0) {
+            angle += 360;
+        }
+    }
+
+    virtual void render() {
+        // computing angle transforms are expensive so
+        // if the angle is under thresh, just render it square
+        if (angle <= 5.f) {
+            Renderer::drawQuad(position, size, color, textureName);
+        } else {
+            Renderer::drawQuadRotated(position, size, glm::radians(angle),
+                                      color, textureName);
+        }
+    }
+};
+
+struct Billboard : public Entity {
+    // Billboard is a textured ent that never moves
+    Billboard(const glm::vec2& position, const glm::vec2& size, float angle,
+              const glm::vec4& color,
+              // TODO somehow i broke colored textures...
+              // so for now we will use a definite undefinied tex
+              // and it will trigger the flat shader
+              const std::string& textureName = "__INVALID__")
+        : Entity(position, size, angle, color, textureName) {}
+
+    virtual ~Billboard() {}
+};
+
 struct SuperLayer : public Layer {
-    TextureLibrary textureLibrary;
+    std::vector<std::shared_ptr<Entity>> entities;
 
     OrthoCameraController cameraController;
 
     SuperLayer() : Layer("Supermarket"), cameraController(WIN_RATIO, true) {
-        std::shared_ptr<Texture> whiteTexture =
-            std::make_shared<Texture2D>("white", 1, 1, 0);
-        unsigned int data = 0xffffffff;
-        whiteTexture->setData(&data);
-        textureLibrary.add(whiteTexture);
+        auto billy = std::make_shared<Billboard>(
+            glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f}, 45.f,
+            glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "face");
+        entities.push_back(billy);
 
-        textureLibrary.load("./resources/face.png", 1);
-        textureLibrary.get("face")->tilingFactor = 3.f;
+        billy = std::make_shared<Billboard>(glm::vec2{0.5f, 1.f},
+                                            glm::vec2{0.5f, 0.5f}, 0.f,
+                                            glm::vec4{0.8f, 0.3f, 0.0f, 1.0f});
+        entities.push_back(billy);
 
-        textureLibrary.load("./resources/screen.png", 2);
+        billy = std::make_shared<Billboard>(glm::vec2{-0.5f, -1.f},
+                                            glm::vec2{1.1f, 1.1f}, 0.f,
+                                            glm::vec4{0.2f, 0.7f, 0.0f, 1.0f});
+        entities.push_back(billy);
     }
 
     virtual ~SuperLayer() {}
@@ -32,24 +95,20 @@ struct SuperLayer : public Layer {
     virtual void onDetach() override {}
 
     virtual void onUpdate(Time dt) override {
+        log_trace(fmt::format("{:.2}s ({:.2} ms) ", dt.s(), dt.ms()));
         prof(__PROFILE_FUNC__);
 
         cameraController.onUpdate(dt);
-
-        log_trace(fmt::format("{:.2}s ({:.2} ms) ", dt.s(), dt.ms()));
+        for (auto& entity : entities) {
+            entity->onUpdate(dt);
+        }
 
         Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
         Renderer::begin(cameraController.camera);
 
-        Renderer::drawQuadRotated(
-            glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f}, glm::radians(45.f),
-            glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, textureLibrary.get("face"));
-
-        Renderer::drawQuad(glm::vec2{0.5f, 1.f}, glm::vec2{0.8f, 0.8f},
-                           glm::vec4{0.5f, 0.4f, 0.2f, 1.0f});
-
-        Renderer::drawQuad(glm::vec2{-0.5f, -1.f}, glm::vec2{1.1f, 1.1f},
-                           glm::vec4{0.2f, 0.7f, 0.0f, 1.0f});
+        for (auto& entity : entities) {
+            entity->render();
+        }
 
         Renderer::end();
     }

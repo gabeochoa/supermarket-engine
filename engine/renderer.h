@@ -50,17 +50,33 @@ struct Renderer3D {
     }
 };
 
+static const char* DEFAULT_TEX = "white";
 struct Renderer {
     struct SceneData {
         glm::mat4 viewProjection;
 
         std::shared_ptr<VertexArray> vertexArray;
         ShaderLibrary shaderLibrary;
+        TextureLibrary textureLibrary;
     };
 
     static SceneData* sceneData;
 
     static void init() {
+        sceneData->shaderLibrary.load("./engine/shaders/flat.glsl");
+        sceneData->shaderLibrary.load("./engine/shaders/texture.glsl");
+
+        std::shared_ptr<Texture> whiteTexture =
+            std::make_shared<Texture2D>("white", 1, 1, 0);
+        unsigned int data = 0xffffffff;
+        whiteTexture->setData(&data);
+        sceneData->textureLibrary.add(whiteTexture);
+
+        sceneData->textureLibrary.load("./resources/face.png", 1);
+        sceneData->textureLibrary.get("face")->tilingFactor = 3.f;
+
+        sceneData->textureLibrary.load("./resources/screen.png", 2);
+
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_DEPTH_TEST);
@@ -69,12 +85,6 @@ struct Renderer {
         std::shared_ptr<IndexBuffer> squareIB;
         sceneData->vertexArray.reset(VertexArray::create());
 
-        // float squareVerts[] = {
-        // 0.f, 0.f, 0.f,  //
-        // 1.f, 0.f, 0.f,  //
-        // 1.f, 1.f, 0.f,  //
-        // 0.f, 1.f, 0.f,  //
-        // };
         float squareVerts[5 * 4] = {
             0.f, 0.f, 0.f, 0.0f, 0.0f,  //
             1.f, 0.f, 0.f, 1.0f, 0.0f,  //
@@ -91,9 +101,6 @@ struct Renderer {
         unsigned int squareIs[] = {0, 1, 2, 0, 2, 3};
         squareIB.reset(IndexBuffer::create(squareIs, 6));
         sceneData->vertexArray->setIndexBuffer(squareIB);
-
-        sceneData->shaderLibrary.load("./engine/shaders/flat.glsl");
-        sceneData->shaderLibrary.load("./engine/shaders/texture.glsl");
     }
 
     static void resize(int width, int height) {
@@ -132,7 +139,8 @@ struct Renderer {
                        GL_UNSIGNED_INT, nullptr);
     }
     static void drawQuad(const glm::mat4& transform, const glm::vec4& color,
-                         const std::shared_ptr<Texture>& texture = nullptr) {
+                         const std::string& textureName = DEFAULT_TEX) {
+        auto texture = sceneData->textureLibrary.get(textureName);
         if (texture == nullptr) {
             auto flatShader = sceneData->shaderLibrary.get("flat");
             flatShader->bind();
@@ -157,17 +165,17 @@ struct Renderer {
 
     static void drawQuad(const glm::vec3& position, const glm::vec2& size,
                          const glm::vec4& color,
-                         const std::shared_ptr<Texture>& texture = nullptr) {
+                         const std::string& textureName = DEFAULT_TEX) {
         prof(__PROFILE_FUNC__);
         auto transform = glm::translate(glm::mat4(1.f), position) *
                          glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
-        drawQuad(transform, color, texture);
+        drawQuad(transform, color, textureName);
     }
 
-    static void drawQuadRotated(
-        const glm::vec3& position, const glm::vec2& size, float angleInRad,
-        const glm::vec4& color,
-        const std::shared_ptr<Texture>& texture = nullptr) {
+    static void drawQuadRotated(const glm::vec3& position,
+                                const glm::vec2& size, float angleInRad,
+                                const glm::vec4& color,
+                                const std::string& textureName = DEFAULT_TEX) {
         prof(__PROFILE_FUNC__);
 
         auto transform =
@@ -175,7 +183,7 @@ struct Renderer {
             glm::rotate(glm::mat4(1.f), angleInRad, {0.0f, 0.0f, 1.f}) *
             glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
-        drawQuad(transform, color, texture);
+        drawQuad(transform, color, textureName);
     }
 
     ////// ////// ////// ////// ////// ////// ////// //////
@@ -184,16 +192,16 @@ struct Renderer {
 
     static void drawQuad(const glm::vec2& position, const glm::vec2& size,
                          const glm::vec4& color,
-                         const std::shared_ptr<Texture>& texture = nullptr) {
+                         const std::string& textureName = DEFAULT_TEX) {
         Renderer::drawQuad(glm::vec3{position.x, position.y, 0.f}, size, color,
-                           texture);
+                           textureName);
     }
 
-    static void drawQuadRotated(
-        const glm::vec2& position, const glm::vec2& size, float angleInRad,
-        const glm::vec4& color,
-        const std::shared_ptr<Texture>& texture = nullptr) {
+    static void drawQuadRotated(const glm::vec2& position,
+                                const glm::vec2& size, float angleInRad,
+                                const glm::vec4& color,
+                                const std::string& textureName = DEFAULT_TEX) {
         Renderer::drawQuadRotated(glm::vec3{position.x, position.y, 0.f}, size,
-                                  angleInRad, color, texture);
+                                  angleInRad, color, textureName);
     }
 };

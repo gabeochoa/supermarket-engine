@@ -1,5 +1,5 @@
 
-# -fsanitize=address
+# FLAGS = -std=c++11 -stdlib=libc++ -Wall -Wextra -g -fsanitize=address
 FLAGS = -std=c++11 -stdlib=libc++ -Wall -Wextra -g 
 LIBS = -lglfw -lGLEW  
 FRAMEWORKS = -Ivendor/ -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon

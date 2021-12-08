@@ -30,5 +30,7 @@
 
     out vec4 frag_color;
     void main(){
+        // Debug texcoord
+        // frag_color = vec4(v_texcoord, 0.0, 1.0);
         frag_color = texture(u_texture, v_texcoord * f_tiling) * u_color;
     }
