@@ -36,6 +36,7 @@ struct OpenGLWindow : public Window {
     }
 
     virtual void update() override {
+        prof(__PROFILE_FUNC__);
         glfwPollEvents();
         context->swapBuffers();
     }
