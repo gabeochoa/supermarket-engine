@@ -146,9 +146,6 @@ struct Renderer {
     static void drawQuad(const glm::vec3& position, const glm::vec2& size,
                          const glm::vec4& color,
                          const std::shared_ptr<Texture>& texture) {
-        // TODO colored textures?
-        (void)color;
-
         auto transform = glm::translate(glm::mat4(1.f), position) *
                          glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
