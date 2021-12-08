@@ -22,6 +22,8 @@ struct SuperLayer : public Layer {
         textureLibrary.add(whiteTexture);
 
         textureLibrary.load("./resources/face.png", 1);
+        textureLibrary.get("face")->tilingFactor = 3.f;
+
         textureLibrary.load("./resources/screen.png", 2);
     }
 
@@ -39,12 +41,15 @@ struct SuperLayer : public Layer {
         Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
         Renderer::begin(cameraController.camera);
 
-        Renderer::drawQuad(glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f},
-                           glm::vec4{1.0f, 1.0f, 1.0f, 1.0f},
-                           textureLibrary.get("face"));
+        Renderer::drawQuadRotated(
+            glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f}, glm::radians(45.f),
+            glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, textureLibrary.get("face"));
 
         Renderer::drawQuad(glm::vec2{0.5f, 1.f}, glm::vec2{0.8f, 0.8f},
                            glm::vec4{0.5f, 0.4f, 0.2f, 1.0f});
+
+        Renderer::drawQuad(glm::vec2{-0.5f, -1.f}, glm::vec2{1.1f, 1.1f},
+                           glm::vec4{0.2f, 0.7f, 0.0f, 1.0f});
 
         Renderer::end();
     }
@@ -80,7 +85,7 @@ struct ProfileLayer : public Layer {
         prof(__PROFILE_FUNC__);
 
         gltInit();
-        int y = 0;
+        int y = 10;
         float scale = 1.f;
         std::vector<GLTtext*> texts;
         gltBeginDraw();
@@ -101,7 +106,7 @@ struct ProfileLayer : public Layer {
             auto filename = showFilenames ? stats.filename : "";
             std::string t = fmt::format("{}{}: avg: {:.2f}ns", filename, name,
                                         stats.average());
-            texts.push_back(drawText(t, 0, y, scale));
+            texts.push_back(drawText(t, 10, y, scale));
             y += 30;
         }
 

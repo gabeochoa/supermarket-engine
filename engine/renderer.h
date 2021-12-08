@@ -131,17 +131,25 @@ struct Renderer {
         glDrawElements(GL_TRIANGLES, vertexArray->indexBuffer->getCount(),
                        GL_UNSIGNED_INT, nullptr);
     }
-
-    static void drawQuad(const glm::vec3& position, const glm::vec2& size,
-                         const glm::vec4& color) {
-        prof(__PROFILE_FUNC__);
-        auto transform = glm::translate(glm::mat4(1.f), position) *
-                         glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
-
-        auto flatShader = sceneData->shaderLibrary.get("flat");
-        flatShader->bind();
-        flatShader->uploadUniformMat4("transformMatrix", transform);
-        flatShader->uploadUniformFloat4("u_color", color);
+    static void drawQuad(const glm::mat4& transform, const glm::vec4& color,
+                         const std::shared_ptr<Texture>& texture = nullptr) {
+        if (texture == nullptr) {
+            auto flatShader = sceneData->shaderLibrary.get("flat");
+            flatShader->bind();
+            flatShader->uploadUniformMat4("transformMatrix", transform);
+            flatShader->uploadUniformFloat4("u_color", color);
+        } else {
+            auto textureShader = sceneData->shaderLibrary.get("texture");
+            textureShader->bind();
+            textureShader->uploadUniformMat4("transformMatrix", transform);
+            textureShader->uploadUniformInt("u_texture", texture->textureIndex);
+            textureShader->uploadUniformFloat4("u_color", color);
+            // TODO if we end up wanting this then obv have to expose it
+            // through function param
+            textureShader->uploadUniformFloat("f_tiling",
+                                              texture->tilingFactor);
+            texture->bind();
+        }
 
         sceneData->vertexArray->bind();
         Renderer::draw(sceneData->vertexArray);
@@ -149,21 +157,25 @@ struct Renderer {
 
     static void drawQuad(const glm::vec3& position, const glm::vec2& size,
                          const glm::vec4& color,
-                         const std::shared_ptr<Texture>& texture) {
+                         const std::shared_ptr<Texture>& texture = nullptr) {
         prof(__PROFILE_FUNC__);
         auto transform = glm::translate(glm::mat4(1.f), position) *
                          glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
+        drawQuad(transform, color, texture);
+    }
 
-        auto textureShader = sceneData->shaderLibrary.get("texture");
-        textureShader->bind();
-        textureShader->uploadUniformMat4("transformMatrix", transform);
-        textureShader->uploadUniformInt("u_texture", texture->textureIndex);
-        textureShader->uploadUniformFloat4("u_color", color);
+    static void drawQuadRotated(
+        const glm::vec3& position, const glm::vec2& size, float angleInRad,
+        const glm::vec4& color,
+        const std::shared_ptr<Texture>& texture = nullptr) {
+        prof(__PROFILE_FUNC__);
 
-        texture->bind();
+        auto transform =
+            glm::translate(glm::mat4(1.f), position) *
+            glm::rotate(glm::mat4(1.f), angleInRad, {0.0f, 0.0f, 1.f}) *
+            glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
-        sceneData->vertexArray->bind();
-        Renderer::draw(sceneData->vertexArray);
+        drawQuad(transform, color, texture);
     }
 
     ////// ////// ////// ////// ////// ////// ////// //////
@@ -171,14 +183,17 @@ struct Renderer {
     ////// ////// ////// ////// ////// ////// ////// //////
 
     static void drawQuad(const glm::vec2& position, const glm::vec2& size,
-                         const glm::vec4& color) {
-        Renderer::drawQuad(glm::vec3{position.x, position.y, 0.f}, size, color);
-    }
-
-    static void drawQuad(const glm::vec2& position, const glm::vec2& size,
                          const glm::vec4& color,
-                         const std::shared_ptr<Texture>& texture) {
+                         const std::shared_ptr<Texture>& texture = nullptr) {
         Renderer::drawQuad(glm::vec3{position.x, position.y, 0.f}, size, color,
                            texture);
+    }
+
+    static void drawQuadRotated(
+        const glm::vec2& position, const glm::vec2& size, float angleInRad,
+        const glm::vec4& color,
+        const std::shared_ptr<Texture>& texture = nullptr) {
+        Renderer::drawQuadRotated(glm::vec3{position.x, position.y, 0.f}, size,
+                                  angleInRad, color, texture);
     }
 };

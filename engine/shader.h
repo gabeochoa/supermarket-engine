@@ -180,6 +180,10 @@ struct Shader {
         GLint location = glGetUniformLocation(rendererID, name.c_str());
         glUniform1i(location, i);
     }
+    void uploadUniformFloat(const std::string &name, float value) {
+        GLint location = glGetUniformLocation(rendererID, name.c_str());
+        glUniform1f(location, value);
+    }
     void uploadUniformFloat3(const std::string &name, const glm::vec3 &values) {
         GLint location = glGetUniformLocation(rendererID, name.c_str());
         glUniform3f(location, values.x, values.y, values.z);

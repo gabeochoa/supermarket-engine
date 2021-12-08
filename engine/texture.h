@@ -8,11 +8,20 @@ struct Texture {
     int width;
     int height;
     int textureIndex;
+    float tilingFactor;
 
     Texture()
-        : name("TEXTURE_HAS_NO_NAME"), width(0), height(0), textureIndex(0) {}
+        : name("TEXTURE_HAS_NO_NAME"),
+          width(0),
+          height(0),
+          textureIndex(0),
+          tilingFactor(1.f) {}
     Texture(const std::string &n, int w, int h, int texIndex)
-        : name(n), width(w), height(h), textureIndex(texIndex) {}
+        : name(n),
+          width(w),
+          height(h),
+          textureIndex(texIndex),
+          tilingFactor(1.f) {}
     virtual void setData(void *data) { (void)data; }
 
     virtual ~Texture() {}
