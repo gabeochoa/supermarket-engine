@@ -156,6 +156,7 @@ struct Renderer {
         textureShader->bind();
         textureShader->uploadUniformMat4("transformMatrix", transform);
         textureShader->uploadUniformInt("u_texture", 0);
+        textureShader->uploadUniformFloat4("u_color", color);
 
         texture->bind(0);
 
