@@ -8,8 +8,10 @@
 #include "window.h"
 
 struct Layer {
+    std::string name;
     bool isMinimized;
-    Layer(const std::string& n = "layer") : name(n) {}
+
+    Layer(const std::string& n = "layer") : name(n), isMinimized(false) {}
     virtual ~Layer() {}
     virtual void onAttach() {}
     virtual void onDetach() {}
@@ -17,7 +19,6 @@ struct Layer {
     virtual void onEvent(Event& event) = 0;
 
     const std::string& getname() const { return name; }
-    std::string name;
 };
 
 struct LayerStack {

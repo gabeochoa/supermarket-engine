@@ -3,13 +3,16 @@
 #include "../engine/app.h"
 #include "../engine/input.h"
 #include "../engine/pch.hpp"
-#include "entity.h"
+#include "custom_fmt.h"
+#include "entities.h"
 #include "job.h"
 
 // TODO at some point we should have some way to send this to app
 constexpr int WIN_W = 1920;
 constexpr int WIN_H = 1080;
 constexpr float WIN_RATIO = (WIN_W * 1.f) / WIN_H;
+
+constexpr bool IS_DEBUG = true;
 
 struct SuperLayer : public Layer {
     std::vector<std::shared_ptr<Entity>> entities;
@@ -34,6 +37,16 @@ struct SuperLayer : public Layer {
 
         Job j = {.type = JobType::None, .seconds = 150};
         JobQueue::addJob(JobType::None, std::make_shared<Job>(j));
+
+        j = {.type = JobType::IdleWalk,
+             .startPosition = {5.f, 5.f},
+             .endPosition = {12.f, 0.f}};
+        JobQueue::addJob(JobType::IdleWalk, std::make_shared<Job>(j));
+
+        j = {.type = JobType::IdleWalk,
+             .startPosition = glm::circularRand<float>(25.f),
+             .endPosition = glm::circularRand<float>(25.f)};
+        JobQueue::addJob(JobType::IdleWalk, std::make_shared<Job>(j));
 
         auto emp = std::make_shared<Employee>();
         entities.push_back(emp);
@@ -73,7 +86,9 @@ struct SuperLayer : public Layer {
 
 struct ProfileLayer : public Layer {
     bool showFilenames;
-    ProfileLayer() : Layer("Profiling"), showFilenames(false) {}
+    ProfileLayer() : Layer("Profiling"), showFilenames(false) {
+        isMinimized = !IS_DEBUG;
+    }
 
     virtual ~ProfileLayer() {}
     virtual void onAttach() override {}
