@@ -4,7 +4,22 @@
 #include "../engine/input.h"
 #include "../engine/pch.hpp"
 
+template <>
+struct fmt::formatter<glm::vec2> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    constexpr auto format(glm::vec2 const& v, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(), "({},{})", v.x, v.y);
+    }
+};
+
+static int ENTITY_ID_GEN = 0;
 struct Entity {
+    int id;
     glm::vec2 position;
     glm::vec2 size;
     float angle;
@@ -12,7 +27,8 @@ struct Entity {
     std::string textureName;
 
     Entity()
-        : position({0.f, 0.f}),
+        : id(ENTITY_ID_GEN++),
+          position({0.f, 0.f}),
           size({1.f, 1.f}),
           angle(0.f),
           color({1.f, 1.f, 1.f, 1.f}),
@@ -48,7 +64,29 @@ struct Entity {
                                       color, textureName);
         }
     }
+
+    virtual const Entity* asEntity() const {
+        return dynamic_cast<const Entity*>(this);
+    }
+    void announce(const std::string& tosay) const;
 };
+
+template <>
+struct fmt::formatter<Entity> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    constexpr auto format(Entity const& e, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(), "Entity{} at {}", e.id, e.position);
+    }
+};
+
+void Entity::announce(const std::string& tosay) const {
+    log_info(fmt::format("{}: {}", *asEntity(), tosay));
+}
 
 struct Billboard : public Entity {
     // Billboard is a textured ent that never moves
@@ -104,17 +142,26 @@ struct Person : public Entity {
     JobHandler handler;
     std::shared_ptr<Job> assignedJob;
 
+    void startJob(const std::shared_ptr<Job> job) {
+        assignedJob = job;
+        if (!assignedJob) return;
+
+        assignedJob->isAssigned = true;
+        announce(fmt::format("starting job {}", jobTypeToString(job->type)));
+    }
+
     void workOrFindMore(Time dt) {
         if (!assignedJob) {
+            // announce("finding new job");
             auto range = getJobRange();
             auto ptr = JobQueue::getNextInRange(range);
-            assignedJob = ptr;
-            if (assignedJob) assignedJob->isAssigned = true;
-
+            startJob(ptr);
             return;
         }
         handler.handle(assignedJob, {dt});
         if (assignedJob->isComplete) {
+            announce(fmt::format("completed my job {}",
+                                 jobTypeToString(assignedJob->type)));
             assignedJob.reset();
         }
     }
@@ -131,8 +178,7 @@ struct Person : public Entity {
     bool none(const std::shared_ptr<Job>& j, const WorkInput& input) {
         j->seconds = j->seconds - input.dt.s();
         if (j->seconds <= 0) {
-            log_info(fmt::format("completed wait job, i have {} seconds left",
-                                 j->seconds));
+            announce(fmt::format("completed job {}", jobTypeToString(j->type)));
             j->isComplete = true;
             return true;
         }
