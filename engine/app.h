@@ -15,24 +15,37 @@
 
 #define M_BIND(x) std::bind(&App::x, this, std::placeholders::_1)
 
+struct AppSettings {
+    int width;
+    int height;
+    const char* title;
+    bool clearEnabled;
+};
+
+struct App;
+static std::shared_ptr<App> app;
+
 struct App {
     std::unique_ptr<Window> window;
     Time time;
     bool isMinimized;
+    bool clearEnabled;
 
     bool running;
     LayerStack layerstack;
 
-    inline static App& get() {
-        static App app;
-        return app;
+    inline static App* create(AppSettings settings) {
+        return new App(settings);
     }
 
-    App(int width = 1920, int height = 1080) {
+    inline static App& get() { return *app; }
+
+    App(AppSettings settings) {
         WindowConfig config;
-        config.width = width;
-        config.height = height;
-        config.title = "test tile";
+        config.width = settings.width;
+        config.height = settings.height;
+        config.title = settings.title;
+        clearEnabled = settings.clearEnabled;
 
         window = std::unique_ptr<Window>(Window::create(config));
 
@@ -104,6 +117,9 @@ struct App {
 
             if (isMinimized) {
                 continue;
+            }
+            if (clearEnabled) {
+                Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
             }
 
             for (Layer* layer : layerstack) {

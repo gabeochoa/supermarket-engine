@@ -25,3 +25,9 @@ glm::vec4 gen_rand_vec4(float min, float max) {
         glm::linearRand(min, max),
     };
 }
+
+struct VectorHash {
+    std::size_t operator()(const glm::vec2& a) const {
+        return std::hash<float>()(a.x) ^ ((std::hash<float>()(a.y) << 1) >> 1);
+    }
+};

@@ -59,6 +59,21 @@ struct Job {
     glm::vec2 endPosition;
     int seconds;
 };
+template <>
+struct fmt::formatter<Job> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    constexpr auto format(Job const& j, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(),  //
+                              "Job({}) {}->{} duration {}",
+                              jobTypeToString(j.type), j.startPosition,
+                              j.endPosition, j.seconds);
+    }
+};
 
 struct JobRange {
     JobType start;

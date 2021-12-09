@@ -4,9 +4,32 @@
 #include "../engine/pch.hpp"
 #include "entity.h"
 #include "job.h"
+#include "vecutil.h"
 
 glm::vec2 lerp(const glm::vec2& x, const glm::vec2& y, float t) {
     return x * (1.f - t) + y * t;
+}
+
+const float REACH_DIST = 1.f;
+const bool USE_ASTAR_PATHING = true;
+//
+#include <queue>
+struct AstarPQItem {
+    glm::vec2 location;
+    double score;
+    bool operator<(const AstarPQItem& s) const { return this->score > s.score; }
+};
+
+std::vector<glm::vec2> reconstruct_path(
+    const std::unordered_map<glm::vec2, glm::vec2, VectorHash>& cameFrom,
+    glm::vec2 cur) {
+    std::vector<glm::vec2> path;
+    path.push_back(cur);
+    while (cameFrom.find(cur) != cameFrom.end()) {
+        cur = cameFrom.at(cur);
+        path.push_back(cur);
+    }
+    return path;
 }
 
 std::vector<glm::vec2> generateWalkablePath(  //
@@ -16,11 +39,51 @@ std::vector<glm::vec2> generateWalkablePath(  //
 ) {
     std::vector<glm::vec2> path;
     glm::vec2 cur = glm::vec2(start);
-    while (glm::distance(cur, end) > movement) {
-        path.push_back(cur);
-        cur = lerp(cur, end, movement);
+
+    if (!USE_ASTAR_PATHING) {
+        while (glm::distance(cur, end) > movement) {
+            path.push_back(cur);
+            cur = lerp(cur, end, movement);
+        }
+        return path;
     }
-    return path;
+
+    // astar
+    prof p(__PROFILE_FUNC__);
+    auto heuristic = [](const glm::vec2& s, const glm::vec2& g) {
+        return abs(s.x - g.x) + abs(s.y - g.y);
+    };
+
+    std::priority_queue<AstarPQItem> openSet;
+    openSet.push(AstarPQItem{start, 0});
+
+    std::unordered_map<glm::vec2, glm::vec2, VectorHash> cameFrom;
+    std::unordered_map<glm::vec2, double, VectorHash> distTraveled;
+
+    distTraveled[start] = 0;
+
+    while (!openSet.empty()) {
+        AstarPQItem qi = openSet.top();
+        openSet.pop();
+        auto cur = qi.location;
+        if (glm::distance(cur, end) < REACH_DIST) break;
+
+        const int x[] = {0, 0, 1, -1, -1, 1, -1, 1};
+        const int y[] = {1, -1, 0, 0, -1, -1, 1, 1};
+
+        for (int i = 0; i < 8; i++) {
+            glm::vec2 neighbor = {cur.x + x[i], cur.y + y[i]};
+            double newCost = distTraveled[cur] + distance(cur, neighbor);
+            if (distTraveled.find(neighbor) == distTraveled.end() ||
+                newCost < distTraveled[neighbor]) {
+                distTraveled[neighbor] = newCost;
+                double prio = newCost + heuristic(neighbor, end);
+                openSet.push(AstarPQItem{.location = neighbor, .score = prio});
+                cameFrom[neighbor] = cur;
+            }
+        }
+    }
+    return reconstruct_path(cameFrom, end);
 }
 
 std::vector<glm::vec2> generateWalkablePath(float movement,
@@ -55,7 +118,6 @@ std::vector<glm::vec2> generateWalkablePath(float movement,
 
 struct MovableEntity : public Entity {
     const glm::vec2 INVALID = {-99.f, -99.f};
-    const float REACH_DIST = 1.f;
     glm::vec2 last = glm::vec2(INVALID);
     std::vector<glm::vec2> path;
     float moveSpeed = 0.01f;
@@ -91,7 +153,7 @@ struct Person : public MovableEntity {
         if (!assignedJob) return;
 
         assignedJob->isAssigned = true;
-        announce(fmt::format("starting job {}", jobTypeToString(job->type)));
+        announce(fmt::format("starting job {}", *job));
     }
 
     void workOrFindMore(Time dt) {

@@ -15,12 +15,12 @@ constexpr float WIN_RATIO = (WIN_W * 1.f) / WIN_H;
 
 constexpr bool IS_DEBUG = true;
 
+static std::vector<std::shared_ptr<Entity>> entities;
+static std::shared_ptr<OrthoCameraController> cameraController;
+
 struct SuperLayer : public Layer {
-    std::vector<std::shared_ptr<Entity>> entities;
-
-    OrthoCameraController cameraController;
-
-    SuperLayer() : Layer("Supermarket"), cameraController(WIN_RATIO, true) {
+    SuperLayer() : Layer("Supermarket") {
+        cameraController.reset(new OrthoCameraController(WIN_RATIO, true));
         auto billy = std::make_shared<Billboard>(
             glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f}, 45.f,
             glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "face");
@@ -39,7 +39,7 @@ struct SuperLayer : public Layer {
         Job j = {.type = JobType::None, .seconds = 150};
         JobQueue::addJob(JobType::None, std::make_shared<Job>(j));
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1; i++) {
             auto emp = Employee();
             // TODO eventually get a texture
             // and fix colored textures
@@ -48,6 +48,7 @@ struct SuperLayer : public Layer {
             emp.color.w = 1.f;
             entities.push_back(std::make_shared<Employee>(emp));
         }
+        Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
     }
 
     virtual ~SuperLayer() {}
@@ -58,13 +59,14 @@ struct SuperLayer : public Layer {
         log_trace(fmt::format("{:.2}s ({:.2} ms) ", dt.s(), dt.ms()));
         prof(__PROFILE_FUNC__);
 
-        cameraController.onUpdate(dt);
+        // Renderer::clear([> color <] {0.1f, 0.1f, 0.1f, 1.0f});
+
+        cameraController->onUpdate(dt);
         for (auto& entity : entities) {
             entity->onUpdate(dt);
         }
 
-        Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
-        Renderer::begin(cameraController.camera);
+        Renderer::begin(cameraController->camera);
 
         for (auto& entity : entities) {
             entity->render();
@@ -86,7 +88,7 @@ struct SuperLayer : public Layer {
 
     virtual void onEvent(Event& event) override {
         log_trace(event.toString());
-        cameraController.onEvent(event);
+        cameraController->onEvent(event);
     }
 };
 
@@ -169,7 +171,6 @@ struct ProfileLayer : public Layer {
             texts.push_back(drawText(t, 10, y, scale));
             y += 30;
         }
-
         // end job queue
 
         gltEndDraw();
@@ -195,18 +196,85 @@ struct ProfileLayer : public Layer {
             &ProfileLayer::onKeyPressed, this, std::placeholders::_1));
     }
 };
+struct EntityDebugLayer : public Layer {
+    EntityDebugLayer() : Layer("EntityDebug") { isMinimized = !IS_DEBUG; }
+
+    virtual ~EntityDebugLayer() {}
+    virtual void onAttach() override {}
+    virtual void onDetach() override {}
+
+    GLTtext* drawText(const std::string& content, float x, float y,
+                      float scale) {
+        GLTtext* text = gltCreateText();
+        gltSetText(text, content.c_str());
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        gltDrawText2D(text, x, y, scale);
+        return text;
+    }
+
+    virtual void onUpdate(Time dt) override {
+        (void)dt;
+        if (isMinimized) {
+            return;
+        }
+
+        prof(__PROFILE_FUNC__);
+
+        gltInit();
+        int y = 10;
+        float scale = 1.f;
+        std::vector<GLTtext*> texts;
+        gltBeginDraw();
+
+        for (auto& e : entities) {
+            auto viewProj = cameraController->camera.viewProjection;
+            auto transformMat =
+                glm::translate(glm::mat4(1.f), {e->position, 0.f}) *
+                glm::scale(glm::mat4(1.0f), {e->size, 1.f});
+            auto pos =
+                viewProj * transformMat * glm::vec4{e->position, 0.f, 0.f};
+            texts.push_back(
+                drawText(fmt::format("{}", *e), pos.x, pos.y, scale));
+        }
+
+        gltEndDraw();
+        for (auto text : texts) gltDeleteText(text);
+        gltTerminate();
+    }
+
+    bool onKeyPressed(KeyPressedEvent event) {
+        if (event.keycode == Key::mapping["Show Entity Overlay"]) {
+            isMinimized = !isMinimized;
+        }
+        return false;
+    }
+
+    virtual void onEvent(Event& event) override {
+        EventDispatcher dispatcher(event);
+        dispatcher.dispatch<KeyPressedEvent>(std::bind(
+            &EntityDebugLayer::onKeyPressed, this, std::placeholders::_1));
+    }
+};
 
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
-    App::get();
+    app.reset(App::create({
+        .width = 1920,
+        .height = 1080,
+        .title = "SuperMarket",
+        .clearEnabled = true,
+    }));
+
+    Layer* super = new SuperLayer();
+    App::get().pushLayer(super);
 
     Layer* profile = new ProfileLayer();
     App::get().pushLayer(profile);
 
-    Layer* super = new SuperLayer();
-    App::get().pushLayer(super);
+    Layer* entityDebug = new EntityDebugLayer();
+    App::get().pushLayer(entityDebug);
 
     App::get().run();
     return 0;
