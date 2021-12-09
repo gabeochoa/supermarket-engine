@@ -144,17 +144,21 @@ enum KeyCode : uint16_t {
 static std::map<std::string, KeyCode> mapping;
 
 static inline void default_keys() {
-    mapping["Esc"] = KeyCode::Escape;
-    mapping["1"] = KeyCode::D0;
-    mapping["2"] = KeyCode::D1;
-    mapping["Left"] = KeyCode::A;
-    mapping["Right"] = KeyCode::D;
     mapping["Up"] = KeyCode::W;
     mapping["Down"] = KeyCode::S;
+    mapping["Left"] = KeyCode::A;
+    mapping["Right"] = KeyCode::D;
+
     mapping["Rotate Clockwise"] = KeyCode::E;
     mapping["Rotate Counterclockwise"] = KeyCode::Q;
+
+    mapping["1"] = KeyCode::D0;
+    mapping["2"] = KeyCode::D1;
+
     mapping["Open Profiler"] = KeyCode::GraveAccent;  // tilde
     mapping["Profiler Hide Filenames"] = KeyCode::Delete;
+
+    mapping["Esc"] = KeyCode::Escape;
 }
 
 static void load_keys() {
