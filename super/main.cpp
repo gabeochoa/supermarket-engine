@@ -6,6 +6,7 @@
 #include "custom_fmt.h"
 #include "entities.h"
 #include "job.h"
+#include "vecutil.h"
 
 // TODO at some point we should have some way to send this to app
 constexpr int WIN_W = 1920;
@@ -38,18 +39,15 @@ struct SuperLayer : public Layer {
         Job j = {.type = JobType::None, .seconds = 150};
         JobQueue::addJob(JobType::None, std::make_shared<Job>(j));
 
-        j = {.type = JobType::IdleWalk,
-             .startPosition = {5.f, 5.f},
-             .endPosition = {12.f, 0.f}};
-        JobQueue::addJob(JobType::IdleWalk, std::make_shared<Job>(j));
-
-        j = {.type = JobType::IdleWalk,
-             .startPosition = glm::circularRand<float>(25.f),
-             .endPosition = glm::circularRand<float>(25.f)};
-        JobQueue::addJob(JobType::IdleWalk, std::make_shared<Job>(j));
-
-        auto emp = std::make_shared<Employee>();
-        entities.push_back(emp);
+        for (int i = 0; i < 10; i++) {
+            auto emp = Employee();
+            // TODO eventually get a texture
+            // and fix colored textures
+            emp.textureName = "__INVALID__";
+            emp.color = gen_rand_vec4(0.3f, 1.0f);
+            emp.color.w = 1.f;
+            entities.push_back(std::make_shared<Employee>(emp));
+        }
     }
 
     virtual ~SuperLayer() {}
@@ -74,6 +72,14 @@ struct SuperLayer : public Layer {
 
         Renderer::end();
 
+        if (JobQueue::numOfJobsWithType(JobType::IdleWalk) < 5) {
+            JobQueue::addJob(
+                JobType::IdleWalk,
+                std::make_shared<Job>(
+                    Job({.type = JobType::IdleWalk,
+                         .startPosition = glm::circularRand<float>(5.f),
+                         .endPosition = glm::circularRand<float>(5.f)})));
+        }
         // Cleanup all completed jobs
         JobQueue::cleanup();
     }

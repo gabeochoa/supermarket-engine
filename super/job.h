@@ -71,6 +71,8 @@ struct JobQueue {
         jobs[(int)t].push_back(j);
     }
 
+    static int numOfJobsWithType(JobType t) { return jobs[(int)t].size(); }
+
     static std::vector<std::shared_ptr<Job>>::iterator getNextMatching(
         JobType t) {
         auto js = jobs[(int)t];

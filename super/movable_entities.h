@@ -144,6 +144,7 @@ struct Employee : public Person {
     }
 
     bool idleWalk(const std::shared_ptr<Job>& j, WorkInput input) {
+        (void)input;
         // Have we reached the endPosition yet?
 
         if (path.empty() &&
