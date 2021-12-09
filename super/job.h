@@ -29,6 +29,22 @@ inline std::string jobTypeToString(JobType t) {
             return "None";
         case JobType::Fill:
             return "Fill";
+        case JobType::Empty:
+            return "Empty";
+        case JobType::IdleWalk:
+            return "IdleWalk";
+        case JobType::INVALID_Customer_Boundary:
+            return "INVALID_Customer_Boundary";
+        case JobType::FindItem:
+            return "FindItem";
+        case JobType::GotoRegister:
+            return "GotoRegister";
+        case JobType::IdleShop:
+            return "IdleShop";
+        case JobType::LeaveStore:
+            return "LeaveStore";
+        case JobType::MAX_JOB_TYPE:
+            return "MAX_JOB_TYPE";
         default:
             log_warn(fmt::format("JobType {} has no toString handler", t));
             return std::to_string(t);
@@ -42,27 +58,6 @@ struct Job {
     glm::vec2 startPosition;
     glm::vec2 endPosition;
     int seconds;
-
-    // Job(JobType type_ = JobType::None, bool isComplete_ = false,
-    // bool isAssigned_ = false, glm::vec2 startPosition_ = {0.f, 0.f},
-    // glm::vec2 endPosition_ = {0.f, 0.f}, int seconds_ = -1)
-    // : type(type_),
-    // isComplete(isComplete_),
-    // isAssigned(isAssigned_),
-    // startPosition(startPosition_),
-    // endPosition(endPosition_),
-    // seconds(seconds_) {}
-
-    // Job() = default;
-    //
-    // Job(const Job& other) {
-    // type = other.type;
-    // isComplete = other.isComplete;
-    // isAssigned = other.isAssigned;
-    // startPosition = other.startPosition;
-    // endPosition = other.endPosition;
-    // seconds = other.seconds;
-    // }
 };
 
 struct JobRange {
@@ -70,14 +65,13 @@ struct JobRange {
     JobType end;
 };
 
-static std::map<int, std::vector<std::shared_ptr<Job> > > jobs;
+static std::map<int, std::vector<std::shared_ptr<Job>>> jobs;
 struct JobQueue {
     static void addJob(JobType t, const std::shared_ptr<Job>& j) {
-        std::cout << "ss" << j->seconds << std::endl;
         jobs[(int)t].push_back(j);
     }
 
-    static std::vector<std::shared_ptr<Job> >::iterator getNextMatching(
+    static std::vector<std::shared_ptr<Job>>::iterator getNextMatching(
         JobType t) {
         auto js = jobs[(int)t];
         for (auto it = js.begin(); it != js.end(); it++) {
@@ -98,6 +92,27 @@ struct JobQueue {
         }
         return nullptr;
     }
+
+    static void cleanup() {
+        for (auto& kv : jobs) {
+            auto it = kv.second.begin();
+            while (it != kv.second.end()) {
+                if ((*it)->isComplete) {
+                    it = kv.second.erase(it);
+                } else {
+                    it++;
+                }
+            }
+        }
+        auto it = jobs.begin();
+        while (it != jobs.end()) {
+            if (it->second.empty()) {
+                it = jobs.erase(it);
+            } else {
+                it++;
+            }
+        }
+    }
 };
 
 struct WorkInput {
@@ -115,8 +130,6 @@ struct JobHandler {
     JobHandler() {}
 
     void registerJobHandler(JobType jt, JobHandlerFn func) {
-        log_info(
-            fmt::format("Registering job handler for {}", jobTypeToString(jt)));
         job_mapping[(int)jt] = func;
     }
 
@@ -127,7 +140,6 @@ struct JobHandler {
                             jobTypeToString(j->type)));
             return;
         }
-
         job_mapping[(int)j->type](j, input);
     }
 };

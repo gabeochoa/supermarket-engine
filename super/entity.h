@@ -113,7 +113,6 @@ struct Person : public Entity {
 
             return;
         }
-        // if (assignedJob) {
         handler.handle(assignedJob, {dt});
         if (assignedJob->isComplete) {
             assignedJob.reset();
@@ -130,11 +129,10 @@ struct Person : public Entity {
     virtual JobRange getJobRange() { return {JobType::None, JobType::None}; }
 
     bool none(const std::shared_ptr<Job>& j, const WorkInput& input) {
-        log_info(
-            fmt::format("working the none job a little, i have {} seconds left",
-                        j->seconds));
         j->seconds = j->seconds - input.dt.s();
         if (j->seconds <= 0) {
+            log_info(fmt::format("completed wait job, i have {} seconds left",
+                                 j->seconds));
             j->isComplete = true;
             return true;
         }

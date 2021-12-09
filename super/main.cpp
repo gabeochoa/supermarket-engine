@@ -32,10 +32,8 @@ struct SuperLayer : public Layer {
                                             glm::vec4{0.2f, 0.7f, 0.0f, 1.0f});
         entities.push_back(billy);
 
-        Job j = {.type = JobType::None, .seconds = 100};
+        Job j = {.type = JobType::None, .seconds = 150};
         JobQueue::addJob(JobType::None, std::make_shared<Job>(j));
-        // JobQueue::addJob(JobType::Fill,
-        // std::make_shared<Job>(JobType::Fill));
 
         auto emp = std::make_shared<Employee>();
         entities.push_back(emp);
@@ -62,6 +60,9 @@ struct SuperLayer : public Layer {
         }
 
         Renderer::end();
+
+        // Cleanup all completed jobs
+        JobQueue::cleanup();
     }
 
     virtual void onEvent(Event& event) override {
