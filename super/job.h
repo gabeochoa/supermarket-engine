@@ -43,17 +43,26 @@ struct Job {
     glm::vec2 endPosition;
     int seconds;
 
-    Job(JobType t)
-        : type(t),
-          isComplete(false),
-          isAssigned(false),
-          startPosition({0.f, 0.f}),
-          endPosition({0.f, 0.f}),
-          seconds(-1) {}
+    // Job(JobType type_ = JobType::None, bool isComplete_ = false,
+    // bool isAssigned_ = false, glm::vec2 startPosition_ = {0.f, 0.f},
+    // glm::vec2 endPosition_ = {0.f, 0.f}, int seconds_ = -1)
+    // : type(type_),
+    // isComplete(isComplete_),
+    // isAssigned(isAssigned_),
+    // startPosition(startPosition_),
+    // endPosition(endPosition_),
+    // seconds(seconds_) {}
 
+    // Job() = default;
     //
-    // internal use
-    bool handled;
+    // Job(const Job& other) {
+    // type = other.type;
+    // isComplete = other.isComplete;
+    // isAssigned = other.isAssigned;
+    // startPosition = other.startPosition;
+    // endPosition = other.endPosition;
+    // seconds = other.seconds;
+    // }
 };
 
 struct JobRange {
@@ -64,6 +73,7 @@ struct JobRange {
 static std::map<int, std::vector<std::shared_ptr<Job> > > jobs;
 struct JobQueue {
     static void addJob(JobType t, const std::shared_ptr<Job>& j) {
+        std::cout << "ss" << j->seconds << std::endl;
         jobs[(int)t].push_back(j);
     }
 

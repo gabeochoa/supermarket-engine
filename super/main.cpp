@@ -32,8 +32,10 @@ struct SuperLayer : public Layer {
                                             glm::vec4{0.2f, 0.7f, 0.0f, 1.0f});
         entities.push_back(billy);
 
-        JobQueue::addJob(JobType::None, std::make_shared<Job>(JobType::None));
-        JobQueue::addJob(JobType::Fill, std::make_shared<Job>(JobType::Fill));
+        Job j = {.type = JobType::None, .seconds = 100};
+        JobQueue::addJob(JobType::None, std::make_shared<Job>(j));
+        // JobQueue::addJob(JobType::Fill,
+        // std::make_shared<Job>(JobType::Fill));
 
         auto emp = std::make_shared<Employee>();
         entities.push_back(emp);

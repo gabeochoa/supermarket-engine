@@ -109,7 +109,8 @@ struct Person : public Entity {
             auto range = getJobRange();
             auto ptr = JobQueue::getNextInRange(range);
             assignedJob = ptr;
-            assignedJob->isAssigned = true;
+            if (assignedJob) assignedJob->isAssigned = true;
+
             return;
         }
         // if (assignedJob) {

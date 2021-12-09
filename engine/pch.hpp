@@ -1,4 +1,11 @@
 #pragma once
+#ifdef __APPLE__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wall"
+#pragma clang diagnostic ignored "-Wdeprecated-volatile"
+#else
+#pragma disable_warn
+#endif
 
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
@@ -6,6 +13,7 @@
 #endif
 #include <GL/glew.h>
 /* Ask for an OpenGL Core Context */
+
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 
@@ -22,14 +30,6 @@
 #include <vector>
 
 // Vendor stuff
-
-#ifdef __APPLE__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wall"
-#else
-#pragma disable_warn
-#endif
-
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #include "../vendor/stb_image.h"
