@@ -52,4 +52,14 @@ struct ItemGroup {
     }
 };
 
+struct Shelf : public Entity {
+    ItemGroup contents;
+
+    Shelf(const glm::vec2& position, const glm::vec2& size, float angle,
+          const glm::vec4& color, const std::string& textureName)
+        : Entity(position, size, angle, color, textureName) {}
+
+    virtual ~Shelf() {}
+};
+
 #include "movable_entities.h"

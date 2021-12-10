@@ -121,7 +121,7 @@ struct MovableEntity : public Entity {
     const glm::vec2 INVALID = {-99.f, -99.f};
     glm::vec2 last = glm::vec2(INVALID);
     std::vector<glm::vec2> path;
-    float moveSpeed = 0.01f;
+    float moveSpeed = 0.05f;
 
     void move() {
         // first time we are moving, just set last to our current position
@@ -134,7 +134,6 @@ struct MovableEntity : public Entity {
         // reached our local target, erase this
         // and next cycle we'll grab the next POI
         if (distance(position, *target) < REACH_DIST) {
-            position = *target;
             path.erase(target);
             // announce(
             // fmt::format(" reached local target, {} to go", path.size()));

@@ -13,6 +13,8 @@ enum LogLevel : int {
     ERROR,
 };
 
+// TODO lets move this to an env var or something
+// we shouldnt have to recompile to change the level
 constexpr auto LOG_LEVEL = LogLevel::TRACE;
 #define M_SHOULD_LOG(x)             \
     {                               \

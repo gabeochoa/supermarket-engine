@@ -51,6 +51,7 @@ struct Renderer3D {
 };
 
 static const char* DEFAULT_TEX = "white";
+static int TEXTURE_INDEX = 1;
 struct Renderer {
     struct SceneData {
         glm::mat4 viewProjection;
@@ -62,6 +63,12 @@ struct Renderer {
 
     static SceneData* sceneData;
 
+    static void addTexture(const std::string& filepath, float tiling = 1.f) {
+        auto tex = sceneData->textureLibrary.load(filepath, TEXTURE_INDEX);
+        tex->tilingFactor = tiling;
+        TEXTURE_INDEX++;
+    }
+
     static void init() {
         sceneData->shaderLibrary.load("./engine/shaders/flat.glsl");
         sceneData->shaderLibrary.load("./engine/shaders/texture.glsl");
@@ -71,11 +78,6 @@ struct Renderer {
         unsigned int data = 0xffffffff;
         whiteTexture->setData(&data);
         sceneData->textureLibrary.add(whiteTexture);
-
-        sceneData->textureLibrary.load("./resources/face.png", 1);
-        sceneData->textureLibrary.get("face")->tilingFactor = 3.f;
-
-        sceneData->textureLibrary.load("./resources/screen.png", 2);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
