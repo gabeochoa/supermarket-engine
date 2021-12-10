@@ -44,7 +44,6 @@ struct Entity {
     }
 
     virtual const Entity* asEntity() const {
-        log_warn("calling as ent");
         return this;
     }
     void announce(const std::string& tosay) const;

@@ -26,6 +26,7 @@ struct OrthoCamera : public Camera {
     }
 
     void setProjection(float left, float right, float bottom, float top) {
+        prof(__PROFILE_FUNC__);
         projection = glm::ortho(left, right, bottom, top, -1.f, 1.f);
         updateViewMat();
     }

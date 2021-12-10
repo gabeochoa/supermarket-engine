@@ -41,6 +41,8 @@ struct App {
     inline static App& get() { return *app; }
 
     App(AppSettings settings) {
+        running = true;
+
         WindowConfig config;
         config.width = settings.width;
         config.height = settings.height;
@@ -53,7 +55,6 @@ struct App {
 
         Key::load_keys();
 
-        running = true;
         window->setEventCallback(M_BIND(onEvent));
 
         Renderer::init();
@@ -114,14 +115,8 @@ struct App {
         while (running) {
             prof(__PROFILE_FUNC__);
             time.end();
-
-            if (isMinimized) {
-                continue;
-            }
-            if (clearEnabled) {
-                Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
-            }
-
+            if (isMinimized) continue;
+            if (clearEnabled) Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
             for (Layer* layer : layerstack) {
                 layer->onUpdate(time);
             }

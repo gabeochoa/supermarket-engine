@@ -95,7 +95,9 @@ struct SuperLayer : public Layer {
 struct ProfileLayer : public Layer {
     bool showFilenames;
     ProfileLayer() : Layer("Profiling"), showFilenames(false) {
-        isMinimized = true;  // !IS_DEBUG;
+        isMinimized = !IS_DEBUG;
+        // Reset all profiling
+        _acc.clear();
     }
 
     virtual ~ProfileLayer() {}
@@ -186,7 +188,10 @@ struct ProfileLayer : public Layer {
         if (event.keycode == Key::mapping["Profiler Hide Filenames"]) {
             showFilenames = !showFilenames;
         }
-
+        if(event.keycode == Key::LeftControl){
+            _acc.clear();
+        }
+        // log_info(std::to_string(event.keycode));
         return false;
     }
 
@@ -224,13 +229,13 @@ struct EntityDebugLayer : public Layer {
         int y = 10;
         float scale = 0.01f;
         std::vector<GLTtext*> texts;
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
         gltBeginDraw();
 
         for (auto& e : entities) {
             auto s = fmt::format("{}", *e);
             GLTtext* text = gltCreateText();
             gltSetText(text, s.c_str());
-            gltColor(1.0f, 1.0f, 1.0f, 1.0f);
 
             // V = C^-1
             auto V = cameraController->camera.view;

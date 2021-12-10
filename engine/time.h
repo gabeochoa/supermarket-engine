@@ -36,11 +36,15 @@ struct Samples {
     bool has_looped;
     double sum, avg, min, max;
     Samples()
-        : filename("unknown"), index(0), numItems(0), sum(0), avg(0), min(0), max(0) {}
+        : filename("unknown"),
+          index(0),
+          numItems(0),
+          sum(0),
+          avg(0),
+          min(0),
+          max(0) {}
 
-    void setFilename(const std::string& fn){
-        filename = fn;
-    }
+    void setFilename(const std::string& fn) { filename = fn; }
 
     double& operator[](int index) { return samples[index]; }
 
@@ -95,22 +99,23 @@ struct prof {
     }
 };
 
-inline const std::string computeFileLocation(const std::string& file, int lineNum) {
+inline const std::string computeFileLocation(const std::string& file,
+                                             int lineNum) {
     return fmt::format("{}:{} ", file, lineNum);
 }
 
 // https://stackoverflow.com/a/29856690
 inline const std::string computeMethodName(const std::string& function,
-                                    const std::string& prettyFunction) {
-    size_t locFunName = prettyFunction.find(
-        function);  // If the input is a constructor, it gets the beginning of
-                    // the class name, not of the method. That's why later on we
-                    // have to search for the first parenthesys
+                                           const std::string& prettyFunction) {
+    // If the input is a constructor, it gets the beginning of
+    // the class name, not of the method. That's why later on we
+    // have to search for the first parenthesys
+    size_t locFunName = prettyFunction.find(function);
     size_t begin = prettyFunction.rfind(" ", locFunName) + 1;
-    size_t end = prettyFunction.find(
-        "(", locFunName + function.length());  // Adding function.length() make
-                                               // this faster and also allows to
-                                               // handle operator parenthesis!
+    // Adding function.length() make
+    // this faster and also allows to
+    // handle operator parenthesis!
+    size_t end = prettyFunction.find("(", locFunName + function.length());
     auto suffix = prettyFunction[end + 1] == ')' ? "()" : "(...)";
     return fmt::format("{}{}", prettyFunction.substr(begin, end - begin),
                        suffix);
