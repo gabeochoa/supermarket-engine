@@ -11,7 +11,7 @@ glm::vec2 lerp(const glm::vec2& x, const glm::vec2& y, float t) {
 }
 
 const float REACH_DIST = 1.f;
-const bool USE_ASTAR_PATHING = true;
+// TODO switch to a star
 //
 #include <queue>
 struct AstarPQItem {
@@ -37,18 +37,12 @@ std::vector<glm::vec2> generateWalkablePath(  //
     const glm::vec2& start,                   //
     const glm::vec2& end                      //
 ) {
-    std::vector<glm::vec2> path;
-    glm::vec2 cur = glm::vec2(start);
-
-    if (!USE_ASTAR_PATHING) {
-        while (glm::distance(cur, end) > movement) {
-            path.push_back(cur);
-            cur = lerp(cur, end, movement);
-        }
-        return path;
-    }
+    // TODO currently only moving 1.f at a time
+    (void)movement;
 
     prof p(__PROFILE_LOC__("astar"));
+    std::vector<glm::vec2> path;
+    glm::vec2 cur = glm::vec2(start);
 
     // astar
     auto heuristic = [](const glm::vec2& s, const glm::vec2& g) {
@@ -121,7 +115,7 @@ struct MovableEntity : public Entity {
     const glm::vec2 INVALID = {-99.f, -99.f};
     glm::vec2 last = glm::vec2(INVALID);
     std::vector<glm::vec2> path;
-    float moveSpeed = 0.05f;
+    float moveSpeed = 0.1f;
 
     void move() {
         // first time we are moving, just set last to our current position
@@ -140,7 +134,7 @@ struct MovableEntity : public Entity {
             return;
         }
 
-        position = lerp(position, *target, moveSpeed / 100);
+        position = lerp(position, *target, moveSpeed / 50);
     }
 
     virtual void onUpdate(Time dt) {
@@ -213,16 +207,115 @@ struct Employee : public Person {
         return {JobType::None, JobType::INVALID_Customer_Boundary};
     }
 
+    bool walkToLocation(const glm::vec2 location) {
+        // Have we reached the position yet?
+        if (path.empty() && glm::distance(position, location) < REACH_DIST) {
+            // our path should be empty but just in case
+            path.clear();
+            return true;
+        }
+        // Did we already generate a path?
+        if (!path.empty()) {
+            move();
+            return false;
+        }
+        announce(
+            fmt::format(" distance to location end {}  (need to be within {})",
+                        glm::distance(position, location), REACH_DIST));
+
+        path = generateWalkablePath(  //
+            moveSpeed,                //
+            position,                 //
+            location);
+        return false;
+    }
+
     bool workFill(const std::shared_ptr<Job>& j, WorkInput input) {
-        (void)j;
-        (void)input;
+        if (j->reg.find("amount") != j->reg.end()) {
+            j->reg["amount"] = 0;
+        }
+
+        switch (j->jobStatus) {
+            case 0:  // Just started the job
+            {
+                // walk to start...
+                bool isAtStartLocation = walkToLocation(j->startPosition);
+                if (isAtStartLocation) {
+                    announce("got to start Location");
+                    j->jobStatus = 1;  // grab something...
+                }
+            } break;
+            case 1:  // Reached start
+            {
+                announce("grab something");
+                // TODO this should be  "Storage" instead of a shelf but shelf
+                // is a little easier right now
+                auto shelves = Shelf::getShelvesInRange(position, REACH_DIST);
+                // announce(fmt::format("trying to grab {} item{} from {}",
+                // j->itemAmount, j->itemID,
+                // (*shelves.begin())->contents));
+                // TODO need to support finding a shelf instead of
+                // setting the start and end manually
+                if (shelves.empty()) {
+                    log_warn("no matching shelf, so uh what can we do");
+                    j->jobStatus = 5;
+                    return false;
+                }
+
+                int amt = (*shelves.begin())
+                              ->contents.removeItem(j->itemID, j->itemAmount);
+                inventory.addItem(j->itemID, amt);
+                if (j->itemAmount - inventory[j->itemID] > 0) {
+                    log_warn("shelf didnt have enough, so giving up");
+                }
+                // announce(fmt::format("tried to grab {} from {}, howd it go?
+                // ", j->itemID, (*shelves.begin())->contents));
+                j->jobStatus = 2;
+            } break;
+            case 2:  // Grabbed item
+            {
+                // walk to end...
+                bool isAtEndLocation = walkToLocation(j->endPosition);
+                if (isAtEndLocation) {
+                    announce("got to end Location");
+                    j->jobStatus = 3;  // drop it off something...
+                }
+            } break;
+            case 3:  // Got to End
+            {
+                announce("drop it off ");
+                auto shelves = Shelf::getShelvesInRange(position, REACH_DIST);
+                // TODO need to support finding a shelf instead of
+                // setting the start and end manually
+                if (shelves.empty()) {
+                    log_warn("no matching shelf, so uh what can we do");
+                    j->jobStatus = 5;
+                    return false;
+                }
+                (*shelves.begin())
+                    ->contents.addItem(j->itemID, inventory[j->itemID]);
+                inventory.removeItem(j->itemID, inventory[j->itemID]);
+                j->jobStatus = 4;
+            } break;
+            case 4:  // Dropped off Item
+            {
+                j->isComplete = true;
+                return true;
+            } break;
+
+            case 5:  // Something bad happened...
+            {
+                log_warn("Something bad happened and i couldnt finish");
+                j->isComplete = true;
+                return true;
+            } break;
+        }
         return false;
     }
 
     bool idleWalk(const std::shared_ptr<Job>& j, WorkInput input) {
         (void)input;
         // Have we reached the endPosition yet?
-
         if (path.empty() &&
             glm::distance(position, j->endPosition) < REACH_DIST) {
             // our path should be empty but just in case

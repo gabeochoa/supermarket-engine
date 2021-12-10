@@ -14,7 +14,6 @@ constexpr int WIN_H = 1080;
 constexpr float WIN_RATIO = (WIN_W * 1.f) / WIN_H;
 constexpr bool IS_DEBUG = true;
 
-static std::vector<std::shared_ptr<Entity>> entities;
 static std::shared_ptr<OrthoCameraController> cameraController;
 
 // Requires access to the camera and entitites
@@ -29,7 +28,7 @@ struct SuperLayer : public Layer {
         Renderer::addTexture("./resources/face.png");
         Renderer::addTexture("./resources/screen.png");
 
-        ///
+        ////////////////////////////////////////////////////////
 
         auto billy = std::make_shared<Billboard>(
             glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f}, 45.f,
@@ -45,10 +44,21 @@ struct SuperLayer : public Layer {
         shelf->contents.addItem(3, 9);
         entities.push_back(shelf);
 
-        Job j = {.type = JobType::None, .seconds = 150};
-        JobQueue::addJob(JobType::None, std::make_shared<Job>(j));
+        auto shelf2 = std::make_shared<Shelf>(
+            glm::vec2{1.f, -3.f}, glm::vec2{1.f, 1.f}, 0.f,
+            glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
+        entities.push_back(shelf2);
 
-        for (int i = 0; i < 10; i++) {
+        Job j = {
+            .type = JobType::Fill,
+            .startPosition = shelf->position,
+            .endPosition = shelf2->position,
+            .itemID = 0,
+            .itemAmount = 1,
+        };
+        JobQueue::addJob(JobType::Fill, std::make_shared<Job>(j));
+
+        for (int i = 0; i < 1; i++) {
             auto emp = Employee();
             // TODO eventually get a texture
             // and fix colored textures

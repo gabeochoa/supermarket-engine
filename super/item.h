@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../engine/pch.hpp"
+#include "../vendor/fmt/ostream.h"
 #include "entity.h"
 
 struct Item {
@@ -37,7 +38,7 @@ struct ItemManager {
 };
 
 struct ItemGroup {
-    std::unordered_map<int, int> group;
+    std::map<int, int> group;
 
     void addItem(int itemID, int amount) {
         if (group.find(itemID) == group.end()) {
@@ -46,6 +47,7 @@ struct ItemGroup {
         group[itemID] += amount;
     }
 
+    // returns the amount removed
     int removeItem(int itemID, int amount) {
         auto it = group.find(itemID);
         if (it == group.end()) {
@@ -63,9 +65,21 @@ struct ItemGroup {
         return has;
     }
 
+    int operator[](int id) const { return group.find(id)->second; }
     auto size() { return group.size(); }
     auto begin() { return group.begin(); }
     auto end() { return group.end(); }
+
+    auto begin() const { return group.begin(); }
+    auto end() const { return group.end(); }
+
+    friend std::ostream& operator<<(std::ostream& os, const ItemGroup& ig) {
+        for (auto& kv : ig.group) {
+            os << "(" << kv.first << "," << kv.second << ")"
+               << "\n";
+        }
+        return os;
+    }
 };
 
 struct Shelf : public Entity {
@@ -128,6 +142,18 @@ struct Shelf : public Entity {
         }
 
         Entity::render();
+    }
+
+    static std::vector<std::shared_ptr<Shelf>> getShelvesInRange(glm::vec2 pos,
+                                                                 float range) {
+        std::vector<std::shared_ptr<Shelf>> shelves;
+        for (auto& e : entities) {
+            if (typeid(*e) != typeid(Shelf)) continue;
+            if (glm::distance(pos, e->position) < range) {
+                shelves.push_back(dynamic_pointer_cast<Shelf>(e));
+            }
+        }
+        return shelves;
     }
 };
 

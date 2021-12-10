@@ -58,7 +58,18 @@ struct Job {
     glm::vec2 startPosition;
     glm::vec2 endPosition;
     int seconds;
+
+    //
+    int itemID;
+    int itemAmount;
+
+    // TODO do we need dynamic types so that we can enforce extra data?
+    // just gotta remember which you are using
+    // if you mess it up well too bad
+    int jobStatus = 0;
+    std::map<std::string, int> reg;
 };
+
 template <>
 struct fmt::formatter<Job> {
     template <typename ParseContext>
@@ -134,8 +145,6 @@ struct JobQueue {
 
 struct WorkInput {
     Time dt;
-
-    WorkInput(Time t) : dt(t) {}
 };
 
 typedef std::function<bool(const std::shared_ptr<Job>&, WorkInput input)>
