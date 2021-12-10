@@ -135,7 +135,7 @@ struct EntityDebugLayer : public Layer {
         prof(__PROFILE_FUNC__);
 
         gltInit();
-        float scale = 0.01f;
+        float scale = 0.003f;
         std::vector<GLTtext*> texts;
         gltColor(1.0f, 1.0f, 1.0f, 1.0f);
         gltBeginDraw();

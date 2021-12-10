@@ -34,7 +34,7 @@ struct SuperLayer : public Layer {
             glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, "face");
         entities.push_back(billy);
 
-        auto shelf = std::make_shared<Billboard>(
+        auto shelf = std::make_shared<Shelf>(
             glm::vec2{1.f, 1.f}, glm::vec2{1.f, 1.f}, 0.f,
             glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
         entities.push_back(shelf);
@@ -51,7 +51,6 @@ struct SuperLayer : public Layer {
             emp.color.w = 1.f;
             entities.push_back(std::make_shared<Employee>(emp));
         }
-        Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
     }
 
     virtual ~SuperLayer() {}

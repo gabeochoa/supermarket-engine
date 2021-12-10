@@ -43,10 +43,10 @@ struct Entity {
         }
     }
 
-    virtual const Entity* asEntity() const {
-        return this;
-    }
+    virtual const Entity* asEntity() const { return this; }
     void announce(const std::string& tosay) const;
+
+    virtual const char* typeString() const = 0;
 };
 
 template <>
@@ -58,7 +58,8 @@ struct fmt::formatter<Entity> {
 
     template <typename FormatContext>
     constexpr auto format(Entity const& e, FormatContext& ctx) {
-        return fmt::format_to(ctx.out(), "Entity{} at {}", e.id, e.position);
+        return fmt::format_to(ctx.out(), "{}{} at {}", e.typeString(), e.id,
+                              e.position);
     }
 };
 

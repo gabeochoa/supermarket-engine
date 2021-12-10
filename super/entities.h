@@ -15,6 +15,7 @@ struct Billboard : public Entity {
         : Entity(position, size, angle, color, textureName) {}
 
     virtual ~Billboard() {}
+    virtual const char* typeString() const override { return "Billboard"; }
 };
 
 struct Item : public Entity {
@@ -22,6 +23,8 @@ struct Item : public Entity {
     const double price;
 
     Item(const char* n, const double p) : name(n), price(p) {}
+
+    virtual const char* typeString() const override { return "Item"; }
 };
 
 struct ItemGroup {
@@ -60,6 +63,7 @@ struct Shelf : public Entity {
         : Entity(position, size, angle, color, textureName) {}
 
     virtual ~Shelf() {}
+    virtual const char* typeString() const override { return "Shelf"; }
 };
 
 #include "movable_entities.h"

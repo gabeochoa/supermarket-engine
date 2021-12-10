@@ -152,6 +152,8 @@ struct MovableEntity : public Entity {
             angle += 360;
         }
     }
+
+    virtual const char* typeString() const = 0;
 };
 
 struct Person : public MovableEntity {
@@ -200,6 +202,8 @@ struct Person : public MovableEntity {
         }
         return false;
     }
+
+    virtual const char* typeString() const = 0;
 };
 
 struct Employee : public Person {
@@ -266,6 +270,7 @@ struct Employee : public Person {
         //
         Person::onUpdate(dt);
     }
+    virtual const char* typeString() const override { return "Employee"; }
 };
 
 struct Customer : public Person {
@@ -296,4 +301,6 @@ struct Customer : public Person {
         //
         Person::onUpdate(dt);
     }
+
+    virtual const char* typeString() const override { return "Customer"; }
 };
