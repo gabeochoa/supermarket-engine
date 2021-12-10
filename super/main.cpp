@@ -29,6 +29,8 @@ struct SuperLayer : public Layer {
         Renderer::addTexture("./resources/face.png");
         Renderer::addTexture("./resources/screen.png");
 
+        ///
+
         auto billy = std::make_shared<Billboard>(
             glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f}, 45.f,
             glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, "face");
@@ -37,6 +39,10 @@ struct SuperLayer : public Layer {
         auto shelf = std::make_shared<Shelf>(
             glm::vec2{1.f, 1.f}, glm::vec2{1.f, 1.f}, 0.f,
             glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
+        shelf->contents.addItem(0, 1);
+        shelf->contents.addItem(1, 6);
+        shelf->contents.addItem(2, 7);
+        shelf->contents.addItem(3, 9);
         entities.push_back(shelf);
 
         Job j = {.type = JobType::None, .seconds = 150};

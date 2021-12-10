@@ -8,3 +8,4 @@ windows_build/*
 *.gch
 *.d
 old/*
+*.tmp
