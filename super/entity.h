@@ -13,7 +13,7 @@ struct Entity {
     std::string textureName;
 
     Entity()
-        : id(ENTITY_ID_GEN++),
+        : id(ENTITY_ID_GEN),
           position({0.f, 0.f}),
           size({1.f, 1.f}),
           angle(0.f),
@@ -30,15 +30,7 @@ struct Entity {
 
     virtual ~Entity() {}
 
-    virtual void onUpdate(Time dt) {
-        (void)dt;
-        if (angle >= 360) {
-            angle -= 360;
-        }
-        if (angle < 0) {
-            angle += 360;
-        }
-    }
+    virtual void onUpdate(Time dt) {}
 
     virtual void render() {
         // computing angle transforms are expensive so
@@ -52,7 +44,8 @@ struct Entity {
     }
 
     virtual const Entity* asEntity() const {
-        return dynamic_cast<const Entity*>(this);
+        log_warn("calling as ent");
+        return this;
     }
     void announce(const std::string& tosay) const;
 };

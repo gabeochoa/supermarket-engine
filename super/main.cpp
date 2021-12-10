@@ -39,7 +39,7 @@ struct SuperLayer : public Layer {
         Job j = {.type = JobType::None, .seconds = 150};
         JobQueue::addJob(JobType::None, std::make_shared<Job>(j));
 
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 10; i++) {
             auto emp = Employee();
             // TODO eventually get a texture
             // and fix colored textures
@@ -95,7 +95,7 @@ struct SuperLayer : public Layer {
 struct ProfileLayer : public Layer {
     bool showFilenames;
     ProfileLayer() : Layer("Profiling"), showFilenames(false) {
-        isMinimized = !IS_DEBUG;
+        isMinimized = true;  // !IS_DEBUG;
     }
 
     virtual ~ProfileLayer() {}
@@ -222,19 +222,33 @@ struct EntityDebugLayer : public Layer {
 
         gltInit();
         int y = 10;
-        float scale = 1.f;
+        float scale = 0.01f;
         std::vector<GLTtext*> texts;
         gltBeginDraw();
 
         for (auto& e : entities) {
-            auto viewProj = cameraController->camera.viewProjection;
-            auto transformMat =
-                glm::translate(glm::mat4(1.f), {e->position, 0.f}) *
-                glm::scale(glm::mat4(1.0f), {e->size, 1.f});
-            auto pos =
-                viewProj * transformMat * glm::vec4{e->position, 0.f, 0.f};
-            texts.push_back(
-                drawText(fmt::format("{}", *e), pos.x, pos.y, scale));
+            auto s = fmt::format("{}", *e);
+            GLTtext* text = gltCreateText();
+            gltSetText(text, s.c_str());
+            gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+            // V = C^-1
+            auto V = cameraController->camera.view;
+            auto P = cameraController->camera.projection;
+            auto pos = glm::vec3{
+                e->position.x,
+                e->position.y + gltGetTextHeight(text, scale),  //
+                0.f                                             //
+            };
+            // M = T * R * S
+            auto M =  // model matrix
+                glm::translate(glm::mat4(1.f), pos) *
+                glm::scale(glm::mat4(1.0f), {scale, -scale, 1.f});
+
+            auto mvp = P * V * M;
+
+            gltDrawText(text, glm::value_ptr(mvp));
+            texts.push_back(text);
         }
 
         gltEndDraw();

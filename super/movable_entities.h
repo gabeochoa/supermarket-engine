@@ -141,6 +141,17 @@ struct MovableEntity : public Entity {
         }
 
         position = lerp(position, *target, moveSpeed / 100);
+
+    }
+
+    virtual void onUpdate(Time dt) {
+        (void)dt;
+        if (angle >= 360) {
+            angle -= 360;
+        }
+        if (angle < 0) {
+            angle += 360;
+        }
     }
 };
 
