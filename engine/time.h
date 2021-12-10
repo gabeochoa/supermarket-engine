@@ -29,12 +29,11 @@ struct Time {
 
 struct Samples {
     std::string filename;
-    int size = 1000;
-    double samples[1000];
+    int size = 100;
+    float samples[100];
     int index;
     int numItems;
-    bool has_looped;
-    double sum, avg, min, max;
+    float sum, avg, min, max;
     Samples()
         : filename("unknown"),
           index(0),
@@ -46,11 +45,11 @@ struct Samples {
 
     void setFilename(const std::string& fn) { filename = fn; }
 
-    double& operator[](int index) { return samples[index]; }
+    float& operator[](int index) { return samples[index]; }
 
-    double average() const { return sum / std::min(numItems, size); }
+    float average() const { return sum / std::min(numItems, size); }
 
-    void addSample(double s) {
+    void addSample(float s) {
         index = (index + 1) % size;
         numItems++;
         sum += s;
@@ -58,7 +57,7 @@ struct Samples {
         if (numItems < size) {
             samples[index] = s;
         } else {
-            double& old = samples[index];
+            float& old = samples[index];
             sum -= old;
             old = s;
         }
@@ -106,7 +105,8 @@ inline const std::string computeFileLocation(const std::string& file,
 
 // https://stackoverflow.com/a/29856690
 inline const std::string computeMethodName(const std::string& function,
-                                           const std::string& prettyFunction) {
+                                           const std::string& prettyFunction,
+                                           const char* extra) {
     // If the input is a constructor, it gets the beginning of
     // the class name, not of the method. That's why later on we
     // have to search for the first parenthesys
@@ -117,10 +117,14 @@ inline const std::string computeMethodName(const std::string& function,
     // handle operator parenthesis!
     size_t end = prettyFunction.find("(", locFunName + function.length());
     auto suffix = prettyFunction[end + 1] == ')' ? "()" : "(...)";
-    return fmt::format("{}{}", prettyFunction.substr(begin, end - begin),
-                       suffix);
+    return fmt::format("{}{}{}", prettyFunction.substr(begin, end - begin),
+                       suffix, extra);
 }
 
 #define __PROFILE_FUNC__                             \
     computeFileLocation(__FILE__, __LINE__).c_str(), \
-        computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__).c_str()
+        computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__, "").c_str()
+
+#define __PROFILE_LOC__(x)                           \
+    computeFileLocation(__FILE__, __LINE__).c_str(), \
+        computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__, x).c_str()

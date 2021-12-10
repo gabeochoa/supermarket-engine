@@ -59,8 +59,6 @@ struct SuperLayer : public Layer {
         log_trace(fmt::format("{:.2}s ({:.2} ms) ", dt.s(), dt.ms()));
         prof(__PROFILE_FUNC__);
 
-        // Renderer::clear([> color <] {0.1f, 0.1f, 0.1f, 1.0f});
-
         cameraController->onUpdate(dt);
         for (auto& entity : entities) {
             entity->onUpdate(dt);
@@ -94,10 +92,13 @@ struct SuperLayer : public Layer {
 
 struct ProfileLayer : public Layer {
     bool showFilenames;
+    float seconds;
+
     ProfileLayer() : Layer("Profiling"), showFilenames(false) {
         isMinimized = !IS_DEBUG;
         // Reset all profiling
         _acc.clear();
+        seconds = 0.f;
     }
 
     virtual ~ProfileLayer() {}
@@ -107,42 +108,38 @@ struct ProfileLayer : public Layer {
     GLTtext* drawText(const std::string& content, int x, int y, float scale) {
         GLTtext* text = gltCreateText();
         gltSetText(text, content.c_str());
-        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
         gltDrawText2D(text, x, y, scale);
         return text;
     }
 
     virtual void onUpdate(Time dt) override {
-        (void)dt;
+        prof(__PROFILE_FUNC__);
+
         if (isMinimized) {
             return;
         }
 
-        prof(__PROFILE_FUNC__);
-
-        gltInit();
         int y = 10;
         float scale = 1.f;
-        std::vector<GLTtext*> texts;
+        gltInit();
         gltBeginDraw();
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        std::vector<GLTtext*> texts;
 
         std::vector<SamplePair> pairs;
-        for (const auto& x : _acc) {
-            pairs.push_back(x);
-        }
-
+        pairs.insert(pairs.end(), _acc.begin(), _acc.end());
         sort(pairs.begin(), pairs.end(),
              [](const SamplePair& a, const SamplePair& b) {
                  return a.second.average() > b.second.average();
              });
 
         for (const auto& x : pairs) {
-            auto name = x.first;
             auto stats = x.second;
-            auto filename = showFilenames ? stats.filename : "";
-            std::string t = fmt::format("{}{}: avg: {:.2f}ns", filename, name,
-                                        stats.average());
-            texts.push_back(drawText(t, 10, y, scale));
+            texts.push_back(
+                drawText(fmt::format("{}{}: avg: {:.2f}ns",
+                                     showFilenames ? stats.filename : "",
+                                     x.first, stats.average()),
+                         10, y, scale));
             y += 30;
         }
 
@@ -160,16 +157,14 @@ struct ProfileLayer : public Layer {
         y += 30;
 
         for (const auto& x : jobs) {
-            JobType type = (JobType)x.first;
             auto job_list = x.second;
-            int num_assigned =
-                std::count_if(job_list.begin(), job_list.end(),
-                              [](const std::shared_ptr<Job>& job) {
-                                  return job->isAssigned;
-                              });
-            std::string t =
-                fmt::format("{}: {} ({} assigned)", jobTypeToString(type),
-                            job_list.size(), num_assigned);
+            int num_assigned = 0;
+            for (auto it = job_list.begin(); it != job_list.end(); it++) {
+                if ((*it)->isAssigned) num_assigned++;
+            }
+            std::string t = fmt::format("{}: {} ({} assigned)",
+                                        jobTypeToString((JobType)x.first),
+                                        job_list.size(), num_assigned);
             texts.push_back(drawText(t, 10, y, scale));
             y += 30;
         }
@@ -188,7 +183,7 @@ struct ProfileLayer : public Layer {
         if (event.keycode == Key::mapping["Profiler Hide Filenames"]) {
             showFilenames = !showFilenames;
         }
-        if(event.keycode == Key::LeftControl){
+        if (event.keycode == Key::mapping["Profiler Clear Stats"]) {
             _acc.clear();
         }
         // log_info(std::to_string(event.keycode));

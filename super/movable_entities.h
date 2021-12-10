@@ -48,8 +48,9 @@ std::vector<glm::vec2> generateWalkablePath(  //
         return path;
     }
 
+    prof p(__PROFILE_LOC__("astar"));
+
     // astar
-    prof p(__PROFILE_FUNC__);
     auto heuristic = [](const glm::vec2& s, const glm::vec2& g) {
         return abs(s.x - g.x) + abs(s.y - g.y);
     };
@@ -141,7 +142,6 @@ struct MovableEntity : public Entity {
         }
 
         position = lerp(position, *target, moveSpeed / 100);
-
     }
 
     virtual void onUpdate(Time dt) {

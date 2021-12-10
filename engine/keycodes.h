@@ -158,6 +158,7 @@ static inline void default_keys() {
     mapping["Open Profiler"] = KeyCode::GraveAccent;   // tilde
     mapping["Show Entity Overlay"] = KeyCode::Insert;  // tilde
     mapping["Profiler Hide Filenames"] = KeyCode::Delete;
+    mapping["Profiler Clear Stats"] = KeyCode::LeftControl;
 
     mapping["Esc"] = KeyCode::Escape;
 }
