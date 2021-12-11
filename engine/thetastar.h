@@ -56,6 +56,7 @@ struct Theta {
     const float x[8] = {0, 0, 1, -1, -1, 1, -1, 1};
     const float y[8] = {1, -1, 0, 0, -1, -1, 1, 1};
     const float dst = 0.25f;
+    const int LOOP_LIMIT = 10000;
 
     glm::vec2 start;
     glm::vec2 end;
@@ -86,7 +87,10 @@ struct Theta {
     }
 
     std::vector<glm::vec2> go() {
+        int i = 0;
         while (!openSet.empty()) {
+            if (i++ > LOOP_LIMIT) break;
+
             ThetaPQ::Qi qi = openSet.pop();
             auto s = qi.first;
             // wow we got here already
@@ -118,6 +122,8 @@ struct Theta {
     }
 
     bool line_of_sight(const glm::vec2& parent, const glm::vec2& neighbor) {
+        // TODO - i kinda like not doing line of sight...
+        return false;
         // technically we can see it but cant walk to it its in the wall?
         if (!isWalkable(neighbor)) {
             return false;
@@ -164,9 +170,11 @@ struct Theta {
 
     std::vector<glm::vec2> reconstruct_path(glm::vec2 cur) {
         std::vector<glm::vec2> path;
+        path.push_back(end);
         path.push_back(cur);
         while (parent.find(cur) != parent.end() && cur != start) {
             cur = parent.at(cur);
+            if (cur.x == 0.f && cur.y == 0.f) continue;
             path.push_back(cur);
         }
         return path;

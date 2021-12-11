@@ -96,7 +96,6 @@ struct SuperLayer : public Layer {
         // JobType::IdleWalk,
         // std::make_shared<Job>(
         // Job({.type = JobType::IdleWalk,
-        // .startPosition = glm::circularRand<float>(5.f),
         // .endPosition = glm::circularRand<float>(5.f)})));
         // }
         // Cleanup all completed jobs
@@ -161,9 +160,27 @@ void theta_test() {
     return;
 }
 
+void point_collision_test() {
+    auto shelf =
+        std::make_shared<Shelf>(glm::vec2{0.f, 0.f}, glm::vec2{2.f, 2.f}, 0.f,
+                                glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
+
+    M_ASSERT(shelf->pointCollides(glm::vec2{0.f, 0.f}) == true, "00");
+    M_ASSERT(shelf->pointCollides(glm::vec2{1.f, 0.f}) == true, "10");
+    M_ASSERT(shelf->pointCollides(glm::vec2{0.f, 1.f}) == true, "01");
+    M_ASSERT(shelf->pointCollides(glm::vec2{1.f, 1.f}) == true, "11");
+    M_ASSERT(shelf->pointCollides(glm::vec2{3.f, 3.f}) == false, "33");
+    M_ASSERT(shelf->pointCollides(glm::vec2{01.f, 0.f}) == true, "010");
+    M_ASSERT(shelf->pointCollides(glm::vec2{1.9f, 0.f}) == true, "110");
+    M_ASSERT(shelf->pointCollides(glm::vec2{01.f, 1.f}) == true, "011");
+    M_ASSERT(shelf->pointCollides(glm::vec2{1.1f, 1.f}) == true, "111");
+    M_ASSERT(shelf->pointCollides(glm::vec2{2.0001f, 3.f}) == false, "200013");
+}
+
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
+    point_collision_test();
 
     app.reset(App::create({
         .width = 1920,

@@ -7,32 +7,14 @@
 #include "job.h"
 
 const float REACH_DIST = 0.2f;
-// TODO switch to a star
-//
-#include <queue>
-struct AstarPQItem {
-    glm::vec2 location;
-    double score;
-    bool operator<(const AstarPQItem& s) const { return this->score > s.score; }
-};
 
-std::vector<glm::vec2> reconstruct_path(
-    const std::unordered_map<glm::vec2, glm::vec2, VectorHash>& cameFrom,
-    glm::vec2 cur) {
-    std::vector<glm::vec2> path;
-    path.push_back(cur);
-    while (cameFrom.find(cur) != cameFrom.end()) {
-        cur = cameFrom.at(cur);
-        path.push_back(cur);
-    }
-    return path;
-}
-
-// TODO memoize this function?
-// TODO write a memoize decorator?
-bool isWalkablePosition(int skipID, const glm::vec2& pos) {
+bool isWalkable(const glm::vec2& pos) {
+    // is valid location
     for (auto& e : entities) {
-        if (e->id == skipID) continue;
+        auto s = dynamic_pointer_cast<Shelf>(e);
+        if (!s) continue;
+        // TODO skipid if collision with other types of objec
+        // if (e->id == skipID) continue;
         if (e->pointCollides(pos)) return false;
     }
     return true;
@@ -44,114 +26,15 @@ std::vector<glm::vec2> generateWalkablePath(  //
     const glm::vec2& start,                   //
     const glm::vec2& end                      //
 ) {
-    if (true) {
-        log_info("starting theta");
-        Theta t(start, end, [&](const glm::vec2& pos) {
-            // is valid location
-            for (auto& e : entities) {
-                if (e->id == skipID) continue;
-                if (e->pointCollides(pos)) return false;
-            }
-            return true;
-        });
-        auto a = t.go();
-        std::reverse(a.begin(), a.end());
-        for (auto i : a) {
-            log_info(fmt::format("{}", i));
-        }
-        return a;
+    (void)movement;
+    log_info("starting theta");
+    Theta t(start, end, isWalkable);
+    auto a = t.go();
+    std::reverse(a.begin(), a.end());
+    for (auto i : a) {
+        log_info(fmt::format("{}", i));
     }
-
-    const float mv = movement / 10.f;
-    const float x[] = {0 * mv,  0 * mv, 1 * mv,  -1 * mv,
-                       -1 * mv, 1 * mv, -1 * mv, 1 * mv};
-    const float y[] = {1 * mv,  -1 * mv, 0 * mv, 0 * mv,
-                       -1 * mv, -1 * mv, 1 * mv, 1 * mv};
-
-    if (false) {
-        std::vector<glm::vec2> path;
-        glm::vec2 cur = glm::vec2(start);
-        while (glm::distance(cur, end) > movement) {
-            path.push_back(cur);
-            cur = lerp(cur, end, movement / 10.f);
-        }
-        return path;
-    }
-
-    prof p(__PROFILE_LOC__("astar"));
-    std::vector<glm::vec2> visited;
-
-    // astar
-    auto heuristic = [](const glm::vec2& s, const glm::vec2& g) {
-        return glm::distance(s, g);
-    };
-
-    std::priority_queue<AstarPQItem> openSet;
-    openSet.push(AstarPQItem{start, 0});
-
-    std::unordered_map<glm::vec2, glm::vec2, VectorHash> cameFrom;
-    std::unordered_map<glm::vec2, double, VectorHash> distTraveled;
-
-    distTraveled[start] = 0;
-
-    while (!openSet.empty()) {
-        AstarPQItem qi = openSet.top();
-        openSet.pop();
-        auto cur = qi.location;
-        visited.push_back(cur);
-        if (glm::distance(cur, end) < REACH_DIST) {
-            log_info("i reached the goal");
-            for (auto i : visited) {
-                log_info(fmt::format("{}", i));
-            }
-            break;
-        }
-
-        for (int i = 0; i < 8; i++) {
-            glm::vec2 neighbor = {cur.x + x[i], cur.y + y[i]};
-            if (!isWalkablePosition(skipID, neighbor)) continue;
-            double newCost = distTraveled[cur] + distance(cur, neighbor);
-            if (distTraveled.find(neighbor) == distTraveled.end() ||
-                newCost < distTraveled[neighbor]) {
-                distTraveled[neighbor] = newCost;
-                double prio = newCost + heuristic(neighbor, end);
-                openSet.push(AstarPQItem{.location = neighbor, .score = prio});
-                cameFrom[neighbor] = cur;
-            }
-        }
-    }
-    return reconstruct_path(cameFrom, end);
-}
-
-std::vector<glm::vec2> generateWalkablePath(int skipID, float movement,
-                                            const glm::vec2& start,
-                                            const glm::vec2& end,
-                                            const glm::vec2& next) {
-    std::vector<glm::vec2> pathToEnd =
-        generateWalkablePath(skipID, movement, start, end);
-    std::vector<glm::vec2> pathFromEndToNext =
-        generateWalkablePath(skipID, movement, end, next);
-    pathToEnd.insert(pathToEnd.end(), pathFromEndToNext.begin(),
-                     pathFromEndToNext.end());
-    return pathToEnd;
-}
-
-// Generates a walkable path, that hits all points of interest IN ORDER
-template <typename... Rest>
-std::vector<glm::vec2> generateWalkablePath(int skipID, float movement,
-                                            const glm::vec2& start,
-                                            const glm::vec2& end,
-                                            const glm::vec2& next,
-                                            Rest... rest) {
-    // base case
-    std::vector<glm::vec2> path =
-        generateWalkablePath(skipID, movement, start, end);
-
-    // reducing the rest by one, as the first item in rest will become "next"
-    std::vector<glm::vec2> path2 =
-        generateWalkablePath(movement, end, next, rest...);
-    path.insert(path.end(), path2.begin(), path2.end());
-    return path;
+    return a;
 }
 
 struct MovableEntity : public Entity {
@@ -160,34 +43,54 @@ struct MovableEntity : public Entity {
     std::vector<glm::vec2> path;
     float moveSpeed = 0.25f;
 
-    void move() {
-        // first time we are moving, just set last to our current position
-        if (last == INVALID) last = glm::vec2(position);
-
-        // try to grab the next spot in the path
-        auto target = path.begin();
-        if (target == path.end()) return;
-
-        // reached our local target, erase this
-        // and next cycle we'll grab the next POI
-        if (distance(position, *target) < REACH_DIST) {
-            path.erase(target);
-            announce(
-                fmt::format(" reached local target, {} to go", path.size()));
-            return;
+    bool walkToLocation(const glm::vec2 location) {
+        // Have we reached the position yet?
+        if (path.empty() && glm::distance(position, location) < REACH_DIST) {
+            // our path should be empty but just in case
+            path.clear();
+            return true;
         }
+        // Did we already generate a path?
+        if (!path.empty()) {
+            // first time we are moving, just set last to our current position
+            if (last == INVALID) last = glm::vec2(position);
+            // try to grab the next spot in the path
+            auto target = path.begin();
+            if (target == path.end()) return true;
 
-        position = lerp(position, *target, moveSpeed);
+            if (!isWalkable(*target)) {
+                announce("my next target isnt walkable....");
+            }
+
+            // reached our local target, erase this
+            // and next cycle we'll grab the next POI
+            if (distance(position, *target) < REACH_DIST) {
+                path.erase(target);
+                announce(fmt::format(" reached local target, {} to go",
+                                     path.size()));
+                return path.empty() ? true : false;
+            }
+
+            position = lerp(position, *target, moveSpeed);
+            return false;
+        }
+        announce(
+            fmt::format(" distance to location end {}  (need to be within {})",
+                        glm::distance(position, location), REACH_DIST));
+
+        path.clear();
+        path = generateWalkablePath(  //
+            id,                       //
+            moveSpeed,                //
+            position,                 //
+            location);
+        return false;
     }
 
     virtual void onUpdate(Time dt) {
         (void)dt;
-        if (angle >= 360) {
-            angle -= 360;
-        }
-        if (angle < 0) {
-            angle += 360;
-        }
+        if (angle >= 360) angle -= 360;
+        if (angle < 0) angle += 360;
     }
 
     virtual const char* typeString() const = 0;
@@ -200,7 +103,7 @@ struct Person : public MovableEntity {
     void startJob(const std::shared_ptr<Job> job) {
         assignedJob = job;
         if (!assignedJob) return;
-
+        path.clear();
         assignedJob->isAssigned = true;
         announce(fmt::format("starting job {}", *job));
     }
@@ -248,31 +151,6 @@ struct Employee : public Person {
 
     JobRange getJobRange() override {
         return {JobType::None, JobType::INVALID_Customer_Boundary};
-    }
-
-    bool walkToLocation(const glm::vec2 location) {
-        // Have we reached the position yet?
-        if (path.empty() && glm::distance(position, location) < REACH_DIST) {
-            // our path should be empty but just in case
-            path.clear();
-            return true;
-        }
-        // Did we already generate a path?
-        if (!path.empty()) {
-            move();
-            return false;
-        }
-        announce(
-            fmt::format(" distance to location end {}  (need to be within {})",
-                        glm::distance(position, location), REACH_DIST));
-
-        path.clear();
-        path = generateWalkablePath(  //
-            id,                       //
-            moveSpeed,                //
-            position,                 //
-            location);
-        return false;
     }
 
     bool workFill(const std::shared_ptr<Job>& j, WorkInput input) {
@@ -360,59 +238,19 @@ struct Employee : public Person {
 
     bool idleWalk(const std::shared_ptr<Job>& j, WorkInput input) {
         (void)input;
-        // Have we reached the endPosition yet?
-        if (path.empty() &&
-            glm::distance(position, j->endPosition) < REACH_DIST) {
-            // our path should be empty but just in case
-            path.clear();
+        if (walkToLocation(j->endPosition)) {
             j->isComplete = true;
             return true;
         }
-
-        // Did we already generate a path?
-        if (!path.empty()) {
-            move();
-            return false;
-        }
-        announce(fmt::format(" distance to job end {}  (need to be within {})",
-                             glm::distance(position, j->endPosition),
-                             REACH_DIST));
-
-        path = generateWalkablePath(  //
-            id,                       //
-            moveSpeed,                //
-            position,                 //
-            j->startPosition,         //
-            j->endPosition);
         return false;
     }
 
     bool directedWalk(const std::shared_ptr<Job>& j, WorkInput input) {
         (void)input;
-        // Have we reached the endPosition yet?
-        if (path.empty() &&
-            glm::distance(position, j->endPosition) < REACH_DIST) {
-            // our path should be empty but just in case
-            path.clear();
+        if (walkToLocation(j->endPosition)) {
             j->isComplete = true;
             return true;
         }
-
-        // Did we already generate a path?
-        if (!path.empty()) {
-            move();
-            return false;
-        }
-        announce(fmt::format(" distance to job end {}  (need to be within {})",
-                             glm::distance(position, j->endPosition),
-                             REACH_DIST));
-
-        path.clear();
-        path = generateWalkablePath(  //
-            id,                       //
-            moveSpeed,                //
-            position,                 //
-            j->endPosition);
         return false;
     }
 
