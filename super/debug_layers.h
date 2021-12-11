@@ -3,6 +3,66 @@
 
 #include "../engine/pch.hpp"
 
+struct JobLayer : public Layer {
+    JobLayer() : Layer("Jobs") { isMinimized = !IS_DEBUG; }
+
+    virtual ~JobLayer() {}
+    virtual void onAttach() override {}
+    virtual void onDetach() override {}
+
+    GLTtext* drawText(const std::string& content, int x, int y, float scale) {
+        GLTtext* text = gltCreateText();
+        gltSetText(text, content.c_str());
+        gltDrawText2D(text, x, y, scale);
+        return text;
+    }
+
+    virtual void onUpdate(Time dt) override {
+        prof(__PROFILE_FUNC__);
+        (void)dt;
+
+        if (isMinimized) {
+            return;
+        }
+
+        int y = 10;
+        float scale = 1.f;
+        gltInit();
+        gltBeginDraw();
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        std::vector<GLTtext*> texts;
+
+        // Job queue
+        texts.push_back(
+            drawText("Job Queue (highest pri to lowest) ", 0, y, scale));
+        y += 30;
+
+        for (auto it = jobs.rbegin(); it != jobs.rend(); it++) {
+            auto [type, job_list] = *it;
+            int num_assigned = 0;
+            for (auto it = job_list.begin(); it != job_list.end(); it++) {
+                if ((*it)->isAssigned) num_assigned++;
+            }
+            std::string t = fmt::format("{}: {} ({} assigned)",
+                                        jobTypeToString((JobType)type),
+                                        job_list.size(), num_assigned);
+            texts.push_back(drawText(t, 10, y, scale));
+            y += 30;
+        }
+        // end job queue
+
+        gltEndDraw();
+        for (auto text : texts) gltDeleteText(text);
+        gltTerminate();
+    }
+
+    virtual void onEvent(Event& event) override {
+        EventDispatcher dispatcher(event);
+        (void)event;
+        (void)dispatcher;
+    }
+};
+
 struct ProfileLayer : public Layer {
     bool showFilenames;
     float seconds;

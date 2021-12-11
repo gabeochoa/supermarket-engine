@@ -49,14 +49,14 @@ struct SuperLayer : public Layer {
             glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
         entities.push_back(shelf2);
 
-        // Job j = {
-        // .type = JobType::Fill,
-        // .startPosition = shelf->position,
-        // .endPosition = shelf2->position,
-        // .itemID = 0,
-        // .itemAmount = 1,
-        // };
-        // JobQueue::addJob(JobType::Fill, std::make_shared<Job>(j));
+        Job j = {
+            .type = JobType::Fill,
+            .startPosition = shelf->position,
+            .endPosition = shelf2->position,
+            .itemID = 0,
+            .itemAmount = 1,
+        };
+        JobQueue::addJob(JobType::Fill, std::make_shared<Job>(j));
 
         for (int i = 0; i < 1; i++) {
             auto emp = Employee();
@@ -90,14 +90,14 @@ struct SuperLayer : public Layer {
 
         Renderer::end();
 
-        // if (JobQueue::numOfJobsWithType(JobType::IdleWalk) < 5) {
-        // JobQueue::addJob(
-        // JobType::IdleWalk,
-        // std::make_shared<Job>(
-        // Job({.type = JobType::IdleWalk,
-        // .startPosition = glm::circularRand<float>(5.f),
-        // .endPosition = glm::circularRand<float>(5.f)})));
-        // }
+        if (JobQueue::numOfJobsWithType(JobType::IdleWalk) < 5) {
+            JobQueue::addJob(
+                JobType::IdleWalk,
+                std::make_shared<Job>(
+                    Job({.type = JobType::IdleWalk,
+                         .startPosition = glm::circularRand<float>(5.f),
+                         .endPosition = glm::circularRand<float>(5.f)})));
+        }
         // Cleanup all completed jobs
         JobQueue::cleanup();
     }
@@ -149,6 +149,9 @@ int main(int argc, char** argv) {
 
     Layer* entityDebug = new EntityDebugLayer();
     App::get().pushLayer(entityDebug);
+
+    Layer* jobLayer = new JobLayer();
+    App::get().pushLayer(jobLayer);
 
     App::get().run();
     return 0;

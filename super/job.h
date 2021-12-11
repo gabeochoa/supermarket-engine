@@ -4,21 +4,22 @@
 
 #include "../engine/pch.hpp"
 
+// Lower number means lower priority
 enum JobType {
     None = 0,
     // Employee job types
-    Fill,
-    Empty,
-    DirectedWalk,
     IdleWalk,
+    DirectedWalk,
+    Empty,
+    Fill,
 
     // delineates job group
     INVALID_Customer_Boundary,
     // Customer job types
-    FindItem,
+    LeaveStore,
     GotoRegister,
     IdleShop,
-    LeaveStore,
+    FindItem,
 
     // always last
     MAX_JOB_TYPE,
@@ -34,6 +35,8 @@ inline std::string jobTypeToString(JobType t) {
             return "Empty";
         case JobType::IdleWalk:
             return "IdleWalk";
+        case JobType::DirectedWalk:
+            return "DirectedWalk";
         case JobType::INVALID_Customer_Boundary:
             return "INVALID_Customer_Boundary";
         case JobType::FindItem:
@@ -111,7 +114,11 @@ struct JobQueue {
     }
 
     static std::shared_ptr<Job> getNextInRange(JobRange jr) {
-        for (int i = (int)jr.start; i <= jr.end; i++) {
+        // note that we iterate backwards so that higher pri
+        // gets chosen first
+        // TODO - do we need to set a timer so that some jobs eventually
+        // get forced to do
+        for (int i = (int)jr.end; i >= jr.start; i--) {
             auto js = jobs[i];
             for (auto it = js.begin(); it != js.end(); it++) {
                 if ((*it)->isAssigned || (*it)->isComplete) continue;
