@@ -9,6 +9,7 @@ enum JobType {
     // Employee job types
     Fill,
     Empty,
+    DirectedWalk,
     IdleWalk,
 
     // delineates job group

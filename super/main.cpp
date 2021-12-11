@@ -49,14 +49,14 @@ struct SuperLayer : public Layer {
             glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
         entities.push_back(shelf2);
 
-        Job j = {
-            .type = JobType::Fill,
-            .startPosition = shelf->position,
-            .endPosition = shelf2->position,
-            .itemID = 0,
-            .itemAmount = 1,
-        };
-        JobQueue::addJob(JobType::Fill, std::make_shared<Job>(j));
+        // Job j = {
+        // .type = JobType::Fill,
+        // .startPosition = shelf->position,
+        // .endPosition = shelf2->position,
+        // .itemID = 0,
+        // .itemAmount = 1,
+        // };
+        // JobQueue::addJob(JobType::Fill, std::make_shared<Job>(j));
 
         for (int i = 0; i < 1; i++) {
             auto emp = Employee();
@@ -90,21 +90,43 @@ struct SuperLayer : public Layer {
 
         Renderer::end();
 
-        if (JobQueue::numOfJobsWithType(JobType::IdleWalk) < 5) {
-            JobQueue::addJob(
-                JobType::IdleWalk,
-                std::make_shared<Job>(
-                    Job({.type = JobType::IdleWalk,
-                         .startPosition = glm::circularRand<float>(5.f),
-                         .endPosition = glm::circularRand<float>(5.f)})));
-        }
+        // if (JobQueue::numOfJobsWithType(JobType::IdleWalk) < 5) {
+        // JobQueue::addJob(
+        // JobType::IdleWalk,
+        // std::make_shared<Job>(
+        // Job({.type = JobType::IdleWalk,
+        // .startPosition = glm::circularRand<float>(5.f),
+        // .endPosition = glm::circularRand<float>(5.f)})));
+        // }
         // Cleanup all completed jobs
         JobQueue::cleanup();
+    }
+
+    bool onMouseButtonPressed(Mouse::MouseButtonPressedEvent& e) {
+        auto mouse = Input::getMousePosition();
+        glm::vec4 viewport = {0, 0, WIN_W, WIN_H};
+        glm::vec3 mouseInWorld =
+            glm::unProject(glm::vec3{mouse.x, WIN_H - mouse.y, 0.f},
+                           cameraController->camera.view,
+                           cameraController->camera.projection, viewport);
+
+        // TODO allow people to remap their mouse buttons?
+        if (e.GetMouseButton() == Mouse::MouseCode::ButtonLeft) {
+            log_info(fmt::format("{} {}", mouse, mouseInWorld));
+            JobQueue::addJob(
+                JobType::DirectedWalk,
+                std::make_shared<Job>(Job({.type = JobType::DirectedWalk,
+                                           .endPosition = mouseInWorld})));
+        }
+        return false;
     }
 
     virtual void onEvent(Event& event) override {
         log_trace(event.toString());
         cameraController->onEvent(event);
+        EventDispatcher dispatcher(event);
+        dispatcher.dispatch<Mouse::MouseButtonPressedEvent>(std::bind(
+            &SuperLayer::onMouseButtonPressed, this, std::placeholders::_1));
     }
 };
 

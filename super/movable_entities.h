@@ -341,6 +341,33 @@ struct Employee : public Person {
         return false;
     }
 
+    bool directedWalk(const std::shared_ptr<Job>& j, WorkInput input) {
+        (void)input;
+        // Have we reached the endPosition yet?
+        if (path.empty() &&
+            glm::distance(position, j->endPosition) < REACH_DIST) {
+            // our path should be empty but just in case
+            path.clear();
+            j->isComplete = true;
+            return true;
+        }
+
+        // Did we already generate a path?
+        if (!path.empty()) {
+            move();
+            return false;
+        }
+        announce(fmt::format(" distance to job end {}  (need to be within {})",
+                             glm::distance(position, j->endPosition),
+                             REACH_DIST));
+
+        path = generateWalkablePath(  //
+            moveSpeed,                //
+            position,                 //
+            j->endPosition);
+        return false;
+    }
+
     Employee() : Person() {}
 
     virtual void registerJobHandlers() override {
@@ -352,6 +379,11 @@ struct Employee : public Person {
         handler.registerJobHandler(
             JobType::IdleWalk,
             std::bind(&Employee::idleWalk, this, std::placeholders::_1,
+                      std::placeholders::_2));
+
+        handler.registerJobHandler(
+            JobType::DirectedWalk,
+            std::bind(&Employee::directedWalk, this, std::placeholders::_1,
                       std::placeholders::_2));
 
         handler.registerJobHandler(
