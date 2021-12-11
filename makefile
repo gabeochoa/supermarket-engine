@@ -1,6 +1,6 @@
 
-# FLAGS = -std=c++11 -stdlib=libc++ -Wall -Wextra -g -fsanitize=address
-FLAGS = -std=c++2a -stdlib=libc++ -Wall -Wextra -g 
+# FLAGS = -std=c++2a -stdlib=libc++ -Wall -Wextra -g -fsanitize=address
+FLAGS = -std=c++2a -stdlib=libc++ -Wall -Wextra -g
 LIBS = -lglfw -lGLEW  
 FRAMEWORKS = -Ivendor/ -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon
 
@@ -43,6 +43,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	clang++ $(FLAGS) -MMD -MP -c $< -o $@ 
 
 clean:
-	$(RM) $(OBJ_FILES) $(LIB_OBJ_FILES) $(DEPENDS)
+	$(RM) $(OBJ_FILES) $(LIB_OBJ_FILES) $(DEPENDS) ${LIBRARY}
 
 .PHONY: all clean

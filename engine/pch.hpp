@@ -52,4 +52,4 @@
 #include "strutil.h"
 #include "texture.h"
 #include "time.h"
-
+#include "vecutil.h"

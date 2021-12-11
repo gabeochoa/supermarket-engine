@@ -155,8 +155,8 @@ static inline void default_keys() {
     mapping["1"] = KeyCode::D0;
     mapping["2"] = KeyCode::D1;
 
-    mapping["Open Profiler"] = KeyCode::GraveAccent;   // tilde
-    mapping["Show Entity Overlay"] = KeyCode::Insert;  // tilde
+    mapping["Open Profiler"] = KeyCode::GraveAccent;  // tilde
+    mapping["Show Entity Overlay"] = KeyCode::Insert;
     mapping["Profiler Hide Filenames"] = KeyCode::Delete;
     mapping["Profiler Clear Stats"] = KeyCode::LeftControl;
 

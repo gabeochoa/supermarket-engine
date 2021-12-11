@@ -6,7 +6,6 @@
 #include "custom_fmt.h"
 #include "entities.h"
 #include "job.h"
-#include "vecutil.h"
 
 // TODO at some point we should have some way to send this to app
 constexpr int WIN_W = 1920;
@@ -30,10 +29,10 @@ struct SuperLayer : public Layer {
 
         ////////////////////////////////////////////////////////
 
-        auto billy = std::make_shared<Billboard>(
-            glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f}, 45.f,
-            glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, "face");
-        entities.push_back(billy);
+        // auto billy = std::make_shared<Billboard>(
+        // glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f}, 45.f,
+        // glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, "face");
+        // entities.push_back(billy);
 
         auto shelf = std::make_shared<Shelf>(
             glm::vec2{1.f, 1.f}, glm::vec2{1.f, 1.f}, 0.f,
@@ -44,10 +43,12 @@ struct SuperLayer : public Layer {
         shelf->contents.addItem(3, 9);
         entities.push_back(shelf);
 
-        auto shelf2 = std::make_shared<Shelf>(
-            glm::vec2{1.f, -3.f}, glm::vec2{1.f, 1.f}, 0.f,
-            glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
-        entities.push_back(shelf2);
+        for (int i = 0; i < 5; i++) {
+            auto shelf2 = std::make_shared<Shelf>(
+                glm::vec2{1.f + i, -3.f}, glm::vec2{1.f, 1.f}, 0.f,
+                glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
+            entities.push_back(shelf2);
+        }
 
         // Job j = {
         // .type = JobType::Fill,
@@ -129,6 +130,36 @@ struct SuperLayer : public Layer {
             &SuperLayer::onMouseButtonPressed, this, std::placeholders::_1));
     }
 };
+
+void theta_test() {
+    auto shelf =
+        std::make_shared<Shelf>(glm::vec2{2.f, 0.f}, glm::vec2{1.f, 1.f}, 0.f,
+                                glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
+    entities.push_back(shelf);
+
+    auto shelf2 =
+        std::make_shared<Shelf>(glm::vec2{4.f, 0.f}, glm::vec2{1.f, 1.f}, 0.f,
+                                glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
+    entities.push_back(shelf2);
+
+    glm::vec2 start = {0.f, 0.f};
+    glm::vec2 end = {6.f, 0.f};
+    Theta t(start, end, [&](const glm::vec2& pos) {
+        // just dont allow negatives right now
+        if (pos.x < 0 || pos.y < 0) return false;
+        // is valid location
+        for (auto& e : entities) {
+            // if (e->id == skipID) continue;
+            if (e->pointCollides(pos)) return false;
+        }
+        return true;
+    });
+    auto result = t.go();
+    for (auto i : result) {
+        log_info(fmt::format("{}", i));
+    }
+    return;
+}
 
 int main(int argc, char** argv) {
     (void)argc;

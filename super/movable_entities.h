@@ -2,15 +2,11 @@
 #pragma once
 
 #include "../engine/pch.hpp"
+#include "../engine/thetastar.h"
 #include "entity.h"
 #include "job.h"
-#include "vecutil.h"
 
-glm::vec2 lerp(const glm::vec2& x, const glm::vec2& y, float t) {
-    return x * (1.f - t) + y * t;
-}
-
-const float REACH_DIST = 1.f;
+const float REACH_DIST = 0.2f;
 // TODO switch to a star
 //
 #include <queue>
@@ -48,16 +44,46 @@ std::vector<glm::vec2> generateWalkablePath(  //
     const glm::vec2& start,                   //
     const glm::vec2& end                      //
 ) {
-    // TODO currently only moving 1.f at a time
-    (void)movement;
+    if (true) {
+        log_info("starting theta");
+        Theta t(start, end, [&](const glm::vec2& pos) {
+            // is valid location
+            for (auto& e : entities) {
+                if (e->id == skipID) continue;
+                if (e->pointCollides(pos)) return false;
+            }
+            return true;
+        });
+        auto a = t.go();
+        std::reverse(a.begin(), a.end());
+        for (auto i : a) {
+            log_info(fmt::format("{}", i));
+        }
+        return a;
+    }
+
+    const float mv = movement / 10.f;
+    const float x[] = {0 * mv,  0 * mv, 1 * mv,  -1 * mv,
+                       -1 * mv, 1 * mv, -1 * mv, 1 * mv};
+    const float y[] = {1 * mv,  -1 * mv, 0 * mv, 0 * mv,
+                       -1 * mv, -1 * mv, 1 * mv, 1 * mv};
+
+    if (false) {
+        std::vector<glm::vec2> path;
+        glm::vec2 cur = glm::vec2(start);
+        while (glm::distance(cur, end) > movement) {
+            path.push_back(cur);
+            cur = lerp(cur, end, movement / 10.f);
+        }
+        return path;
+    }
 
     prof p(__PROFILE_LOC__("astar"));
-    std::vector<glm::vec2> path;
-    glm::vec2 cur = glm::vec2(start);
+    std::vector<glm::vec2> visited;
 
     // astar
     auto heuristic = [](const glm::vec2& s, const glm::vec2& g) {
-        return abs(s.x - g.x) + abs(s.y - g.y);
+        return glm::distance(s, g);
     };
 
     std::priority_queue<AstarPQItem> openSet;
@@ -72,10 +98,14 @@ std::vector<glm::vec2> generateWalkablePath(  //
         AstarPQItem qi = openSet.top();
         openSet.pop();
         auto cur = qi.location;
-        if (glm::distance(cur, end) < REACH_DIST) break;
-
-        const int x[] = {0, 0, 1, -1, -1, 1, -1, 1};
-        const int y[] = {1, -1, 0, 0, -1, -1, 1, 1};
+        visited.push_back(cur);
+        if (glm::distance(cur, end) < REACH_DIST) {
+            log_info("i reached the goal");
+            for (auto i : visited) {
+                log_info(fmt::format("{}", i));
+            }
+            break;
+        }
 
         for (int i = 0; i < 8; i++) {
             glm::vec2 neighbor = {cur.x + x[i], cur.y + y[i]};
@@ -128,7 +158,7 @@ struct MovableEntity : public Entity {
     const glm::vec2 INVALID = {-99.f, -99.f};
     glm::vec2 last = glm::vec2(INVALID);
     std::vector<glm::vec2> path;
-    float moveSpeed = 0.1f;
+    float moveSpeed = 0.25f;
 
     void move() {
         // first time we are moving, just set last to our current position
@@ -142,12 +172,12 @@ struct MovableEntity : public Entity {
         // and next cycle we'll grab the next POI
         if (distance(position, *target) < REACH_DIST) {
             path.erase(target);
-            // announce(
-            // fmt::format(" reached local target, {} to go", path.size()));
+            announce(
+                fmt::format(" reached local target, {} to go", path.size()));
             return;
         }
 
-        position = lerp(position, *target, moveSpeed / 50);
+        position = lerp(position, *target, moveSpeed);
     }
 
     virtual void onUpdate(Time dt) {
@@ -236,6 +266,7 @@ struct Employee : public Person {
             fmt::format(" distance to location end {}  (need to be within {})",
                         glm::distance(position, location), REACH_DIST));
 
+        path.clear();
         path = generateWalkablePath(  //
             id,                       //
             moveSpeed,                //
@@ -376,6 +407,7 @@ struct Employee : public Person {
                              glm::distance(position, j->endPosition),
                              REACH_DIST));
 
+        path.clear();
         path = generateWalkablePath(  //
             id,                       //
             moveSpeed,                //

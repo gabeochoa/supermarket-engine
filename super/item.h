@@ -148,9 +148,10 @@ struct Shelf : public Entity {
                                                                  float range) {
         std::vector<std::shared_ptr<Shelf>> shelves;
         for (auto& e : entities) {
-            if (typeid(*e) != typeid(Shelf)) continue;
+            auto s = dynamic_pointer_cast<Shelf>(e);
+            if (!s) continue;
             if (glm::distance(pos, e->position) < range) {
-                shelves.push_back(dynamic_pointer_cast<Shelf>(e));
+                shelves.push_back(s);
             }
         }
         return shelves;

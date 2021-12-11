@@ -3,19 +3,19 @@
 
 #include "../engine/pch.hpp"
 
+GLTtext* drawText(const std::string& content, int x, int y, float scale) {
+    GLTtext* text = gltCreateText();
+    gltSetText(text, content.c_str());
+    gltDrawText2D(text, x, y, scale);
+    return text;
+}
+
 struct JobLayer : public Layer {
     JobLayer() : Layer("Jobs") { isMinimized = !IS_DEBUG; }
 
     virtual ~JobLayer() {}
     virtual void onAttach() override {}
     virtual void onDetach() override {}
-
-    GLTtext* drawText(const std::string& content, int x, int y, float scale) {
-        GLTtext* text = gltCreateText();
-        gltSetText(text, content.c_str());
-        gltDrawText2D(text, x, y, scale);
-        return text;
-    }
 
     virtual void onUpdate(Time dt) override {
         prof(__PROFILE_FUNC__);
@@ -78,13 +78,6 @@ struct ProfileLayer : public Layer {
     virtual void onAttach() override {}
     virtual void onDetach() override {}
 
-    GLTtext* drawText(const std::string& content, int x, int y, float scale) {
-        GLTtext* text = gltCreateText();
-        gltSetText(text, content.c_str());
-        gltDrawText2D(text, x, y, scale);
-        return text;
-    }
-
     virtual void onUpdate(Time dt) override {
         prof(__PROFILE_FUNC__);
         (void)dt;
@@ -123,27 +116,6 @@ struct ProfileLayer : public Layer {
                      0, y, scale));
         y += 30;
 
-        // extra space
-        y += 60;
-
-        // Job queue
-        texts.push_back(drawText("Job Queue", 0, y, scale));
-        y += 30;
-
-        for (const auto& x : jobs) {
-            auto job_list = x.second;
-            int num_assigned = 0;
-            for (auto it = job_list.begin(); it != job_list.end(); it++) {
-                if ((*it)->isAssigned) num_assigned++;
-            }
-            std::string t = fmt::format("{}: {} ({} assigned)",
-                                        jobTypeToString((JobType)x.first),
-                                        job_list.size(), num_assigned);
-            texts.push_back(drawText(t, 10, y, scale));
-            y += 30;
-        }
-        // end job queue
-
         gltEndDraw();
         for (auto text : texts) gltDeleteText(text);
         gltTerminate();
@@ -171,20 +143,22 @@ struct ProfileLayer : public Layer {
     }
 };
 struct EntityDebugLayer : public Layer {
-    EntityDebugLayer() : Layer("EntityDebug") { isMinimized = !IS_DEBUG; }
+    std::shared_ptr<Entity> node;
+
+    EntityDebugLayer() : Layer("EntityDebug") {
+        isMinimized = !IS_DEBUG;
+
+        node = std::make_shared<Billboard>(    //
+            glm::vec2{0.f, 0.f},               //
+            glm::vec2{0.1f, 0.1f},             //
+            0.f,                               //
+            glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}  //
+        );
+    }
 
     virtual ~EntityDebugLayer() {}
     virtual void onAttach() override {}
     virtual void onDetach() override {}
-
-    GLTtext* drawText(const std::string& content, float x, float y,
-                      float scale) {
-        GLTtext* text = gltCreateText();
-        gltSetText(text, content.c_str());
-        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-        gltDrawText2D(text, x, y, scale);
-        return text;
-    }
 
     virtual void onUpdate(Time dt) override {
         (void)dt;
@@ -199,6 +173,8 @@ struct EntityDebugLayer : public Layer {
         std::vector<GLTtext*> texts;
         gltColor(1.0f, 1.0f, 1.0f, 1.0f);
         gltBeginDraw();
+
+        std::vector<std::shared_ptr<MovableEntity>> movables;
 
         for (auto& e : entities) {
             auto s = fmt::format("{}", *e);
@@ -222,11 +198,27 @@ struct EntityDebugLayer : public Layer {
 
             gltDrawText(text, glm::value_ptr(mvp));
             texts.push_back(text);
+
+            auto m = dynamic_pointer_cast<MovableEntity>(e);
+            if (m && !m->path.empty()) {
+                movables.push_back(m);
+            }
         }
 
         gltEndDraw();
         for (auto text : texts) gltDeleteText(text);
         gltTerminate();
+
+        Renderer::begin(cameraController->camera);
+
+        for (auto& m : movables) {
+            for (auto it = m->path.begin(); it != m->path.end(); it++) {
+                node->position = *it;
+                node->render();
+            }
+        }
+
+        Renderer::end();
     }
 
     bool onKeyPressed(KeyPressedEvent event) {
