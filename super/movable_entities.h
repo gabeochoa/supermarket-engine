@@ -41,9 +41,10 @@ struct MovableEntity : public Entity {
     const glm::vec2 INVALID = {-99.f, -99.f};
     glm::vec2 last = glm::vec2(INVALID);
     std::vector<glm::vec2> path;
-    float moveSpeed = 0.25f;
+    float moveSpeed = 0.15f;
 
     bool walkToLocation(const glm::vec2 location) {
+        prof(__PROFILE_FUNC__);
         // Have we reached the position yet?
         if (path.empty() && glm::distance(position, location) < REACH_DIST) {
             // our path should be empty but just in case

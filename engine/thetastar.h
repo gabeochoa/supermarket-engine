@@ -55,7 +55,7 @@ struct Theta {
     const float maxnum = 99999.f;
     const float x[8] = {0, 0, 1, -1, -1, 1, -1, 1};
     const float y[8] = {1, -1, 0, 0, -1, -1, 1, 1};
-    const float dst = 0.25f;
+    const float dst = 0.125f;
     const int LOOP_LIMIT = 10000;
 
     glm::vec2 start;
@@ -75,18 +75,14 @@ struct Theta {
         : start(s), end(e), isWalkable(valid) {
         log_info(fmt::format("trying to find path from {} to {}", start, end));
         // gScore(node) is the current shortest distance from the start node to
-        // node gScore(start) := 0;
         gScore[start] = 0;
-        // parent(start) := start:
         // Initializing open and closed sets. The open set is initialized
         // with the start node and an initial cost
-        // open := {};
-        // open.insert(start, gScore(start) + heuristic(start, end));
         openSet.add(start, (gScore[start] + glm::distance(start, end)));
-        // closed := {};
     }
 
     std::vector<glm::vec2> go() {
+        prof(__PROFILE_FUNC__);
         int i = 0;
         while (!openSet.empty()) {
             if (i++ > LOOP_LIMIT) break;
@@ -122,14 +118,12 @@ struct Theta {
     }
 
     bool line_of_sight(const glm::vec2& parent, const glm::vec2& neighbor) {
-        // TODO - i kinda like not doing line of sight...
-        return false;
         // technically we can see it but cant walk to it its in the wall?
         if (!isWalkable(neighbor)) {
             return false;
         }
         glm::vec2 loc(parent);
-        while (distance(loc, neighbor) > 1.f) {
+        while (distance(loc, neighbor) > 0.5f) {
             loc = lerp(loc, neighbor, 0.25f);
             if (!isWalkable(loc)) {
                 return false;
