@@ -150,7 +150,7 @@ struct EntityDebugLayer : public Layer {
 
         node = std::make_shared<Billboard>(    //
             glm::vec2{0.f, 0.f},               //
-            glm::vec2{0.1f, 0.1f},             //
+            glm::vec2{0.05f, 0.05f},           //
             0.f,                               //
             glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}  //
         );
@@ -210,6 +210,18 @@ struct EntityDebugLayer : public Layer {
         gltTerminate();
 
         Renderer::begin(cameraController->camera);
+
+        for (auto& e : entities) {
+            auto [a, b, c, d] = getBoundingBox(e->position, e->size);
+            node->position = a;
+            node->render();
+            node->position = b;
+            node->render();
+            node->position = c;
+            node->render();
+            node->position = d;
+            node->render();
+        }
 
         for (auto& m : movables) {
             for (auto it = m->path.begin(); it != m->path.end(); it++) {

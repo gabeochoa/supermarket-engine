@@ -50,17 +50,18 @@ struct ThetaPQ {
 };
 
 struct Theta {
-    const float EQUAL_RANGE = 0.25f;
+    const float EQUAL_RANGE = 0.5f;
     // TODO replace with float max?
     const float maxnum = 99999.f;
     const float x[8] = {0, 0, 1, -1, -1, 1, -1, 1};
     const float y[8] = {1, -1, 0, 0, -1, -1, 1, 1};
-    const float dst = 0.125f;
+    const float dst = 0.25f;
     const int LOOP_LIMIT = 10000;
 
     glm::vec2 start;
     glm::vec2 end;
     std::function<bool(const glm::vec2& pos)> isWalkable;
+    bool lazy;
 
     std::unordered_map<glm::vec2, double, VectorHash> gScore;
     std::unordered_map<glm::vec2, glm::vec2, VectorHash> parent;
@@ -71,24 +72,50 @@ struct Theta {
     ThetaPQ closedSet;
 
     Theta(const glm::vec2& s, const glm::vec2& e,
-          std::function<bool(const glm::vec2& pos)> valid)
-        : start(s), end(e), isWalkable(valid) {
+          std::function<bool(const glm::vec2& pos)> valid, bool isLazy = false)
+        : start(s), end(e), isWalkable(valid), lazy(isLazy) {
         log_info(fmt::format("trying to find path from {} to {}", start, end));
-        // gScore(node) is the current shortest distance from the start node to
+
+        // if the goal isnt reachable, then we have to change the goal for now
+        if (!isWalkable(end)) {
+            // uses the closedSet
+            end = expandUntilWalkable(end);
+            closedSet.Q.clear();
+            log_info(fmt::format("couldnt get to end so end is now {}", end));
+        }
+
+        // init vars
         gScore[start] = 0;
-        // Initializing open and closed sets. The open set is initialized
-        // with the start node and an initial cost
         openSet.add(start, (gScore[start] + glm::distance(start, end)));
     }
 
-    std::vector<glm::vec2> go() {
-        prof(__PROFILE_FUNC__);
-        int i = 0;
-        while (!openSet.empty()) {
-            if (i++ > LOOP_LIMIT) break;
+    glm::vec2 expandUntilWalkable(glm::vec2 n, int j = 0) {
+        closedSet.add(n, 0);
+        while (true) {
+            ThetaPQ::Qi qi = closedSet.pop();
+            n = qi.first;
+            for (int i = 0; i < 8; i++) {
+                glm::vec2 neighbor = {n.x + (x[i] * dst), n.y + (y[i] * dst)};
+                if (isWalkable(neighbor)) return neighbor;
+                closedSet.add(neighbor, qi.second + 1);
+            }
+        }
+    }
 
+    std::vector<glm::vec2> go() {
+        if (!isWalkable(end)) {
+            // TODO for now just clear it,
+            // otherwise itll inf loop
+            openSet.Q.clear();
+        }
+
+        prof(__PROFILE_FUNC__);
+        while (!openSet.empty()) {
             ThetaPQ::Qi qi = openSet.pop();
             auto s = qi.first;
+            if (lazy) {
+                set_vertex(s);
+            }
             // wow we got here already
             if (glm::distance(s, end) < EQUAL_RANGE) {
                 return reconstruct_path(s);
@@ -132,36 +159,6 @@ struct Theta {
         return true;
     }
 
-    void update_vertex(const glm::vec2& s, const glm::vec2& neighbor) {
-        // This part of the algorithm is the main difference between A* and
-        // Theta*
-        if (line_of_sight(parent[s], neighbor)) {
-            // If there is line-of-sight between parent(s) and neighbor
-            // then ignore s and use the path from parent(s) to neighbor
-            auto newPathScore =
-                gScore[parent[s]] + glm::distance(parent[s], neighbor);
-            if (newPathScore < gScore[neighbor]) {
-                gScore[neighbor] = newPathScore;
-                parent[neighbor] = parent[s];
-                openSet.erase(neighbor);
-                openSet.add(neighbor,
-                            (gScore[neighbor] + glm::distance(neighbor, end)));
-            }
-        } else {
-            // If the length of the path from start to s and from s to
-            // neighbor is shorter than the shortest currently known distance
-            // from start to neighbor, then update node with the new distance
-            auto newPathScore = gScore[s] + glm::distance(s, neighbor);
-            if (newPathScore < gScore[neighbor]) {
-                gScore[neighbor] = newPathScore;
-                parent[neighbor] = s;
-                openSet.erase(neighbor);
-                openSet.add(neighbor,
-                            gScore[neighbor] + glm::distance(neighbor, end));
-            }
-        }
-    }
-
     std::vector<glm::vec2> reconstruct_path(glm::vec2 cur) {
         std::vector<glm::vec2> path;
         path.push_back(end);
@@ -173,5 +170,83 @@ struct Theta {
         }
         return path;
     }
+
+    void set_vertex(const glm::vec2& s) {
+        if (!line_of_sight(parent[s], s)) {
+            glm::vec2 minN;
+            double minS = -1;
+            for (int i = 0; i < 8; i++) {
+                glm::vec2 neighbor = {s.x + (x[i] * dst), s.y + (y[i] * dst)};
+                if (!isWalkable(neighbor)) continue;
+                if (closedSet.contains(neighbor)) {
+                    if (minS == -1 || minS > gScore[neighbor]) {
+                        minN = neighbor;
+                        minS = gScore[neighbor];
+                    }
+                }
+            }
+            parent[s] = minN;
+            gScore[s] = minS;
+        }
+    }
+
+    void update_vertex(const glm::vec2& s, const glm::vec2& neighbor) {
+        double oldScore = gScore[neighbor];
+        // This part of the algorithm is the main difference between A* and
+        // Theta*
+        if (this->lazy) {
+            // If there is line-of-sight between parent(s) and neighbor
+            // then ignore s and use the path from parent(s) to neighbor
+            auto newPathScore =
+                gScore[parent[s]] + glm::distance(parent[s], neighbor);
+            if (newPathScore < gScore[neighbor]) {
+                parent[neighbor] = parent[s];
+                gScore[neighbor] = newPathScore;
+            }
+            if (gScore[neighbor] < oldScore) {
+                openSet.erase(neighbor);
+                openSet.add(neighbor,
+                            (gScore[neighbor] + glm::distance(neighbor, end)));
+            }
+            return;
+        }
+
+        // Non lazy version
+
+        if (line_of_sight(parent[s], neighbor)) {
+            // If there is line-of-sight between parent(s) and neighbor
+            // then ignore s and use the path from parent(s) to neighbor
+            auto newPathScore =
+                gScore[parent[s]] + glm::distance(parent[s], neighbor);
+            if (newPathScore < gScore[neighbor]) {
+                parent[neighbor] = parent[s];
+                gScore[neighbor] = newPathScore;
+            }
+            if (gScore[neighbor] < oldScore) {
+                openSet.erase(neighbor);
+                openSet.add(neighbor,
+                            (gScore[neighbor] + glm::distance(neighbor, end)));
+            }
+        } else {
+            // If the length of the path from start to s and from s to
+            // neighbor is shorter than the shortest currently known distance
+            // from start to neighbor, then update node with the new distance
+            auto newPathScore = gScore[s] + glm::distance(s, neighbor);
+            if (newPathScore < gScore[neighbor]) {
+                parent[neighbor] = s;
+                gScore[neighbor] = newPathScore;
+            }
+            if (gScore[neighbor] < oldScore) {
+                openSet.erase(neighbor);
+                openSet.add(neighbor,
+                            (gScore[neighbor] + glm::distance(neighbor, end)));
+            }
+        }
+    }
 };
 
+struct LazyTheta : public Theta {
+    LazyTheta(const glm::vec2& s, const glm::vec2& e,
+              std::function<bool(const glm::vec2& pos)> valid)
+        : Theta(s, e, valid, true) {}
+};

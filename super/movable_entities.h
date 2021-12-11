@@ -8,14 +8,24 @@
 
 const float REACH_DIST = 0.2f;
 
-bool isWalkable(const glm::vec2& pos) {
+bool isWalkable(const glm::vec2& size, const glm::vec2& pos) {
     // is valid location
     for (auto& e : entities) {
         auto s = dynamic_pointer_cast<Shelf>(e);
         if (!s) continue;
-        // TODO skipid if collision with other types of objec
-        // if (e->id == skipID) continue;
-        if (e->pointCollides(pos)) return false;
+        // if (e->pointCollides(pos)) return false;
+        {
+            // collision x-axis?
+            bool collisionX = pos.x + size.x >= e->position.x &&
+                              e->position.x + e->size.x >= pos.x;
+            // collision y-axis?
+            bool collisionY = pos.y + size.y >= e->position.y &&
+                              e->position.y + e->size.y >= pos.y;
+            // collision only if on both axes
+            if (collisionX && collisionY) {
+                return false;
+            }
+        }
     }
     return true;
 }
@@ -24,11 +34,12 @@ std::vector<glm::vec2> generateWalkablePath(  //
     int skipID,                               //
     float movement,                           //
     const glm::vec2& start,                   //
-    const glm::vec2& end                      //
+    const glm::vec2& end,                     //
+    const glm::vec2& size                     //
 ) {
     (void)movement;
     log_info("starting theta");
-    Theta t(start, end, isWalkable);
+    LazyTheta t(start, end, std::bind(isWalkable, size, std::placeholders::_1));
     auto a = t.go();
     std::reverse(a.begin(), a.end());
     for (auto i : a) {
@@ -41,7 +52,7 @@ struct MovableEntity : public Entity {
     const glm::vec2 INVALID = {-99.f, -99.f};
     glm::vec2 last = glm::vec2(INVALID);
     std::vector<glm::vec2> path;
-    float moveSpeed = 0.15f;
+    float moveSpeed = 0.05f;
 
     bool walkToLocation(const glm::vec2 location) {
         prof(__PROFILE_FUNC__);
@@ -59,7 +70,7 @@ struct MovableEntity : public Entity {
             auto target = path.begin();
             if (target == path.end()) return true;
 
-            if (!isWalkable(*target)) {
+            if (!isWalkable(this->size, *target)) {
                 announce("my next target isnt walkable....");
             }
 
@@ -79,12 +90,8 @@ struct MovableEntity : public Entity {
             fmt::format(" distance to location end {}  (need to be within {})",
                         glm::distance(position, location), REACH_DIST));
 
-        path.clear();
-        path = generateWalkablePath(  //
-            id,                       //
-            moveSpeed,                //
-            position,                 //
-            location);
+        path =
+            generateWalkablePath(id, moveSpeed, position, location, this->size);
         return false;
     }
 

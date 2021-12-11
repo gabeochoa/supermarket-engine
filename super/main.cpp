@@ -6,6 +6,7 @@
 #include "custom_fmt.h"
 #include "entities.h"
 #include "job.h"
+#include "util.h"
 
 // TODO at some point we should have some way to send this to app
 constexpr int WIN_W = 1920;
@@ -44,10 +45,13 @@ struct SuperLayer : public Layer {
         entities.push_back(shelf);
 
         for (int i = 0; i < 5; i++) {
-            auto shelf2 = std::make_shared<Shelf>(
-                glm::vec2{1.f + i, -3.f}, glm::vec2{1.f, 1.f}, 0.f,
-                glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
-            entities.push_back(shelf2);
+            for (int j = 0; j < 10; j += 2) {
+                auto shelf2 = std::make_shared<Shelf>(
+                    glm::vec2{1.f + i, -3.f + j},  //
+                    glm::vec2{1.f, 1.f}, 0.f,      //
+                    glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
+                entities.push_back(shelf2);
+            }
         }
 
         // Job j = {
@@ -66,6 +70,7 @@ struct SuperLayer : public Layer {
             emp.textureName = "__INVALID__";
             emp.color = gen_rand_vec4(0.3f, 1.0f);
             emp.color.w = 1.f;
+            emp.size = {0.6f, 0.6f};
             entities.push_back(std::make_shared<Employee>(emp));
         }
     }
@@ -131,31 +136,36 @@ struct SuperLayer : public Layer {
 };
 
 void theta_test() {
-    auto shelf =
-        std::make_shared<Shelf>(glm::vec2{2.f, 0.f}, glm::vec2{1.f, 1.f}, 0.f,
-                                glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
-    entities.push_back(shelf);
+    // Walk straight through
+    //  - i expect it to just walk around
+    {
+        auto shelf = std::make_shared<Shelf>(
+            glm::vec2{1.f, 0.f}, glm::vec2{1.f, 1.f}, 0.f,
+            glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
+        entities.push_back(shelf);
 
-    auto shelf2 =
-        std::make_shared<Shelf>(glm::vec2{4.f, 0.f}, glm::vec2{1.f, 1.f}, 0.f,
-                                glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
-    entities.push_back(shelf2);
+        auto shelf2 = std::make_shared<Shelf>(
+            glm::vec2{3.f, 0.f}, glm::vec2{1.f, 1.f}, 0.f,
+            glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
+        entities.push_back(shelf2);
 
-    glm::vec2 start = {0.f, 0.f};
-    glm::vec2 end = {6.f, 0.f};
-    Theta t(start, end, [&](const glm::vec2& pos) {
-        // just dont allow negatives right now
-        if (pos.x < 0 || pos.y < 0) return false;
-        // is valid location
-        for (auto& e : entities) {
-            // if (e->id == skipID) continue;
-            if (e->pointCollides(pos)) return false;
+        glm::vec2 start = {0.f, 0.f};
+        glm::vec2 end = {6.f, 0.f};
+
+        auto emp = Employee();
+        emp.position = start;
+        emp.size = {0.6f, 0.6f};
+        entities.push_back(std::make_shared<Employee>(emp));
+
+        LazyTheta t(start, end,
+                    std::bind(isWalkable, emp.size, std::placeholders::_1));
+        auto result = t.go();
+        std::reverse(result.begin(), result.end());
+        for (auto i : result) {
+            log_info(fmt::format("{}", i));
         }
-        return true;
-    });
-    auto result = t.go();
-    for (auto i : result) {
-        log_info(fmt::format("{}", i));
+        M_ASSERT(result.size(), "Path is empty but shouldnt be");
+        entities.clear();
     }
     return;
 }
@@ -180,6 +190,7 @@ void point_collision_test() {
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
+    theta_test();
     point_collision_test();
 
     app.reset(App::create({
