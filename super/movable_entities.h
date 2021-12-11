@@ -32,7 +32,18 @@ std::vector<glm::vec2> reconstruct_path(
     return path;
 }
 
+// TODO memoize this function?
+// TODO write a memoize decorator?
+bool isWalkablePosition(int skipID, const glm::vec2& pos) {
+    for (auto& e : entities) {
+        if (e->id == skipID) continue;
+        if (e->pointCollides(pos)) return false;
+    }
+    return true;
+}
+
 std::vector<glm::vec2> generateWalkablePath(  //
+    int skipID,                               //
     float movement,                           //
     const glm::vec2& start,                   //
     const glm::vec2& end                      //
@@ -68,6 +79,7 @@ std::vector<glm::vec2> generateWalkablePath(  //
 
         for (int i = 0; i < 8; i++) {
             glm::vec2 neighbor = {cur.x + x[i], cur.y + y[i]};
+            if (!isWalkablePosition(skipID, neighbor)) continue;
             double newCost = distTraveled[cur] + distance(cur, neighbor);
             if (distTraveled.find(neighbor) == distTraveled.end() ||
                 newCost < distTraveled[neighbor]) {
@@ -81,14 +93,14 @@ std::vector<glm::vec2> generateWalkablePath(  //
     return reconstruct_path(cameFrom, end);
 }
 
-std::vector<glm::vec2> generateWalkablePath(float movement,
+std::vector<glm::vec2> generateWalkablePath(int skipID, float movement,
                                             const glm::vec2& start,
                                             const glm::vec2& end,
                                             const glm::vec2& next) {
     std::vector<glm::vec2> pathToEnd =
-        generateWalkablePath(movement, start, end);
+        generateWalkablePath(skipID, movement, start, end);
     std::vector<glm::vec2> pathFromEndToNext =
-        generateWalkablePath(movement, end, next);
+        generateWalkablePath(skipID, movement, end, next);
     pathToEnd.insert(pathToEnd.end(), pathFromEndToNext.begin(),
                      pathFromEndToNext.end());
     return pathToEnd;
@@ -96,13 +108,14 @@ std::vector<glm::vec2> generateWalkablePath(float movement,
 
 // Generates a walkable path, that hits all points of interest IN ORDER
 template <typename... Rest>
-std::vector<glm::vec2> generateWalkablePath(float movement,
+std::vector<glm::vec2> generateWalkablePath(int skipID, float movement,
                                             const glm::vec2& start,
                                             const glm::vec2& end,
                                             const glm::vec2& next,
                                             Rest... rest) {
     // base case
-    std::vector<glm::vec2> path = generateWalkablePath(movement, start, end);
+    std::vector<glm::vec2> path =
+        generateWalkablePath(skipID, movement, start, end);
 
     // reducing the rest by one, as the first item in rest will become "next"
     std::vector<glm::vec2> path2 =
@@ -224,6 +237,7 @@ struct Employee : public Person {
                         glm::distance(position, location), REACH_DIST));
 
         path = generateWalkablePath(  //
+            id,                       //
             moveSpeed,                //
             position,                 //
             location);
@@ -334,6 +348,7 @@ struct Employee : public Person {
                              REACH_DIST));
 
         path = generateWalkablePath(  //
+            id,                       //
             moveSpeed,                //
             position,                 //
             j->startPosition,         //
@@ -362,6 +377,7 @@ struct Employee : public Person {
                              REACH_DIST));
 
         path = generateWalkablePath(  //
+            id,                       //
             moveSpeed,                //
             position,                 //
             j->endPosition);
