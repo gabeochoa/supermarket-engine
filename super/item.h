@@ -144,6 +144,19 @@ struct Shelf : public Entity {
         Entity::render();
     }
 
+    static std::shared_ptr<Shelf> getRandomShelf(const glm::vec2& notpos = {
+                                                     -99.f, -99.f}) {
+        std::vector<std::shared_ptr<Shelf>> shelves;
+        for (auto& e : entities) {
+            auto s = dynamic_pointer_cast<Shelf>(e);
+            if (!s) continue;
+            if (glm::distance(s->position, notpos) > 1.f) shelves.push_back(s);
+        }
+
+        int i = randIn(0, shelves.size() - 1);
+        return shelves[i];
+    }
+
     static std::vector<std::shared_ptr<Shelf>> getShelvesInRange(glm::vec2 pos,
                                                                  float range) {
         std::vector<std::shared_ptr<Shelf>> shelves;
