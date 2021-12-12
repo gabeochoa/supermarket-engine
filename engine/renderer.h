@@ -160,8 +160,6 @@ struct Renderer {
         textureShader->uploadUniformIntArray("u_textures", samples.data(),
                                              MAX_TEX);
 
-        sceneData->textureSlots[0] = textureLibrary.get("white");
-
         // float squareVerts[5 * 4] = {
         // 0.f, 0.f, 0.f, 0.0f, 0.0f,  //
         // 1.f, 0.f, 0.f, 1.0f, 0.0f,  //
@@ -246,6 +244,7 @@ struct Renderer {
     }
 
     static void start_batch() {
+        sceneData->textureSlots[0] = textureLibrary.get("white");
         sceneData->quadIndexCount = 0;
         sceneData->qvbufferptr = sceneData->qvbufferstart;
         sceneData->nextTexSlot = 1;

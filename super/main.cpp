@@ -59,7 +59,7 @@ struct SuperLayer : public Layer {
             emp.color = gen_rand_vec4(0.3f, 1.0f);
             emp.color.w = 1.f;
             emp.size = {0.6f, 0.6f};
-            emp.textureName = "white";
+            emp.textureName = "face";
             entities.push_back(std::make_shared<Employee>(emp));
         }
     }

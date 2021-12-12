@@ -40,7 +40,7 @@
     out vec4 frag_color;
     void main(){
         // Debug texcoord
-        // frag_color = vec4(v_texcoord, 0.0, 1.0) * v_color;
+        frag_color = vec4(v_texcoord, 0.0, 1.0) * v_color;
         
         vec4 inter = texture(u_textures[int(v_texindex)], v_texcoord * v_tilingfactor);
         // hide anything with basically no alpha
