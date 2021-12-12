@@ -1,4 +1,4 @@
-MAKEFLAGS := --jobs=4
+MAKEFLAGS := --jobs=16
 MAKEFLAGS += --output-sync=target
 
 # FLAGS = -std=c++2a -stdlib=libc++ -Wall -Wextra -g -fsanitize=address
