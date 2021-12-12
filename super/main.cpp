@@ -23,21 +23,17 @@ struct SuperLayer : public Layer {
     SuperLayer() : Layer("Supermarket") {
         cameraController.reset(new OrthoCameraController(WIN_RATIO, true));
 
+        Renderer::addTexture("./resources/face.png");
+        Renderer::addTexture("./resources/box.png", 2.f);
+        Renderer::addTexture("./resources/shelf.png", 2.f);
+        Renderer::addTexture("./resources/screen.png");
+
         // 918 × 203 pixels
         // 16 x 16
         // margin 1
         Renderer::addTexture("./resources/character_tilesheet.png");
-        Renderer::addTexture("./resources/box.png", 2.f);
-        Renderer::addTexture("./resources/shelf.png", 2.f);
-        Renderer::addTexture("./resources/face.png");
-        Renderer::addTexture("./resources/screen.png");
 
         ////////////////////////////////////////////////////////
-        auto billy = std::make_shared<Billboard>(
-            glm::vec2{0.f, 0.f}, glm::vec2{1.f, 1.f}, 0.f,
-            glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "white");
-        entities.push_back(billy);
-
         auto storage = std::make_shared<Storage>(
             glm::vec2{1.f, 1.f}, glm::vec2{1.f, 1.f}, 0.f,
             glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
@@ -46,27 +42,26 @@ struct SuperLayer : public Layer {
         storage->contents.addItem(2, 7);
         storage->contents.addItem(3, 9);
         entities.push_back(storage);
-        //
-        // for (int i = 0; i < 5; i++) {
-        // for (int j = 0; j < 10; j += 2) {
-        // auto shelf2 = std::make_shared<Shelf>(
-        // glm::vec2{1.f + i, -3.f + j},  //
-        // glm::vec2{1.f, 1.f}, 0.f,      //
-        // glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "shelf");
-        // entities.push_back(shelf2);
-        // }
-        // }
-        //
-        // for (int i = 0; i < 1; i++) {
-        // auto emp = Employee();
-        // // TODO eventually get a texture
-        // // and fix colored textures
-        // emp.textureName = "__INVALID__";
-        // emp.color = gen_rand_vec4(0.3f, 1.0f);
-        // emp.color.w = 1.f;
-        // emp.size = {0.6f, 0.6f};
-        // entities.push_back(std::make_shared<Employee>(emp));
-        // }
+
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 10; j += 2) {
+                auto shelf2 = std::make_shared<Shelf>(
+                    glm::vec2{1.f + i, -3.f + j},  //
+                    glm::vec2{1.f, 1.f}, 0.f,      //
+                    glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "shelf");
+
+                entities.push_back(shelf2);
+            }
+        }
+
+        for (int i = 0; i < 1; i++) {
+            auto emp = Employee();
+            emp.color = gen_rand_vec4(0.3f, 1.0f);
+            emp.color.w = 1.f;
+            emp.size = {0.6f, 0.6f};
+            emp.textureName = "white";
+            entities.push_back(std::make_shared<Employee>(emp));
+        }
     }
 
     virtual ~SuperLayer() {}

@@ -22,12 +22,23 @@ struct Texture {
           height(h),
           textureIndex(texIndex),
           tilingFactor(1.f) {}
+
+    Texture(const Texture &tex)
+        : name(tex.name),
+          width(tex.width),
+          height(tex.height),
+          textureIndex(tex.textureIndex),
+          tilingFactor(tex.tilingFactor) {}
     virtual void setData(void *data) { (void)data; }
 
     virtual ~Texture() {}
     // its const from a C++ pov but
     // its not really const if you know what i mean
-    virtual void bind() const = 0;
+    virtual void bind(int i = -1) const = 0;
+
+    bool operator==(const Texture &other) const {
+        return other.name == this->name;
+    }
 };
 
 struct Texture2D : public Texture {
@@ -48,6 +59,27 @@ struct Texture2D : public Texture {
     virtual void setData(void *data) override {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
                      GL_UNSIGNED_BYTE, data);
+    }
+
+    Texture2D(const Texture2D &other) {
+        this->rendererID = other.rendererID;
+        this->name = other.name;
+        this->width = other.width;
+        this->height = other.height;
+        this->textureIndex = other.textureIndex;
+        this->tilingFactor = other.tilingFactor;
+    }
+
+    Texture2D &operator=(Texture2D &other) {
+        if (this != &other) {
+            this->rendererID = other.rendererID;
+            this->name = other.name;
+            this->width = other.width;
+            this->height = other.height;
+            this->textureIndex = other.textureIndex;
+            this->tilingFactor = other.tilingFactor;
+        }
+        return *this;
     }
 
     Texture2D(const std::string &path, int texIndex = 0) : Texture() {
@@ -93,13 +125,33 @@ struct Texture2D : public Texture {
     }
 
     virtual ~Texture2D() { glDeleteTextures(1, &rendererID); }
-    virtual void bind() const override {
-        glBindTexture(textureIndex, rendererID);
+    virtual void bind(int i = -1) const override {
+        glActiveTexture(GL_TEXTURE0 + (i == -1 ? textureIndex : i));
+        glBindTexture(GL_TEXTURE_2D, rendererID);
+    }
+
+    bool operator==(const Texture2D &other) const {
+        return other.rendererID == this->rendererID;
     }
 };
 
 struct TextureLibrary {
-    std::unordered_map<std::string, std::shared_ptr<Texture>> textures;
+    std::map<std::string, std::shared_ptr<Texture>> textures;
+
+    auto size() { return textures.size(); }
+    auto begin() { return textures.begin(); }
+    auto end() { return textures.end(); }
+
+    auto begin() const { return textures.begin(); }
+    auto end() const { return textures.end(); }
+
+    auto rbegin() const { return textures.rbegin(); }
+    auto rend() const { return textures.rend(); }
+
+    auto rbegin() { return textures.rbegin(); }
+    auto rend() { return textures.rend(); }
+
+    auto empty() const { return textures.empty(); }
 
     void add(const std::shared_ptr<Texture> &texture) {
         if (textures.find(texture->name) != textures.end()) {
@@ -109,13 +161,12 @@ struct TextureLibrary {
                 texture->name));
             return;
         }
-        log_trace(
-            fmt::format("Adding Texture \"{}\" to our library", texture->name));
+        log_info(fmt::format("Adding Texture \"{}\" to our library ({})",
+                             texture->name, texture->textureIndex));
         textures[texture->name] = texture;
     }
-    std::shared_ptr<Texture> load(const std::string &path,
-                                  int activeTextureIndex = 0) {
-        auto texture = std::make_shared<Texture2D>(path, activeTextureIndex);
+    std::shared_ptr<Texture> load(const std::string &path) {
+        auto texture = std::make_shared<Texture2D>(path, textures.size());
         add(texture);
         return texture;
     }
@@ -125,3 +176,4 @@ struct TextureLibrary {
     }
 };
 
+static TextureLibrary textureLibrary;

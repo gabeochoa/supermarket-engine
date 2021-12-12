@@ -51,18 +51,19 @@ struct Renderer3D {
 };
 
 static const char* DEFAULT_TEX = "white";
-static int TEXTURE_INDEX = 1;
+static const int MAX_TEX = 16;
 struct Renderer {
     struct QuadVert {
         glm::vec3 position;
         glm::vec4 color;
         glm::vec2 texcoord;
         float texindex;
+        float tilingfactor;
     };
 
     struct SceneData {
         // Max per draw call
-        const int MAX_QUADS = 2;
+        const int MAX_QUADS = 1000;
         const int MAX_VERTS = MAX_QUADS * 4;
         const int MAX_IND = MAX_QUADS * 6;
 
@@ -74,17 +75,22 @@ struct Renderer {
         QuadVert* qvbufferptr = nullptr;
 
         glm::mat4 viewProjection;
+
         ShaderLibrary shaderLibrary;
-        TextureLibrary textureLibrary;
+        std::array<std::shared_ptr<Texture>, MAX_TEX> textureSlots;
+        int nextTexSlot = 1;  // 0 will be white
     };
 
     static SceneData* sceneData;
 
     // TODO lets add something similar for shaders
     static void addTexture(const std::string& filepath, float tiling = 1.f) {
-        auto tex = sceneData->textureLibrary.load(filepath, TEXTURE_INDEX);
+        if ((int)textureLibrary.size() >= MAX_TEX) {
+            log_error("Cant have more than MAX TEX textures (16)");
+            return;
+        }
+        auto tex = textureLibrary.load(filepath);
         tex->tilingFactor = tiling;
-        TEXTURE_INDEX++;
     }
 
     static void init_default_shaders() {
@@ -97,7 +103,7 @@ struct Renderer {
             std::make_shared<Texture2D>("white", 1, 1, 0);
         unsigned int data = 0xffffffff;
         whiteTexture->setData(&data);
-        sceneData->textureLibrary.add(whiteTexture);
+        textureLibrary.add(whiteTexture);
     }
 
     static void init() {
@@ -120,6 +126,7 @@ struct Renderer {
             {"i_color", BufferType::Float4},
             {"i_texcoord", BufferType::Float2},
             {"i_texindex", BufferType::Float},
+            {"i_tilingfactor", BufferType::Float},
         });
         sceneData->quadVA->addVertexBuffer(sceneData->quadVB);
 
@@ -143,6 +150,17 @@ struct Renderer {
         quadIB.reset(IndexBuffer::create(quadIndices, sceneData->MAX_IND));
         sceneData->quadVA->setIndexBuffer(quadIB);
         delete[] quadIndices;
+
+        std::array<int, MAX_TEX> samples = {0};
+        for (size_t i = 0; i < MAX_TEX; i++) {
+            samples[(int)i] = (int)i;
+        }
+        auto textureShader = sceneData->shaderLibrary.get("texture");
+        textureShader->bind();
+        textureShader->uploadUniformIntArray("u_textures", samples.data(),
+                                             MAX_TEX);
+
+        sceneData->textureSlots[0] = textureLibrary.get("white");
 
         // float squareVerts[5 * 4] = {
         // 0.f, 0.f, 0.f, 0.0f, 0.0f,  //
@@ -206,12 +224,18 @@ struct Renderer {
             indexCount ? indexCount : vertexArray->indexBuffer->getCount();
         vertexArray->bind();
         glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     static void begin(OrthoCamera& cam) {
         prof(__PROFILE_FUNC__);
         sceneData->viewProjection = cam.viewProjection;
+
+        auto textureShader = sceneData->shaderLibrary.get("texture");
+        textureShader->bind();
+        textureShader->uploadUniformMat4("viewProjection",
+                                         sceneData->viewProjection);
 
         start_batch();
     }
@@ -224,6 +248,7 @@ struct Renderer {
     static void start_batch() {
         sceneData->quadIndexCount = 0;
         sceneData->qvbufferptr = sceneData->qvbufferstart;
+        sceneData->nextTexSlot = 1;
     }
 
     static void next_batch() {
@@ -237,19 +262,11 @@ struct Renderer {
                                        (uint8_t*)sceneData->qvbufferstart);
         sceneData->quadVB->setData(sceneData->qvbufferstart, dataSize);
 
-        auto flatShader = sceneData->shaderLibrary.get("flat");
-        flatShader->bind();
-        flatShader->uploadUniformMat4("viewProjection",
-                                      sceneData->viewProjection);
-
-        auto texture = sceneData->textureLibrary.get("box");
-        texture->bind();
+        for (int i = 0; i < sceneData->nextTexSlot; i++)
+            sceneData->textureSlots[i]->bind(i);
 
         auto textureShader = sceneData->shaderLibrary.get("texture");
         textureShader->bind();
-        textureShader->uploadUniformInt("u_texture", texture->textureIndex);
-        textureShader->uploadUniformMat4("viewProjection",
-                                         sceneData->viewProjection);
 
         draw(sceneData->quadVA, sceneData->quadIndexCount);
     }
@@ -271,40 +288,38 @@ struct Renderer {
             next_batch();
         }
 
-        auto texture = sceneData->textureLibrary.get(textureName);
-        if (!texture) texture = sceneData->textureLibrary.get("white");
+        auto texture = textureLibrary.get(textureName);
+        int textureIndex = 0;
+        if (textureName != DEFAULT_TEX && texture) {
+            for (int i = 1; i < sceneData->nextTexSlot; i++) {
+                if (*(sceneData->textureSlots[i]) == *texture) {
+                    textureIndex = i;
+                    break;
+                }
+            }
+            if (textureIndex == 0) {
+                if (sceneData->nextTexSlot >= MAX_TEX) {
+                    next_batch();
+                }
+                textureIndex = sceneData->nextTexSlot;
+                sceneData->textureSlots[textureIndex] = texture;
+                sceneData->nextTexSlot++;
+            }
+        } else {
+            texture = textureLibrary.get(DEFAULT_TEX);
+        }
+        // else use 0 which is white texture
 
         for (size_t i = 0; i < 4; i++) {
             sceneData->qvbufferptr->position = transform * vertexCoords[i];
             sceneData->qvbufferptr->color = color;
             sceneData->qvbufferptr->texcoord = textureCoords[i];
-            sceneData->qvbufferptr->texindex = texture->textureIndex;
-            // sceneData->qvbufferptr->tilingFactor = tilingFactor;
+            sceneData->qvbufferptr->texindex = textureIndex;
+            sceneData->qvbufferptr->tilingfactor = texture->tilingFactor;
             // sceneData->qvbufferptr->entityID = entityID;
             sceneData->qvbufferptr++;
         }
         sceneData->quadIndexCount += 6;
-
-        // if (texture == nullptr) {
-        // auto flatShader = sceneData->shaderLibrary.get("flat");
-        // flatShader->bind();
-        // flatShader->uploadUniformMat4("transformMatrix", transform);
-        // flatShader->uploadUniformFloat4("u_color", color);
-        // } else {
-        // auto textureShader = sceneData->shaderLibrary.get("texture");
-        // textureShader->bind();
-        // textureShader->uploadUniformMat4("transformMatrix", transform);
-        // textureShader->uploadUniformInt("u_texture", texture->textureIndex);
-        // textureShader->uploadUniformFloat4("u_color", color);
-        // // TODO if we end up wanting this then obv have to expose it
-        // // through function param
-        // textureShader->uploadUniformFloat("f_tiling",
-        // texture->tilingFactor);
-        // texture->bind();
-        // }
-
-        // sceneData->quadVA->bind();
-        // Renderer::draw(sceneData->quadVA);
     }
 
     static void drawQuad(const glm::vec3& position, const glm::vec2& size,

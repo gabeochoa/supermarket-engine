@@ -78,7 +78,9 @@ struct Entity {
         // computing angle transforms are expensive so
         // if the angle is under thresh, just render it square
         if (angle <= 5.f) {
-            Renderer::drawQuad(position, size, color, textureName);
+            Renderer::drawQuad(
+                {position.x + size.x / 2, position.y + size.y / 2}, size, color,
+                textureName);
         } else {
             Renderer::drawQuadRotated(position, size, glm::radians(angle),
                                       color, textureName);

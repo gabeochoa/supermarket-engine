@@ -47,7 +47,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 clean:
 	$(RM) $(OBJ_FILES) $(LIB_OBJ_FILES) $(DEPENDS) ${LIBRARY}
 
-gettrace:
+trace:
 	rm -f super.exe.trace
 	../apitracedyld/build/apitrace trace --api gl $(EXE)
 

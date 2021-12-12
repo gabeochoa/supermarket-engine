@@ -76,8 +76,8 @@ struct SuperLayer : public Layer {
         shaderLibrary.load("./engine/shaders/flat.glsl");
         shaderLibrary.load("./engine/shaders/texture.glsl");
 
-        textureLibrary.load("./resources/face.png", 0);
-        textureLibrary.load("./resources/screen.png", 1);
+        textureLibrary.load("./resources/face.png");
+        textureLibrary.load("./resources/screen.png");
     }
 
     virtual ~SuperLayer() {}
