@@ -87,11 +87,42 @@ struct Renderer {
         std::shared_ptr<IndexBuffer> squareIB;
         sceneData->vertexArray.reset(VertexArray::create());
 
+        // float squareVerts[5 * 4] = {
+        // 0.f, 0.f, 0.f, 0.0f, 0.0f,  //
+        // 1.f, 0.f, 0.f, 1.0f, 0.0f,  //
+        // 1.f, 1.f, 0.f, 1.0f, 1.0f,  //
+        // 0.f, 1.f, 0.f, 0.0f, 1.0f,  //
+        // };
+        float sheetWidth = 918.f;
+        float sheetHeight = 203.f;
+        float spriteWidth = 17.f;
+        float spriteHeight = 17.f;
+
+        int x = 0;
+        int y = 10;
+
         float squareVerts[5 * 4] = {
-            0.f, 0.f, 0.f, 0.0f, 0.0f,  //
-            1.f, 0.f, 0.f, 1.0f, 0.0f,  //
-            1.f, 1.f, 0.f, 1.0f, 1.0f,  //
-            0.f, 1.f, 0.f, 0.0f, 1.0f,  //
+            0.f,
+            0.f,
+            0.f,  //
+            ((x * spriteWidth) / sheetWidth),
+            ((y * spriteHeight) / sheetHeight),
+            //
+            1.f,
+            0.f,
+            0.f,  //
+            (((x + 1) * spriteWidth) / sheetWidth),
+            ((y * spriteHeight) / sheetHeight),
+            1.f,
+            1.f,
+            0.f,  //
+            (((x + 1) * spriteWidth) / sheetWidth),
+            (((y + 1) * spriteHeight) / sheetHeight),
+            0.f,
+            1.f,
+            0.f,  //
+            ((x * spriteWidth) / sheetWidth),
+            (((y + 1) * spriteHeight) / sheetHeight),
         };
         squareVB.reset(VertexBuffer::create(squareVerts, sizeof(squareVerts)));
         squareVB->setLayout(BufferLayout{
