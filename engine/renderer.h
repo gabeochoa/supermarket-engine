@@ -53,87 +53,113 @@ struct Renderer3D {
 static const char* DEFAULT_TEX = "white";
 static int TEXTURE_INDEX = 1;
 struct Renderer {
-    struct SceneData {
-        glm::mat4 viewProjection;
+    struct QuadVert {
+        glm::vec3 position;
+        glm::vec4 color;
+        glm::vec2 texcoord;
+    };
 
-        std::shared_ptr<VertexArray> vertexArray;
+    struct SceneData {
+        // Max per draw call
+        const int MAX_QUADS = 10000;
+        const int MAX_VERTS = MAX_QUADS * 4;
+        const int MAX_IND = MAX_QUADS * 6;
+
+        int quadIndexCount = 0;
+
+        QuadVert* qvbufferstart = nullptr;
+        QuadVert* qvbufferptr = nullptr;
+
+        std::shared_ptr<VertexArray> quadVA;
+        std::shared_ptr<VertexBuffer> quadVB;
+
+        glm::mat4 viewProjection;
         ShaderLibrary shaderLibrary;
         TextureLibrary textureLibrary;
     };
 
     static SceneData* sceneData;
 
+    // TODO lets add something similar for shaders
     static void addTexture(const std::string& filepath, float tiling = 1.f) {
         auto tex = sceneData->textureLibrary.load(filepath, TEXTURE_INDEX);
         tex->tilingFactor = tiling;
         TEXTURE_INDEX++;
     }
 
-    static void init() {
+    static void init_default_shaders() {
         sceneData->shaderLibrary.load("./engine/shaders/flat.glsl");
         sceneData->shaderLibrary.load("./engine/shaders/texture.glsl");
+    }
 
+    static void init_default_textures() {
         std::shared_ptr<Texture> whiteTexture =
             std::make_shared<Texture2D>("white", 1, 1, 0);
         unsigned int data = 0xffffffff;
         whiteTexture->setData(&data);
         sceneData->textureLibrary.add(whiteTexture);
+    }
 
+    static void init() {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_DEPTH_TEST);
 
+        init_default_shaders();
+        init_default_textures();
+
         std::shared_ptr<VertexBuffer> squareVB;
         std::shared_ptr<IndexBuffer> squareIB;
-        sceneData->vertexArray.reset(VertexArray::create());
-
-        // float squareVerts[5 * 4] = {
-        // 0.f, 0.f, 0.f, 0.0f, 0.0f,  //
-        // 1.f, 0.f, 0.f, 1.0f, 0.0f,  //
-        // 1.f, 1.f, 0.f, 1.0f, 1.0f,  //
-        // 0.f, 1.f, 0.f, 0.0f, 1.0f,  //
-        // };
-        float sheetWidth = 918.f;
-        float sheetHeight = 203.f;
-        float spriteWidth = 17.f;
-        float spriteHeight = 17.f;
-
-        int x = 0;
-        int y = 10;
+        sceneData->quadVA.reset(VertexArray::create());
 
         float squareVerts[5 * 4] = {
-            0.f,
-            0.f,
-            0.f,  //
-            ((x * spriteWidth) / sheetWidth),
-            ((y * spriteHeight) / sheetHeight),
-            //
-            1.f,
-            0.f,
-            0.f,  //
-            (((x + 1) * spriteWidth) / sheetWidth),
-            ((y * spriteHeight) / sheetHeight),
-            1.f,
-            1.f,
-            0.f,  //
-            (((x + 1) * spriteWidth) / sheetWidth),
-            (((y + 1) * spriteHeight) / sheetHeight),
-            0.f,
-            1.f,
-            0.f,  //
-            ((x * spriteWidth) / sheetWidth),
-            (((y + 1) * spriteHeight) / sheetHeight),
+            0.f, 0.f, 0.f, 0.0f, 0.0f,  //
+            1.f, 0.f, 0.f, 1.0f, 0.0f,  //
+            1.f, 1.f, 0.f, 1.0f, 1.0f,  //
+            0.f, 1.f, 0.f, 0.0f, 1.0f,  //
         };
+        // float sheetWidth = 918.f;
+        // float sheetHeight = 203.f;
+        // float spriteWidth = 17.f;
+        // float spriteHeight = 17.f;
+        //
+        // int x = 0;
+        // int y = 10;
+        //
+        // float squareVerts[5 * 4] = {
+        // 0.f,
+        // 0.f,
+        // 0.f,  //
+        // ((x * spriteWidth) / sheetWidth),
+        // ((y * spriteHeight) / sheetHeight),
+        // //
+        // 1.f,
+        // 0.f,
+        // 0.f,  //
+        // (((x + 1) * spriteWidth) / sheetWidth),
+        // ((y * spriteHeight) / sheetHeight),
+        // 1.f,
+        // 1.f,
+        // 0.f,  //
+        // (((x + 1) * spriteWidth) / sheetWidth),
+        // (((y + 1) * spriteHeight) / sheetHeight),
+        // 0.f,
+        // 1.f,
+        // 0.f,  //
+        // ((x * spriteWidth) / sheetWidth),
+        // (((y + 1) * spriteHeight) / sheetHeight),
+        // };
         squareVB.reset(VertexBuffer::create(squareVerts, sizeof(squareVerts)));
         squareVB->setLayout(BufferLayout{
             {"i_pos", BufferType::Float3},
+            // {"i_color", BufferType::Float4},
             {"i_texcoord", BufferType::Float2},
         });
-        sceneData->vertexArray->addVertexBuffer(squareVB);
+        sceneData->quadVA->addVertexBuffer(squareVB);
 
         unsigned int squareIs[] = {0, 1, 2, 0, 2, 3};
         squareIB.reset(IndexBuffer::create(squareIs, 6));
-        sceneData->vertexArray->setIndexBuffer(squareIB);
+        sceneData->quadVA->setIndexBuffer(squareIB);
     }
 
     static void resize(int width, int height) {
@@ -192,8 +218,8 @@ struct Renderer {
             texture->bind();
         }
 
-        sceneData->vertexArray->bind();
-        Renderer::draw(sceneData->vertexArray);
+        sceneData->quadVA->bind();
+        Renderer::draw(sceneData->quadVA);
     }
 
     static void drawQuad(const glm::vec3& position, const glm::vec2& size,
