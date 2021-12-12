@@ -6,7 +6,8 @@
 #include "entity.h"
 #include "job.h"
 
-const float REACH_DIST = 0.2f;
+const float REACH_DIST = 1.4f;
+const float TRAVEL_DIST = 0.2f;
 
 bool isWalkable(const glm::vec2& size, const glm::vec2& pos) {
     // is valid location
@@ -37,13 +38,17 @@ std::vector<glm::vec2> generateWalkablePath(  //
     const glm::vec2& end,                     //
     const glm::vec2& size                     //
 ) {
+    (void)skipID;
     (void)movement;
-    log_info("starting theta");
+
+    // TODO @FIX trace actually will still run
+    // we gotta do some kind of fancy #if log thing
+    log_trace("starting theta");
     LazyTheta t(start, end, std::bind(isWalkable, size, std::placeholders::_1));
     auto a = t.go();
     std::reverse(a.begin(), a.end());
     for (auto i : a) {
-        log_info(fmt::format("{}", i));
+        log_trace(fmt::format("{}", i));
     }
     return a;
 }
@@ -57,7 +62,7 @@ struct MovableEntity : public Entity {
     bool walkToLocation(const glm::vec2 location) {
         prof(__PROFILE_FUNC__);
         // Have we reached the position yet?
-        if (path.empty() && glm::distance(position, location) < REACH_DIST) {
+        if (path.empty() && glm::distance(position, location) < TRAVEL_DIST) {
             // our path should be empty but just in case
             path.clear();
             return true;
@@ -76,19 +81,28 @@ struct MovableEntity : public Entity {
 
             // reached our local target, erase this
             // and next cycle we'll grab the next POI
-            if (distance(position, *target) < REACH_DIST) {
+            if (distance(position, *target) < TRAVEL_DIST) {
                 path.erase(target);
                 announce(fmt::format(" reached local target, {} to go",
                                      path.size()));
                 return path.empty() ? true : false;
             }
 
+            // TODO @FIX this is actually not really moveSpeed,
+            // its move distance and so we cant actually
+            // change the speed without breaking pathing..
+            // what we could is track the DT and just only apply the lerp
+            // every x seconds instead
+            //
+            // I think we need to lerp the same amount otherwise what it thinks
+            // is reachable will no longer be so, so i dont think its as simple
+            // as doing moveSpeed * dt,
             position = lerp(position, *target, moveSpeed);
             return false;
         }
         announce(
             fmt::format(" distance to location end {}  (need to be within {})",
-                        glm::distance(position, location), REACH_DIST));
+                        glm::distance(position, location), TRAVEL_DIST));
 
         path =
             generateWalkablePath(id, moveSpeed, position, location, this->size);
@@ -162,6 +176,8 @@ struct Employee : public Person {
     }
 
     bool workFill(const std::shared_ptr<Job>& j, WorkInput input) {
+        (void)input;
+
         if (j->reg.find("amount") != j->reg.end()) {
             j->reg["amount"] = 0;
         }
@@ -181,7 +197,8 @@ struct Employee : public Person {
                 announce("grab something");
                 // TODO this should be  "Storage" instead of a shelf but shelf
                 // is a little easier right now
-                auto shelves = Shelf::getShelvesInRange(position, REACH_DIST);
+                auto shelves =
+                    Storable::getStorageInRange<Storage>(position, REACH_DIST);
                 // announce(fmt::format("trying to grab {} item{} from {}",
                 // j->itemAmount, j->itemID,
                 // (*shelves.begin())->contents));
@@ -193,8 +210,8 @@ struct Employee : public Person {
                     return false;
                 }
 
-                int amt = (*shelves.begin())
-                              ->contents.removeItem(j->itemID, j->itemAmount);
+                int amt = (*shelves.begin())->contents.removeItem(j->itemID, 1);
+                // ->contents.removeItem(j->itemID, j->itemAmount);
                 inventory.addItem(j->itemID, amt);
                 if (j->itemAmount - inventory[j->itemID] > 0) {
                     log_warn("shelf didnt have enough, so giving up");
@@ -215,7 +232,8 @@ struct Employee : public Person {
             case 3:  // Got to End
             {
                 announce("drop it off ");
-                auto shelves = Shelf::getShelvesInRange(position, REACH_DIST);
+                auto shelves =
+                    Storable::getStorageInRange<Shelf>(position, REACH_DIST);
                 // TODO need to support finding a shelf instead of
                 // setting the start and end manually
                 if (shelves.empty()) {

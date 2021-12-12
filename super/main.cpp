@@ -35,33 +35,24 @@ struct SuperLayer : public Layer {
         // glm::vec4{0.0f, 1.0f, 1.0f, 1.0f}, "face");
         // entities.push_back(billy);
 
-        auto shelf = std::make_shared<Shelf>(
+        auto storage = std::make_shared<Storage>(
             glm::vec2{1.f, 1.f}, glm::vec2{1.f, 1.f}, 0.f,
             glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
-        shelf->contents.addItem(0, 1);
-        shelf->contents.addItem(1, 6);
-        shelf->contents.addItem(2, 7);
-        shelf->contents.addItem(3, 9);
-        entities.push_back(shelf);
+        storage->contents.addItem(0, 1);
+        storage->contents.addItem(1, 6);
+        storage->contents.addItem(2, 7);
+        storage->contents.addItem(3, 9);
+        entities.push_back(storage);
 
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 10; j += 2) {
                 auto shelf2 = std::make_shared<Shelf>(
                     glm::vec2{1.f + i, -3.f + j},  //
                     glm::vec2{1.f, 1.f}, 0.f,      //
-                    glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
+                    glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "shelf");
                 entities.push_back(shelf2);
             }
         }
-
-        // Job j = {
-        // .type = JobType::Fill,
-        // .startPosition = shelf->position,
-        // .endPosition = shelf2->position,
-        // .itemID = 0,
-        // .itemAmount = 1,
-        // };
-        // JobQueue::addJob(JobType::Fill, std::make_shared<Job>(j));
 
         for (int i = 0; i < 1; i++) {
             auto emp = Employee();
@@ -95,6 +86,7 @@ struct SuperLayer : public Layer {
         }
 
         Renderer::end();
+
         //
         // if (JobQueue::numOfJobsWithType(JobType::IdleWalk) < 5) {
         // JobQueue::addJob(
@@ -122,6 +114,30 @@ struct SuperLayer : public Layer {
                 JobType::DirectedWalk,
                 std::make_shared<Job>(Job({.type = JobType::DirectedWalk,
                                            .endPosition = mouseInWorld})));
+        }
+        if (e.GetMouseButton() == Mouse::MouseCode::ButtonRight) {
+            for (auto& entity : entities) {
+                auto storage = dynamic_pointer_cast<Storage>(entity);
+                if (storage) {
+                    // TODO for now just keep queue jobs until we are empty
+                    if (!storage->contents.empty() &&
+                        JobQueue::numOfJobsWithType(JobType::Fill) <
+                            (int)storage->contents.size()) {
+                        // TODO getting random shelf probably not the best
+                        // idea.. .
+                        Job j = {
+                            .type = JobType::Fill,
+                            .startPosition = storage->position,
+                            .endPosition =
+                                Storage::getRandomStorage<Shelf>()->position,
+                            .itemID = storage->contents.rbegin()->first,
+                            .itemAmount = storage->contents.rbegin()->second,
+                        };
+                        JobQueue::addJob(JobType::Fill,
+                                         std::make_shared<Job>(j));
+                    }
+                }
+            }
         }
         return false;
     }

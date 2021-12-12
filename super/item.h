@@ -73,6 +73,14 @@ struct ItemGroup {
     auto begin() const { return group.begin(); }
     auto end() const { return group.end(); }
 
+    auto rbegin() const { return group.rbegin(); }
+    auto rend() const { return group.rend(); }
+
+    auto rbegin() { return group.rbegin(); }
+    auto rend() { return group.rend(); }
+
+    auto empty() const { return group.empty(); }
+
     friend std::ostream& operator<<(std::ostream& os, const ItemGroup& ig) {
         for (auto& kv : ig.group) {
             os << "(" << kv.first << "," << kv.second << ")"
@@ -82,7 +90,7 @@ struct ItemGroup {
     }
 };
 
-struct Shelf : public Entity {
+struct Storable : public Entity {
     static constexpr std::array<std::pair<float, float>, 4> item_positions{{
         //
         {0.11f, 0.1f},
@@ -109,12 +117,10 @@ struct Shelf : public Entity {
 
     ItemGroup contents;
 
-    Shelf(const glm::vec2& position, const glm::vec2& size, float angle,
-          const glm::vec4& color, const std::string& textureName)
+    Storable(const glm::vec2& position, const glm::vec2& size, float angle,
+             const glm::vec4& color, const std::string& textureName)
         : Entity(position, size, angle, color, textureName) {}
 
-    virtual ~Shelf() {}
-    virtual const char* typeString() const override { return "Shelf"; }
     virtual void render() override {
         if (contents.size() > 4) {
             log_warn("Contents is too large and so not all items will display");
@@ -144,30 +150,47 @@ struct Shelf : public Entity {
         Entity::render();
     }
 
-    static std::shared_ptr<Shelf> getRandomShelf(const glm::vec2& notpos = {
-                                                     -99.f, -99.f}) {
-        std::vector<std::shared_ptr<Shelf>> shelves;
+    template <typename T>
+    static std::shared_ptr<T> getRandomStorage(const glm::vec2& notpos = {
+                                                   -99.f, -99.f}) {
+        std::vector<std::shared_ptr<T>> matching;
         for (auto& e : entities) {
-            auto s = dynamic_pointer_cast<Shelf>(e);
+            auto s = dynamic_pointer_cast<T>(e);
             if (!s) continue;
-            if (glm::distance(s->position, notpos) > 1.f) shelves.push_back(s);
+            if (glm::distance(s->position, notpos) > 1.f) matching.push_back(s);
         }
-
-        int i = randIn(0, shelves.size() - 1);
-        return shelves[i];
+        int i = randIn(0, matching.size() - 1);
+        return matching[i];
     }
 
-    static std::vector<std::shared_ptr<Shelf>> getShelvesInRange(glm::vec2 pos,
-                                                                 float range) {
-        std::vector<std::shared_ptr<Shelf>> shelves;
+    template <typename T>
+    static std::vector<std::shared_ptr<T>> getStorageInRange(glm::vec2 pos,
+                                                             float range) {
+        std::vector<std::shared_ptr<T>> matching;
         for (auto& e : entities) {
-            auto s = dynamic_pointer_cast<Shelf>(e);
+            auto s = dynamic_pointer_cast<T>(e);
             if (!s) continue;
             if (glm::distance(pos, e->position) < range) {
-                shelves.push_back(s);
+                matching.push_back(s);
             }
         }
-        return shelves;
+        return matching;
     }
+};
+
+struct Storage : public Storable {
+    virtual const char* typeString() const override { return "Storage"; }
+
+    Storage(const glm::vec2& position, const glm::vec2& size, float angle,
+            const glm::vec4& color, const std::string& textureName)
+        : Storable(position, size, angle, color, textureName) {}
+};
+
+struct Shelf : public Storable {
+    virtual const char* typeString() const override { return "Shelf"; }
+
+    Shelf(const glm::vec2& position, const glm::vec2& size, float angle,
+          const glm::vec4& color, const std::string& textureName)
+        : Storable(position, size, angle, color, textureName) {}
 };
 

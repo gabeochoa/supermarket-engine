@@ -38,7 +38,7 @@ struct Entity {
 
     virtual ~Entity() {}
 
-    virtual void onUpdate(Time dt) {}
+    virtual void onUpdate(Time dt) { (void)dt; }
 
     virtual bool pointCollides(const glm::vec2& m) const {
         auto [a, b, c, d] = getBoundingBox(position, size);

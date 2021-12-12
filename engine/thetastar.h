@@ -89,7 +89,7 @@ struct Theta {
         openSet.add(start, (gScore[start] + glm::distance(start, end)));
     }
 
-    glm::vec2 expandUntilWalkable(glm::vec2 n, int j = 0) {
+    glm::vec2 expandUntilWalkable(glm::vec2 n) {
         closedSet.add(n, 0);
         while (true) {
             ThetaPQ::Qi qi = closedSet.pop();

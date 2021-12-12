@@ -146,7 +146,7 @@ struct EntityDebugLayer : public Layer {
     std::shared_ptr<Entity> node;
 
     EntityDebugLayer() : Layer("EntityDebug") {
-        isMinimized = !IS_DEBUG;
+        isMinimized = false;  //! IS_DEBUG;
 
         node = std::make_shared<Billboard>(    //
             glm::vec2{0.f, 0.f},               //
