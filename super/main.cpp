@@ -59,29 +59,19 @@ struct SuperLayer : public Layer {
             }
         }
 
-        // for (int i = 0; i < 1; i++)
-        {
+        const int num_people_sprites = 3;
+        std::array<std::string, num_people_sprites> peopleSprites = {
+            "player",
+            "player2",
+            "player3",
+        };
+
+        for (int i = 0; i < 5; i++) {
             auto emp = Employee();
             emp.color = gen_rand_vec4(0.3f, 1.0f);
             emp.color.w = 1.f;
             emp.size = {0.6f, 0.6f};
-            emp.textureName = "player";
-            entities.push_back(std::make_shared<Employee>(emp));
-        }
-        {
-            auto emp = Employee();
-            emp.color = gen_rand_vec4(0.3f, 1.0f);
-            emp.color.w = 1.f;
-            emp.size = {0.6f, 0.6f};
-            emp.textureName = "player2";
-            entities.push_back(std::make_shared<Employee>(emp));
-        }
-        {
-            auto emp = Employee();
-            emp.color = gen_rand_vec4(0.3f, 1.0f);
-            emp.color.w = 1.f;
-            emp.size = {0.6f, 0.6f};
-            emp.textureName = "player3";
+            emp.textureName = peopleSprites[i % num_people_sprites];
             entities.push_back(std::make_shared<Employee>(emp));
         }
     }
@@ -107,14 +97,13 @@ struct SuperLayer : public Layer {
 
         Renderer::end();
 
-        //
-        // if (JobQueue::numOfJobsWithType(JobType::IdleWalk) < 5) {
-        // JobQueue::addJob(
-        // JobType::IdleWalk,
-        // std::make_shared<Job>(
-        // Job({.type = JobType::IdleWalk,
-        // .endPosition = glm::circularRand<float>(5.f)})));
-        // }
+        if (JobQueue::numOfJobsWithType(JobType::IdleWalk) < 5) {
+            JobQueue::addJob(
+                JobType::IdleWalk,
+                std::make_shared<Job>(
+                    Job({.type = JobType::IdleWalk,
+                         .endPosition = glm::circularRand<float>(5.f)})));
+        }
         // Cleanup all completed jobs
         JobQueue::cleanup();
     }
