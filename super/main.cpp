@@ -8,7 +8,6 @@
 #include "job.h"
 #include "util.h"
 
-// TODO at some point we should have some way to send this to app
 constexpr int WIN_W = 1920;
 constexpr int WIN_H = 1080;
 constexpr float WIN_RATIO = (WIN_W * 1.f) / WIN_H;
@@ -32,8 +31,8 @@ int main(int argc, char** argv) {
     }
 
     app.reset(App::create({
-        .width = 1920,
-        .height = 1080,
+        .width = WIN_W,
+        .height = WIN_H,
         .title = "SuperMarket",
         .clearEnabled = true,
     }));

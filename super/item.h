@@ -7,10 +7,12 @@
 struct Item {
     const char* name;
     const float price;
-    // TODO eventually should be a string with texture, but for now, color
+    const char* textureName;
     const glm::vec4 color;
-    constexpr Item(const char* n, const float p, const glm::vec4& c)
-        : name(n), price(p), color(c) {}
+
+    constexpr Item(const char* n, const float p, const char* t,
+                   const glm::vec4& c)
+        : name(n), price(p), textureName(t), color(c) {}
 };
 
 // error: excess items in array initializer
@@ -18,10 +20,10 @@ struct Item {
 static constexpr std::array<std::pair<int, Item>, 4> items_{
     //
     {
-        {0, {"apple", 1.f, glm::vec4{1.f}}},  //
-        {1, {"apple", 1.f, glm::vec4{1.f}}},  //
-        {2, {"apple", 1.f, glm::vec4{1.f}}},  //
-        {3, {"apple", 1.f, glm::vec4{1.f}}},  //
+        {0, {"apple", 1.f, "face", glm::vec4{1.f}}},   //
+        {1, {"apple", 1.f, "box", glm::vec4{1.f}}},    //
+        {2, {"apple", 1.f, "shelf", glm::vec4{1.f}}},  //
+        {3, {"apple", 1.f, "face", glm::vec4{1.f}}},   //
     }
     //
 };
@@ -128,7 +130,6 @@ struct Storable : public Entity {
         int index = 0;
         for (auto& kv : contents) {
             if (index >= 4) break;
-            // TODO replace "face" with the real texture
             Item item = ItemManager::getItem(kv.first);
             auto basepos =
                 glm::vec3{position.x + item_positions[index].first,
@@ -141,7 +142,7 @@ struct Storable : public Entity {
                      basepos.z},                          // pos
                     {0.1f, 0.1f},                         // size
                     item.color,                           // color
-                    "face"                                // tex
+                    item.textureName                      // textureName
                 );
             }
             index++;

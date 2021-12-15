@@ -188,15 +188,13 @@ struct Employee : public Person {
                 // walk to start...
                 bool isAtStartLocation = walkToLocation(j->startPosition);
                 if (isAtStartLocation) {
-                    announce("got to start Location");
+                    // announce("got to start Location");
                     j->jobStatus = 1;  // grab something...
                 }
             } break;
             case 1:  // Reached start
             {
                 announce("grab something");
-                // TODO this should be  "Storage" instead of a shelf but shelf
-                // is a little easier right now
                 auto shelves =
                     Storable::getStorageInRange<Storage>(position, REACH_DIST);
                 // announce(fmt::format("trying to grab {} item{} from {}",
@@ -205,16 +203,19 @@ struct Employee : public Person {
                 // TODO need to support finding a shelf instead of
                 // setting the start and end manually
                 if (shelves.empty()) {
-                    log_warn("no matching shelf, so uh what can we do");
+                    // log_warn("no matching shelf, so uh what can we do");
                     j->jobStatus = 5;
                     return false;
                 }
 
+                // TODO set some kind of hand size cause 1 at a time doesnt make
+                // sense
                 int amt = (*shelves.begin())->contents.removeItem(j->itemID, 1);
                 // ->contents.removeItem(j->itemID, j->itemAmount);
                 inventory.addItem(j->itemID, amt);
                 if (j->itemAmount - inventory[j->itemID] > 0) {
-                    log_warn("shelf didnt have enough, so giving up");
+                    // log_warn("shelf didnt have enough, so giving up");
+                    j->jobStatus = 5;
                 }
                 // announce(fmt::format("tried to grab {} from {}, howd it go?
                 // ", j->itemID, (*shelves.begin())->contents));
@@ -225,19 +226,19 @@ struct Employee : public Person {
                 // walk to end...
                 bool isAtEndLocation = walkToLocation(j->endPosition);
                 if (isAtEndLocation) {
-                    announce("got to end Location");
+                    // announce("got to end Location");
                     j->jobStatus = 3;  // drop it off something...
                 }
             } break;
             case 3:  // Got to End
             {
-                announce("drop it off ");
+                // announce("drop it off ");
                 auto shelves =
                     Storable::getStorageInRange<Shelf>(position, REACH_DIST);
                 // TODO need to support finding a shelf instead of
                 // setting the start and end manually
                 if (shelves.empty()) {
-                    log_warn("no matching shelf, so uh what can we do");
+                    // log_warn("no matching shelf, so uh what can we do");
                     j->jobStatus = 5;
                     return false;
                 }
