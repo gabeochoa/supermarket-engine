@@ -21,6 +21,9 @@ constexpr auto LOG_LEVEL = LogLevel::TRACE;
         if (x <= LOG_LEVEL) return; \
     }
 
+// TODO replace having to do fmt::format() for logs, check the api docs theres
+// definitely a way to do it
+
 inline void log(const std::string &line) { std::cout << line << std::endl; }
 inline void log_trace(const std::string &s) {
     M_SHOULD_LOG(LogLevel::TRACE);
