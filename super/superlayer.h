@@ -69,7 +69,7 @@ struct SuperLayer : public Layer {
     virtual void onDetach() override {}
 
     virtual void onUpdate(Time dt) override {
-        log_trace(fmt::format("{:.2}s ({:.2} ms) ", dt.s(), dt.ms()));
+        log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
         prof(__PROFILE_FUNC__);  //
         Renderer::stats.reset();
         Renderer::stats.begin();
@@ -146,7 +146,7 @@ struct SuperLayer : public Layer {
     }
 
     virtual void onEvent(Event& event) override {
-        log_trace(event.toString());
+        log_trace(event.toString().c_str());
         cameraController->onEvent(event);
         EventDispatcher dispatcher(event);
         dispatcher.dispatch<Mouse::MouseButtonPressedEvent>(std::bind(

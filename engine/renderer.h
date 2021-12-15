@@ -66,7 +66,7 @@ struct Renderer {
         int drawCalls = 0;
         int quadCount = 0;
         int textureCount = 0;
-        int frameCount = 0;
+        size_t frameCount = 0;
         float frameBeginTime = 0.f;
         float totalFrameTime = 0.f;
 

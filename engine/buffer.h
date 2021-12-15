@@ -43,7 +43,7 @@ struct BufferElem {
             case BufferType::Mat4:
                 return GL_FLOAT;
             default:
-                log_error(fmt::format("Missing type conversion for {}", type));
+                log_error("Missing type conversion for {}", type);
                 return GL_FLOAT;
         }
     }
@@ -65,7 +65,7 @@ struct BufferElem {
             case BufferType::Bool:
                 return 1;
             default:
-                log_error(fmt::format("Missing buffer type size for {}", t));
+                log_error("Missing buffer type size for {}", t);
                 return -1;
         }
     }
@@ -86,7 +86,7 @@ struct BufferElem {
             case BufferType::Mat4:
                 return 4;
             default:
-                log_error(fmt::format("Missing count for {}", type));
+                log_error("Missing count for {}", type);
                 return -1;
         }
     }

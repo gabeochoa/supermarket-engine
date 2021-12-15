@@ -88,7 +88,7 @@ struct App {
     }
 
     void onEvent(Event& e) {
-        log_trace(e.toString());
+        log_trace(e.toString().c_str());
         EventDispatcher dispatcher(e);
         dispatcher.dispatch<WindowCloseEvent>(M_BIND(onWindowClose));
         dispatcher.dispatch<KeyPressedEvent>(M_BIND(onKeyPressed));
@@ -116,7 +116,8 @@ struct App {
             prof(__PROFILE_FUNC__);
             time.end();
             if (isMinimized) continue;
-            if (clearEnabled) Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
+            if (clearEnabled)
+                Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
             for (Layer* layer : layerstack) {
                 layer->onUpdate(time);
             }

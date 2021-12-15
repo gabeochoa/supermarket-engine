@@ -50,7 +50,7 @@ inline std::string jobTypeToString(JobType t) {
         case JobType::MAX_JOB_TYPE:
             return "MAX_JOB_TYPE";
         default:
-            log_warn(fmt::format("JobType {} has no toString handler", t));
+            log_warn("JobType {} has no toString handler", t);
             return std::to_string(t);
     }
 }
@@ -169,9 +169,8 @@ struct JobHandler {
 
     void handle(const std::shared_ptr<Job>& j, const WorkInput& input) {
         if (job_mapping.find((int)j->type) == job_mapping.end()) {
-            log_warn(
-                fmt::format("Got job of type {} but dont have a handler for it",
-                            jobTypeToString(j->type)));
+            log_warn("Got job of type {} but dont have a handler for it",
+                     jobTypeToString(j->type));
             return;
         }
         job_mapping[(int)j->type](j, input);

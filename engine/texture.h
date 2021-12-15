@@ -73,7 +73,7 @@ struct Texture2D : public Texture {
     }
 
     Texture2D(const std::string &path) : Texture() {
-        log_trace(fmt::format("Loading texture: {}", path));
+        log_trace("Loading texture: {}", path);
 
         name = nameFromFilePath(path);
 
@@ -90,9 +90,8 @@ struct Texture2D : public Texture {
             internalFormat = GL_RGB8;
             dataFormat = GL_RGB;
         }
-        M_ASSERT(internalFormat,
-                 fmt::format("image format not supported: {}", channels));
-        log_trace(fmt::format("texture {} has {} channels", path, channels));
+        M_ASSERT(internalFormat, "image format not supported: {}", channels);
+        log_trace("texture {} has {} channels", path, channels);
 
         this->width = w;
         this->height = h;
@@ -158,14 +157,13 @@ struct TextureLibrary {
 
     const std::string add(const std::shared_ptr<Texture> &texture) {
         if (textures.find(texture->name) != textures.end()) {
-            log_warn(fmt::format(
-                "Failed to add texture to library, texture with name "
-                "{} already exists",
-                texture->name));
+            log_warn(
+                "Failed to add texture to library, texture with name {} "
+                "already exists",
+                texture->name);
             return "";
         }
-        log_info(
-            fmt::format("Adding Texture \"{}\" to our library", texture->name));
+        log_info("Adding Texture \"{}\" to our library", texture->name);
         textures[texture->name] = texture;
         return texture->name;
     }
@@ -213,10 +211,10 @@ struct TextureLibrary {
                        float spriteHeight) {
         auto textureIt = textures.find(textureName);
         if (textureIt == textures.end()) {
-            log_warn(fmt::format(
+            log_warn(
                 "Failed to add subtexture to library, texture with name "
                 "{} was not found",
-                textureName));
+                textureName);
             return;
         }
 
@@ -226,19 +224,19 @@ struct TextureLibrary {
         // or maybe we just have those two functions and they handle tiebreaks
         // differently...
         if (textures.find(name) != textures.end()) {
-            log_warn(fmt::format(
+            log_warn(
                 "Failed to add subtexture to library, this name '{}' is "
                 "already being used for a texture, and cant be reused for a "
                 "subtexture",
-                name));
+                name);
             return;
         }
 
         if (subtextures.find(name) != subtextures.end()) {
-            log_warn(fmt::format(
+            log_warn(
                 "Failed to add subtexture to library, subtexture with name "
                 "{} already exists",
-                name));
+                name);
             return;
         }
 
@@ -253,7 +251,7 @@ struct TextureLibrary {
             ((y + 1) * spriteHeight) / texture->height,
         };
 
-        log_info(fmt::format("Adding subtexture \"{}\" to our library", name));
+        log_info("Adding subtexture \"{}\" to our library", name);
         subtextures[name] = std::make_shared<Subtexture>(texture, min, max);
     }
 

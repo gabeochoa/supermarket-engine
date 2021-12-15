@@ -20,11 +20,11 @@ struct Shader {
     Shader(const std::string &filepath) {
         name = nameFromFilePath(filepath);
 
-        log_trace(fmt::format("Trying to load shader at: {} ", filepath));
+        log_trace("Trying to load shader at: {} ", filepath);
         std::string contents = readFromFile(filepath);
-        log_trace(fmt::format("Got shader contents from file {} ", filepath));
+        log_trace("Got shader contents from file {} ", filepath);
         std::unordered_map<GLenum, std::string> sources = preProcess(contents);
-        log_trace(fmt::format("finished preprocessing shader {} ", filepath));
+        log_trace("finished preprocessing shader {} ", filepath);
         compile(sources);
     }
 
@@ -65,7 +65,7 @@ struct Shader {
         if (type == "vertex") return GL_VERTEX_SHADER;
         if (type == "fragment" || type == "pixel") return GL_FRAGMENT_SHADER;
 
-        M_ASSERT(false, fmt::format("Unknown shader type: {}", type));
+        M_ASSERT(false, "Unknown shader type: {}", type);
         return 0;
     }
 
@@ -77,8 +77,7 @@ struct Shader {
                 std::ios::binary);  // ifstream closes itself due to RAII
 
         if (!in.is_open()) {
-            log_warn(
-                fmt::format("Tried to load shader: {} but failed", filepath));
+            log_warn("Tried to load shader: {} but failed", filepath);
             return result;
         }
 
@@ -125,9 +124,8 @@ struct Shader {
                 glDeleteShader(shader);
 
                 // Use the infoLog as you see fit.
-                log_error(
-                    fmt::format("{} Shader failed to compile: \n{}", type,
-                                std::string(infoLog.begin(), infoLog.end())));
+                log_error("{} Shader failed to compile: \n{}", type,
+                          std::string(infoLog.begin(), infoLog.end()));
                 return;
             }
 
@@ -159,8 +157,8 @@ struct Shader {
             // Use the infoLog as you see fit.
 
             // In this simple program, we'll just leave
-            log_error(fmt::format("Shaders failed to link:\n {}",
-                                  std::string(infoLog.begin(), infoLog.end())));
+            log_error("Shaders failed to link:\n {}",
+                      std::string(infoLog.begin(), infoLog.end()));
             return;
         }
 
@@ -180,7 +178,8 @@ struct Shader {
         GLint location = glGetUniformLocation(rendererID, name.c_str());
         glUniform1i(location, i);
     }
-    void uploadUniformIntArray(const std::string &name, int* values, int count) {
+    void uploadUniformIntArray(const std::string &name, int *values,
+                               int count) {
         GLint location = glGetUniformLocation(rendererID, name.c_str());
         glUniform1iv(location, count, values);
     }
@@ -208,13 +207,12 @@ struct ShaderLibrary {
     void add(const std::shared_ptr<Shader> &shader) {
         if (shaders.find(shader->name) != shaders.end()) {
             log_warn(
-                fmt::format("Failed to add shader to library, shader with name "
-                            "{} already exists",
-                            shader->name));
+                "Failed to add shader to library, shader with name "
+                "{} already exists",
+                shader->name);
             return;
         }
-        log_trace(
-            fmt::format("Adding Shader \"{}\" to our library", shader->name));
+        log_trace("Adding Shader \"{}\" to our library", shader->name);
         shaders[shader->name] = shader;
     }
     std::shared_ptr<Shader> load(const std::string &path) {

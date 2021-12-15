@@ -48,7 +48,7 @@ std::vector<glm::vec2> generateWalkablePath(  //
     auto a = t.go();
     std::reverse(a.begin(), a.end());
     for (auto i : a) {
-        log_trace(fmt::format("{}", i));
+        log_trace("{}", i);
     }
     return a;
 }

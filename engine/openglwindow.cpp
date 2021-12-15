@@ -9,8 +9,8 @@ void OpenGLWindow::init(const WindowConfig& config) {
     info.width = config.width;
     info.height = config.height;
 
-    log(fmt::format("Creating a new window {} ({}, {})", info.title, info.width,
-                    info.height));
+    log_trace("Creating a new window {} ({}, {})", info.title, info.width,
+              info.height);
 
     // TODO Have some way of only doing this once
     int success = glfwInit();

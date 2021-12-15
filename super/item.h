@@ -53,9 +53,9 @@ struct ItemGroup {
     int removeItem(int itemID, int amount) {
         auto it = group.find(itemID);
         if (it == group.end()) {
-            log_warn(fmt::format(
+            log_warn(
                 "Trying to remove {} of {} but this ItemGroup doesnt have that",
-                amount, itemID));
+                amount, itemID);
             return 0;
         }
         if (it->second >= amount) {

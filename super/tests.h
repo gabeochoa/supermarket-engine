@@ -28,7 +28,7 @@ void theta_test() {
         auto result = t.go();
         std::reverse(result.begin(), result.end());
         for (auto i : result) {
-            log_info(fmt::format("{}", i));
+            log_info("{}", i);
         }
         M_ASSERT(result.size(), "Path is empty but shouldnt be");
         entities.clear();
