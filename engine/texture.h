@@ -4,6 +4,9 @@
 #include "pch.hpp"
 
 struct Texture {
+    const std::array<glm::vec2, 4> textureCoords = {
+        {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}}};
+
     std::string name;
     int width;
     int height;
@@ -91,8 +94,8 @@ struct Texture2D : public Texture {
                  fmt::format("image format not supported: {}", channels));
         log_trace(fmt::format("texture {} has {} channels", path, channels));
 
-        width = w;
-        height = h;
+        this->width = w;
+        this->height = h;
 
         glGenTextures(1, &rendererID);
         glBindTexture(GL_TEXTURE_2D, rendererID);
@@ -120,8 +123,23 @@ struct Texture2D : public Texture {
     }
 };
 
+struct Subtexture {
+    std::shared_ptr<Texture> texture;
+    std::array<glm::vec2, 4> textureCoords;
+
+    Subtexture(const std::shared_ptr<Texture> &tex, const glm::vec2 &min,
+               const glm::vec2 &max)
+        : texture(tex) {
+        textureCoords[0] = {min.x, min.y};
+        textureCoords[1] = {max.x, min.y};
+        textureCoords[2] = {max.x, max.y};
+        textureCoords[3] = {min.x, max.y};
+    }
+};
+
 struct TextureLibrary {
     std::map<std::string, std::shared_ptr<Texture>> textures;
+    std::map<std::string, std::shared_ptr<Subtexture>> subtextures;
 
     auto size() { return textures.size(); }
     auto begin() { return textures.begin(); }
@@ -159,6 +177,86 @@ struct TextureLibrary {
 
     std::shared_ptr<Texture> &get(const std::string &name) {
         return textures[name];
+    }
+
+    bool hasMatchingTexture(const std::string &name) {
+        return textures.find(name) != textures.end();
+    }
+
+    bool hasMatchingSubtexture(const std::string &name) {
+        return subtextures.find(name) != subtextures.end();
+    }
+
+    // -1 if not found, 0 if texture, 1 if subtexture
+    int isTextureOrSubtexture(const std::string &textureName) {
+        // is this a texture?
+        auto textureIt = textures.find(textureName);
+        auto subtextureIt = subtextures.find(textureName);
+        int textureStatus = -1;
+        // TODO i dont like that we have to reach into end() here
+        // but its better than calling find 3 times
+        if (textureIt == textures.end()) {
+            // not a valid texture, is it a subtexture?
+            if (subtextureIt == subtextures.end()) {
+                textureStatus = 1;  // is subtexture
+            }
+        } else {
+            textureStatus = 0;  // is texture
+        }
+        return textureStatus;
+    }
+
+    void addSubtexture(const std::string &textureName, const std::string &name,
+                       float x, float y, float spriteWidth,
+                       float spriteHeight) {
+        auto textureIt = textures.find(textureName);
+        if (textureIt != textures.end()) {
+            log_warn(fmt::format(
+                "Failed to add subtexture to library, texture with name "
+                "{} was not found",
+                textureName));
+            return;
+        }
+
+        // This makes the renderer code easier because we can just assume theres
+        // no conflicts. In order to fix this we would need a way for the user
+        // to specify if they want to drawQuad or drawQuadSubtexture
+        // or maybe we just have those two functions and they handle tiebreaks
+        // differently...
+        if (textures.find(name) != textures.end()) {
+            log_warn(fmt::format(
+                "Failed to add subtexture to library, this name {} is already "
+                "being used for a texture, and cant be reused for a "
+                "subtexture",
+                name));
+            return;
+        }
+
+        if (subtextures.find(name) != subtextures.end()) {
+            log_warn(fmt::format(
+                "Failed to add subtexture to library, subtexture with name "
+                "{} already exists",
+                name));
+            return;
+        }
+
+        auto texture = textureIt->second;
+
+        glm::vec2 min = {
+            x * spriteWidth / texture->width,
+            y * spriteHeight / texture->height,
+        };
+        glm::vec2 max = {
+            (x + 1) * spriteWidth / texture->width,
+            (y + 1) * spriteHeight / texture->height,
+        };
+
+        log_info(fmt::format("Adding subtexture \"{}\" to our library", name));
+        subtextures[name] = std::make_shared<Subtexture>(texture, min, max);
+    }
+
+    std::shared_ptr<Subtexture> &getSubtexture(const std::string &name) {
+        return subtextures[name];
     }
 };
 

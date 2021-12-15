@@ -272,10 +272,6 @@ struct Renderer {
 
     static void drawQuad(const glm::mat4& transform, const glm::vec4& color,
                          const std::string& textureName = DEFAULT_TEX) {
-        (void)textureName;
-        const std::array<glm::vec2, 4> textureCoords = {
-            {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}}};
-
         const std::array<glm::vec4, 4> vertexCoords = {{
             {-0.5f, -0.5f, 0.0f, 1.0f},
             {0.5f, -0.5f, 0.0f, 1.0f},
@@ -287,9 +283,26 @@ struct Renderer {
             next_batch();
         }
 
-        auto texture = textureLibrary.get(textureName);
+        auto textureStatus = textureLibrary.isTextureOrSubtexture(textureName);
+
+        std::shared_ptr<Texture> texture;
+        std::shared_ptr<Subtexture> subtexture;
+
+        if (textureStatus == -1 || textureStatus == 0) {
+            texture = textureLibrary.get(textureName);
+        } else {
+            subtexture = textureLibrary.getSubtexture(textureName);
+            // only do this -> when valid, to avoid segfault
+            // we check for validity later so this is fine
+            if (subtexture) texture = subtexture->texture;
+        }
+
+        // Load the corresponding Texture into the texture slots
         int textureIndex = 0;
-        if (textureName != DEFAULT_TEX && texture) {
+        if (texture                        // tex is valid (ie not nullptr)
+            && textureName != DEFAULT_TEX  // default tex is always loaded
+            && textureStatus != -1  // set to default tex so already loaded
+        ) {
             for (int i = 1; i < sceneData->nextTexSlot; i++) {
                 if (*(sceneData->textureSlots[i]) == *texture) {
                     textureIndex = i;
@@ -307,13 +320,20 @@ struct Renderer {
             }
         } else {
             texture = textureLibrary.get(DEFAULT_TEX);
+            // if we fall into this case,
+            // either textureName didnt exist at all
+            // or textureName was a texture and is invalid
+            // or textureName was an invalid subtexture or texture is
+            textureStatus = -1;
         }
         // else use 0 which is white texture
 
         for (size_t i = 0; i < 4; i++) {
             sceneData->qvbufferptr->position = transform * vertexCoords[i];
             sceneData->qvbufferptr->color = color;
-            sceneData->qvbufferptr->texcoord = textureCoords[i];
+            sceneData->qvbufferptr->texcoord =
+                textureStatus != 1 ? texture->textureCoords[i]
+                                   : subtexture->textureCoords[i];
             sceneData->qvbufferptr->texindex = (float)textureIndex;
             // TODO FIX - for some reason the "->tilingFactor" controls the
             // texture index in the shader
@@ -324,13 +344,31 @@ struct Renderer {
         sceneData->quadIndexCount += 6;
     }
 
+    ////// ////// ////// ////// ////// ////// ////// //////
+    //      the draw quads below here, just call one of the ones above
+    ////// ////// ////// ////// ////// ////// ////// //////
+
+    static void drawQuad(const glm::vec2& position, const glm::vec2& size,
+                         const glm::vec4& color,
+                         const std::string& textureName = DEFAULT_TEX) {
+        Renderer::drawQuad(glm::vec3{position.x, position.y, 0.f}, size, color,
+                           textureName);
+    }
+
     static void drawQuad(const glm::vec3& position, const glm::vec2& size,
                          const glm::vec4& color,
                          const std::string& textureName = DEFAULT_TEX) {
-        prof(__PROFILE_FUNC__);
         auto transform = glm::translate(glm::mat4(1.f), position) *
                          glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
-        drawQuad(transform, color, textureName);
+        Renderer::drawQuad(transform, color, textureName);
+    }
+
+    static void drawQuadRotated(const glm::vec2& position,
+                                const glm::vec2& size, float angleInRad,
+                                const glm::vec4& color,
+                                const std::string& textureName = DEFAULT_TEX) {
+        Renderer::drawQuadRotated({position.x, position.y, 0.f}, size,
+                                  angleInRad, color, textureName);
     }
 
     static void drawQuadRotated(const glm::vec3& position,
@@ -345,24 +383,5 @@ struct Renderer {
             glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
         drawQuad(transform, color, textureName);
-    }
-
-    ////// ////// ////// ////// ////// ////// ////// //////
-    //      the draw quads below here, just call one of the ones above
-    ////// ////// ////// ////// ////// ////// ////// //////
-
-    static void drawQuad(const glm::vec2& position, const glm::vec2& size,
-                         const glm::vec4& color,
-                         const std::string& textureName = DEFAULT_TEX) {
-        Renderer::drawQuad(glm::vec3{position.x, position.y, 0.f}, size, color,
-                           textureName);
-    }
-
-    static void drawQuadRotated(const glm::vec2& position,
-                                const glm::vec2& size, float angleInRad,
-                                const glm::vec4& color,
-                                const std::string& textureName = DEFAULT_TEX) {
-        Renderer::drawQuadRotated(glm::vec3{position.x, position.y, 0.f}, size,
-                                  angleInRad, color, textureName);
     }
 };
