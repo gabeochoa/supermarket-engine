@@ -93,6 +93,13 @@ struct Renderer {
         textureLibrary.get(texName)->tilingFactor = 2.f;
     }
 
+    static void addSubtexture(const std::string& textureName,
+                              const std::string& name, float x, float y,
+                              float spriteWidth, float spriteHeight) {
+        textureLibrary.addSubtexture(textureName, name, x, y, spriteWidth,
+                                     spriteHeight);
+    }
+
     static void init_default_shaders() {
         sceneData->shaderLibrary.load("./engine/shaders/flat.glsl");
         sceneData->shaderLibrary.load("./engine/shaders/texture.glsl");
@@ -159,44 +166,6 @@ struct Renderer {
         textureShader->bind();
         textureShader->uploadUniformIntArray("u_textures", samples.data(),
                                              MAX_TEX);
-
-        // float squareVerts[5 * 4] = {
-        // 0.f, 0.f, 0.f, 0.0f, 0.0f,  //
-        // 1.f, 0.f, 0.f, 1.0f, 0.0f,  //
-        // 1.f, 1.f, 0.f, 1.0f, 1.0f,  //
-        // 0.f, 1.f, 0.f, 0.0f, 1.0f,  //
-        // };
-        // float sheetWidth = 918.f;
-        // float sheetHeight = 203.f;
-        // float spriteWidth = 17.f;
-        // float spriteHeight = 17.f;
-        //
-        // int x = 0;
-        // int y = 10;
-        //
-        // float squareVerts[5 * 4] = {
-        // 0.f,
-        // 0.f,
-        // 0.f,  //
-        // ((x * spriteWidth) / sheetWidth),
-        // ((y * spriteHeight) / sheetHeight),
-        // //
-        // 1.f,
-        // 0.f,
-        // 0.f,  //
-        // (((x + 1) * spriteWidth) / sheetWidth),
-        // ((y * spriteHeight) / sheetHeight),
-        // 1.f,
-        // 1.f,
-        // 0.f,  //
-        // (((x + 1) * spriteWidth) / sheetWidth),
-        // (((y + 1) * spriteHeight) / sheetHeight),
-        // 0.f,
-        // 1.f,
-        // 0.f,  //
-        // ((x * spriteWidth) / sheetWidth),
-        // (((y + 1) * spriteHeight) / sheetHeight),
-        // };
     }
 
     static void resize(int width, int height) {

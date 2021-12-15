@@ -189,15 +189,17 @@ struct TextureLibrary {
 
     // -1 if not found, 0 if texture, 1 if subtexture
     int isTextureOrSubtexture(const std::string &textureName) {
-        // is this a texture?
+        int textureStatus = -1;
+
         auto textureIt = textures.find(textureName);
         auto subtextureIt = subtextures.find(textureName);
-        int textureStatus = -1;
-        // TODO i dont like that we have to reach into end() here
-        // but its better than calling find 3 times
+
+        // is this a texture?
         if (textureIt == textures.end()) {
             // not a valid texture, is it a subtexture?
             if (subtextureIt == subtextures.end()) {
+                // pass -1
+            } else {
                 textureStatus = 1;  // is subtexture
             }
         } else {
@@ -210,7 +212,7 @@ struct TextureLibrary {
                        float x, float y, float spriteWidth,
                        float spriteHeight) {
         auto textureIt = textures.find(textureName);
-        if (textureIt != textures.end()) {
+        if (textureIt == textures.end()) {
             log_warn(fmt::format(
                 "Failed to add subtexture to library, texture with name "
                 "{} was not found",
@@ -225,8 +227,8 @@ struct TextureLibrary {
         // differently...
         if (textures.find(name) != textures.end()) {
             log_warn(fmt::format(
-                "Failed to add subtexture to library, this name {} is already "
-                "being used for a texture, and cant be reused for a "
+                "Failed to add subtexture to library, this name '{}' is "
+                "already being used for a texture, and cant be reused for a "
                 "subtexture",
                 name));
             return;
@@ -243,12 +245,12 @@ struct TextureLibrary {
         auto texture = textureIt->second;
 
         glm::vec2 min = {
-            x * spriteWidth / texture->width,
-            y * spriteHeight / texture->height,
+            (x * spriteWidth) / texture->width,
+            (y * spriteHeight) / texture->height,
         };
         glm::vec2 max = {
-            (x + 1) * spriteWidth / texture->width,
-            (y + 1) * spriteHeight / texture->height,
+            ((x + 1) * spriteWidth) / texture->width,
+            ((y + 1) * spriteHeight) / texture->height,
         };
 
         log_info(fmt::format("Adding subtexture \"{}\" to our library", name));

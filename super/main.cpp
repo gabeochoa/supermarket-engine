@@ -32,6 +32,12 @@ struct SuperLayer : public Layer {
         // 16 x 16
         // margin 1
         Renderer::addTexture("./resources/character_tilesheet.png");
+        Renderer::addSubtexture("character_tilesheet", "player", 0, 0, 4.f,
+                                4.f);
+        Renderer::addSubtexture("character_tilesheet", "player2", 0, 1, 4.f,
+                                4.f);
+        Renderer::addSubtexture("character_tilesheet", "player3", 1, 1, 4.f,
+                                4.f);
 
         ////////////////////////////////////////////////////////
         auto storage = std::make_shared<Storage>(
@@ -53,12 +59,29 @@ struct SuperLayer : public Layer {
             }
         }
 
-        for (int i = 0; i < 1; i++) {
+        // for (int i = 0; i < 1; i++)
+        {
             auto emp = Employee();
             emp.color = gen_rand_vec4(0.3f, 1.0f);
             emp.color.w = 1.f;
             emp.size = {0.6f, 0.6f};
-            emp.textureName = "face";
+            emp.textureName = "player";
+            entities.push_back(std::make_shared<Employee>(emp));
+        }
+        {
+            auto emp = Employee();
+            emp.color = gen_rand_vec4(0.3f, 1.0f);
+            emp.color.w = 1.f;
+            emp.size = {0.6f, 0.6f};
+            emp.textureName = "player2";
+            entities.push_back(std::make_shared<Employee>(emp));
+        }
+        {
+            auto emp = Employee();
+            emp.color = gen_rand_vec4(0.3f, 1.0f);
+            emp.color.w = 1.f;
+            emp.size = {0.6f, 0.6f};
+            emp.textureName = "player3";
             entities.push_back(std::make_shared<Employee>(emp));
         }
     }
