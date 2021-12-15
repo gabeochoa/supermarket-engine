@@ -71,10 +71,13 @@ struct SuperLayer : public Layer {
     virtual void onUpdate(Time dt) override {
         log_trace(fmt::format("{:.2}s ({:.2} ms) ", dt.s(), dt.ms()));
         prof(__PROFILE_FUNC__);  //
-        child_updates(dt);       // move things around
-        render();                // draw everything
-        fillJobQueue();          // add more jobs if needed
-        JobQueue::cleanup();     // Cleanup all completed jobs
+        Renderer::stats.reset();
+        Renderer::stats.begin();
+        child_updates(dt);    // move things around
+        render();             // draw everything
+        fillJobQueue();       // add more jobs if needed
+        JobQueue::cleanup();  // Cleanup all completed jobs
+        Renderer::stats.end();
     }
 
     void child_updates(Time dt) {

@@ -61,6 +61,38 @@ struct Renderer {
         float tilingfactor;
     };
 
+    struct Statistics {
+        std::array<float, 100> renderTimes;
+        int drawCalls = 0;
+        int quadCount = 0;
+        int textureCount = 0;
+        int frameCount = 0;
+        float frameBeginTime = 0.f;
+        float totalFrameTime = 0.f;
+
+        void reset() {
+            drawCalls = 0;
+            quadCount = 0;
+            textureCount = 0;
+        }
+
+        void begin() { frameBeginTime = (float)glfwGetTime(); }
+
+        void end() {
+            auto endt = (float)glfwGetTime();
+            renderTimes[frameCount] = endt - frameBeginTime;
+            totalFrameTime +=
+                renderTimes[frameCount] -
+                renderTimes[(frameCount + 1) % renderTimes.size()];
+            frameCount += 1;
+            if (frameCount >= renderTimes.size()) {
+                frameCount = 0;
+            }
+        }
+    };
+
+    static Statistics stats;
+
     struct SceneData {
         // Max per draw call
         const int MAX_QUADS = 1000;
@@ -237,6 +269,9 @@ struct Renderer {
         sceneData->shaderLibrary.get("texture")->bind();
 
         draw(sceneData->quadVA, sceneData->quadIndexCount);
+
+        //
+        stats.drawCalls++;
     }
 
     static void drawQuad(const glm::mat4& transform, const glm::vec4& color,
@@ -286,6 +321,8 @@ struct Renderer {
                 sceneData->textureSlots[textureIndex] =
                     dynamic_pointer_cast<Texture2D>(texture);
                 sceneData->nextTexSlot++;
+
+                stats.textureCount++;
             }
         } else {
             texture = textureLibrary.get(DEFAULT_TEX);
@@ -311,6 +348,8 @@ struct Renderer {
             sceneData->qvbufferptr++;
         }
         sceneData->quadIndexCount += 6;
+
+        stats.quadCount++;
     }
 
     ////// ////// ////// ////// ////// ////// ////// //////

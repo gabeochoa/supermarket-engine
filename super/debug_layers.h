@@ -116,6 +116,14 @@ struct ProfileLayer : public Layer {
                      0, y, scale));
         y += 30;
 
+        auto avgRenderTime =
+            Renderer::stats.totalFrameTime / Renderer::stats.renderTimes.size();
+        texts.push_back(
+            drawText(fmt::format("Avg render time {:.4f} ms ({:.2f} fps)",
+                                 avgRenderTime, 1.f / avgRenderTime),
+                     0, y, scale));
+        y += 30;
+
         gltEndDraw();
         for (auto text : texts) gltDeleteText(text);
         gltTerminate();
