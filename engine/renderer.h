@@ -77,7 +77,7 @@ struct Renderer {
         glm::mat4 viewProjection;
 
         ShaderLibrary shaderLibrary;
-        std::array<std::shared_ptr<Texture>, MAX_TEX> textureSlots;
+        std::array<std::shared_ptr<Texture2D>, MAX_TEX> textureSlots;
         int nextTexSlot = 1;  // 0 will be white
     };
 
@@ -89,8 +89,8 @@ struct Renderer {
             log_error("Cant have more than MAX TEX textures (16)");
             return;
         }
-        auto tex = textureLibrary.load(filepath);
-        tex->tilingFactor = tiling;
+        auto texName = textureLibrary.load(filepath);
+        textureLibrary.get(texName)->tilingFactor = 2.f;
     }
 
     static void init_default_shaders() {
@@ -100,7 +100,7 @@ struct Renderer {
 
     static void init_default_textures() {
         std::shared_ptr<Texture> whiteTexture =
-            std::make_shared<Texture2D>("white", 1, 1, 0);
+            std::make_shared<Texture2D>("white", 1, 1);
         unsigned int data = 0xffffffff;
         whiteTexture->setData(&data);
         textureLibrary.add(whiteTexture);
@@ -244,7 +244,8 @@ struct Renderer {
     }
 
     static void start_batch() {
-        sceneData->textureSlots[0] = textureLibrary.get("white");
+        sceneData->textureSlots[0] =
+            dynamic_pointer_cast<Texture2D>(textureLibrary.get("white"));
         sceneData->quadIndexCount = 0;
         sceneData->qvbufferptr = sceneData->qvbufferstart;
         sceneData->nextTexSlot = 1;
@@ -264,8 +265,7 @@ struct Renderer {
         for (int i = 0; i < sceneData->nextTexSlot; i++)
             sceneData->textureSlots[i]->bind(i);
 
-        auto textureShader = sceneData->shaderLibrary.get("texture");
-        textureShader->bind();
+        sceneData->shaderLibrary.get("texture")->bind();
 
         draw(sceneData->quadVA, sceneData->quadIndexCount);
     }
@@ -301,7 +301,8 @@ struct Renderer {
                     next_batch();
                 }
                 textureIndex = sceneData->nextTexSlot;
-                sceneData->textureSlots[textureIndex] = texture;
+                sceneData->textureSlots[textureIndex] =
+                    dynamic_pointer_cast<Texture2D>(texture);
                 sceneData->nextTexSlot++;
             }
         } else {
@@ -313,8 +314,10 @@ struct Renderer {
             sceneData->qvbufferptr->position = transform * vertexCoords[i];
             sceneData->qvbufferptr->color = color;
             sceneData->qvbufferptr->texcoord = textureCoords[i];
-            sceneData->qvbufferptr->texindex = textureIndex;
-            sceneData->qvbufferptr->tilingfactor = texture->tilingFactor;
+            sceneData->qvbufferptr->texindex = (float)textureIndex;
+            // TODO FIX - for some reason the "->tilingFactor" controls the
+            // texture index in the shader
+            sceneData->qvbufferptr->tilingfactor = (float)textureIndex;
             // sceneData->qvbufferptr->entityID = entityID;
             sceneData->qvbufferptr++;
         }

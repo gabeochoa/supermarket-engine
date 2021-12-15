@@ -24,8 +24,8 @@ struct SuperLayer : public Layer {
         cameraController.reset(new OrthoCameraController(WIN_RATIO, true));
 
         Renderer::addTexture("./resources/face.png");
-        Renderer::addTexture("./resources/box.png", 2.f);
-        Renderer::addTexture("./resources/shelf.png", 2.f);
+        Renderer::addTexture("./resources/box.png");
+        Renderer::addTexture("./resources/shelf.png");
         Renderer::addTexture("./resources/screen.png");
 
         // 918 × 203 pixels
@@ -49,7 +49,6 @@ struct SuperLayer : public Layer {
                     glm::vec2{1.f + i, -3.f + j},  //
                     glm::vec2{1.f, 1.f}, 0.f,      //
                     glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "shelf");
-
                 entities.push_back(shelf2);
             }
         }
