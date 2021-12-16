@@ -1,9 +1,29 @@
 
 #pragma once
 
+#include "input.h"
 #include "pch.hpp"
 
 namespace IUI {
+
+struct Style {
+    glm::vec4 margin;
+    glm::vec4 padding;
+    glm::vec4 bgColor;
+    glm::vec4 borderColor;
+    glm::vec4 borderWidth;
+    glm::vec4 cornerRadius;
+
+    Style(const Style& s) {
+        this->margin = s.margin;
+        this->padding = s.padding;
+        this->bgColor = s.bgColor;
+        this->borderColor = s.borderColor;
+        this->borderWidth = s.borderWidth;
+        this->cornerRadius = s.cornerRadius;
+    }
+};
+typedef std::vector<Style> Styles;
 
 struct uuid {
     int owner;
@@ -39,25 +59,6 @@ inline ControlFlags operator|(ControlFlags a, ControlFlags b) {
     return static_cast<ControlFlags>(static_cast<int>(a) | static_cast<int>(b));
 }
 
-struct Style {
-    glm::vec4 margin;
-    glm::vec4 padding;
-    glm::vec4 bgColor;
-    glm::vec4 borderColor;
-    glm::vec4 borderWidth;
-    glm::vec4 cornerRadius;
-
-    Style(const Style& s) {
-        this->margin = s.margin;
-        this->padding = s.padding;
-        this->bgColor = s.bgColor;
-        this->borderColor = s.borderColor;
-        this->borderWidth = s.borderWidth;
-        this->cornerRadius = s.cornerRadius;
-    }
-};
-typedef std::vector<Style> Styles;
-
 struct Control;
 struct Control {
     std::shared_ptr<Control> parent;
@@ -73,93 +74,172 @@ struct Control {
     UILayoutType layout;
     ControlFlags flags;
     FocusState focusState;
-
     State state;
+
     StateInfo stateInfo;
     std::vector<Style> styles;
 };
 
-std::shared_ptr<Control> iui_root;
+/*
 
-std::shared_ptr<Control> iui_get_or_insert(uuid id) { return nullptr; }
-void iui_update_state(std::shared_ptr<Control> control) {}
-void iui_set_parent_ptr(std::shared_ptr<Control> control) {}
-std::shared_ptr<Control> iui_get_parent_ptr() { return nullptr; }
-std::shared_ptr<Control> iui_get_parent_ptr(uuid controlID) { return nullptr; }
-void iui_set_prev_sibling_ptr(std::shared_ptr<Control> control) {}
-std::shared_ptr<Control> iui_get_prev_sibling_ptr() { return nullptr; }
+std::shared_ptr<Control> get_or_insert(uuid id) { return nullptr; }
+void update_state(std::shared_ptr<Control> control) {}
+void set_parent_ptr(std::shared_ptr<Control> control) {}
+std::shared_ptr<Control> get_parent_ptr() { return nullptr; }
+std::shared_ptr<Control> get_parent_ptr(uuid controlID) { return nullptr; }
+void set_prev_sibling_ptr(std::shared_ptr<Control> control) {}
+std::shared_ptr<Control> get_prev_sibling_ptr() { return nullptr; }
 
-bool iui_state_active(State state) { return false; }
+bool state_active(State state) { return false; }
 
-void iui_start(uuid siblingID, ControlFlags controlFlags, Styles styles) {
-    std::shared_ptr<Control> control = iui_get_or_insert(siblingID);
+void start(uuid siblingID, ControlFlags controlFlags, Styles styles) {
+    std::shared_ptr<Control> control = get_or_insert(siblingID);
     control->flags = controlFlags;
     control->styles = styles;
 
-    iui_update_state(control);
+    update_state(control);
 
-    iui_set_parent_ptr(control);
-    iui_set_prev_sibling_ptr(nullptr);
+    set_parent_ptr(control);
+    set_prev_sibling_ptr(nullptr);
 }
-void iui_end() {
-    std::shared_ptr<Control> control = iui_get_parent_ptr();
-    iui_set_parent_ptr(control->parent);
-    iui_set_prev_sibling_ptr(control);
+void end() {
+    std::shared_ptr<Control> control = get_parent_ptr();
+    set_parent_ptr(control->parent);
+    set_prev_sibling_ptr(control);
 }
 
-FocusState iui_button_start(uuid siblingID, Styles styles) {
-    iui_start(siblingID, ControlFlags::can_focus | ControlFlags::can_press,
-              styles);
-    std::shared_ptr<Control> button = iui_get_parent_ptr(siblingID);
+FocusState button_start(uuid siblingID, Styles styles) {
+    start(siblingID, ControlFlags::can_focus | ControlFlags::can_press, styles);
+    std::shared_ptr<Control> button = get_parent_ptr(siblingID);
     return button->focusState;
 }
-void iui_button_end() { iui_end(); }
+void button_end() { end(); }
 
-bool iui_toggle_button_start(uuid siblingID, Styles styles) {
-    iui_start(siblingID, ControlFlags::can_focus | ControlFlags::can_toggle,
-              styles);
-    std::shared_ptr<Control> button = iui_get_parent_ptr(siblingID);
-    return iui_state_active(button->state);
+bool toggle_button_start(uuid siblingID, Styles styles) {
+    start(siblingID, ControlFlags::can_focus | ControlFlags::can_toggle,
+          styles);
+    std::shared_ptr<Control> button = get_parent_ptr(siblingID);
+    return state_active(button->state);
 }
-void iui_toggle_button_end() { iui_end(); }
+void toggle_button_end() { end(); }
 
-Control* iui_control_create() { return nullptr; }
-void iui_find_mouse_focused(std::shared_ptr<Control> tree_root) {
+void find_mouse_focused(std::shared_ptr<Control> tree_root) {
     // set global active state
 }
-void iui_process_input(int events) {}
+void process_input(int events) {}
 
-void iui_layout_start() {}
-void iui_layout_control(std::shared_ptr<Control> iui_root) {}
-void iui_layout_end() {}
-void iui_clear_input() {}
+void layout_start() {}
+void layout_control(std::shared_ptr<Control> root) {}
+void layout_end() {}
+void clear_input() {}
 
-void iui_update() {
+void update() {
     int events = 0;
     // set events
     // frame start
     {
-        if (!iui_root) {
-            iui_root.reset(iui_control_create());
+        if (!root) {
+            root.reset(control_create());
         }
-        iui_find_mouse_focused(iui_root);
-        iui_process_input(events);
-        iui_set_parent_ptr(iui_root);
-        iui_set_prev_sibling_ptr(nullptr);
+        find_mouse_focused(root);
+        process_input(events);
+        set_parent_ptr(root);
+        set_prev_sibling_ptr(nullptr);
     }
     // ui
     // frame end
     // if last_Frame_idx then delete
     {
-        iui_layout_start();
-        iui_layout_control(iui_root);
-        iui_layout_end();
-        iui_clear_input();
+        layout_start();
+        layout_control(root);
+        layout_end();
+        clear_input();
     }
 }
 
+*/
+
+////// ////// ////// ////// ////// ////// ////// ////// ////// ////// //////
+
+/*
+#include <queue>
+
+#include "event.h"
+
+std::shared_ptr<Control> root;
+
+std::shared_ptr<Control> get_parent_ptr() { return root; }
+void set_parent_ptr(std::shared_ptr<Control> control) { root = control; }
+
+bool is_control_root(uuid controlID) { return root->id == controlID; }
+// dfs for the node in the tree with matching id
+// nullptr if no matching node, or node is root
+// use is_control_root to distinguish
+std::shared_ptr<Control> get_parent_ptr(
+    uuid controlID, std::shared_ptr<Control> parent = nullptr,
+    std::shared_ptr<Control> cur = nullptr) {
+    if (cur == nullptr) cur = root;
+    if (cur->id == controlID) return parent;
+    for (auto child : cur->children) {
+        auto match = get_parent_ptr(controlID, cur, child);
+        if (match) return match;
+        // else nullptr
+    }
+    return nullptr;
+}
+
+Control* control_create() { return new Control(); }
+
+void set_prev_sibling_ptr(std::shared_ptr<Control> control) {}
+std::shared_ptr<Control> get_prev_sibling_ptr() { return nullptr; }
+
+std::vector<Mouse::MouseButtonPressedEvent> mousePressEvents;
+std::vector<KeyPressedEvent> keyPressEvents;
+bool mouse_pressed(Mouse::MouseButtonPressedEvent& event) {
+    // whenever a mouse is pressed
+    return false;
+}
+bool key_pressed(KeyPressedEvent& event) {
+    //
+    return false;
+}
+
+void on_new_event(const Event& event) {
+    EventDispatcher dispatcher(event);
+    dispatcher.dispatch<Mouse::MouseButtonPressedEvent>(
+        std::bind(&IUI::mouse_pressed, this, std::placeholders::_1));
+    dispatcher.dispatch<KeyPressedEvent>(
+        std::bind(&IUI::key_pressed, this, std::placeholders::_1));
+}
+void clear_events() { eventsToProcess.clear(); }
+void process_events() {}
+
+void find_mouse_focused(std::shared_ptr<Control> start) {
+    auto mouse = Input::getMousePosition();
+    // TODO what is the mouse hovering over
+}
+
+void frame_start() {
+    if (!root) {
+        root.reset(control_create());
+    }
+    process_events();
+
+    set_parent_ptr(root);
+    set_prev_sibling_ptr(nullptr);
+}
+void frame_end() {
+    // layout_start();
+    // layout_control(root);
+    // layout_end();
+    clear_events();
+}
+
+*/
+
 //
-///
+//
+//
 //
 //
 //
@@ -177,25 +257,76 @@ struct UIContext {
     uuid activeID;  // currently being touched
 };
 
+uuid rootID;
+static std::shared_ptr<UIContext> globalContext;
+
+std::shared_ptr<UIContext> get() {
+    if (!globalContext) globalContext.reset(new UIContext());
+    return globalContext;
+}
+
 bool active(UIContext context, uuid id) { return context.activeID == id; }
 bool hot(UIContext context, uuid id) { return context.hotID == id; }
-
-void set_active(UIContext context, uuid id) {}
+void set_active(UIContext context, uuid id) { context.activeID = id; }
 void set_hot(UIContext context, uuid id) {
     // if theres already an active item, then do nothing
     // you couldve hovered over the mouse while doing something else
+    if (active(context, id)) return;
+    context.hotID = id;
 }
-void set_not_active(UIContext context, uuid id) {}
-void set_not_hot(UIContext context, uuid id) {}
+void set_not_active(UIContext context, uuid id) { context.activeID = rootID; }
+void set_not_hot(UIContext context, uuid id) { context.hotID = rootID; }
 
-bool button(UIContext context, uuid id, const char* text) {
-    bool mouseUp = false;
-    bool mouseDown = false;
+struct TextConfig {
+    const char* text;
+    glm::vec2 position;
+    glm::vec2 size;
+    // TODO color
+};
+
+struct ButtonConfig {
+    // TODO color
+    glm::vec2 position;
+    glm::vec2 size;
+    TextConfig textConfig;
+};
+
+bool text(UIContext context, uuid id, TextConfig config) {
+    // for text it uses screen coords, so we have to convert from
+    // world coords
+    glm::vec4 viewport = {0, 0, WIN_W, WIN_H};
+    glm::vec3 pos =
+        worldToScreen(glm::vec3{config.position.x, config.position.y, 0.f},
+                      menuCameraController->camera.view,
+                      menuCameraController->camera.projection, viewport);
+
+    gltInit();
+    gltBeginDraw();
+    gltColor(0.7f, 0.2f, 1.0f, 1.0f);
+    GLTtext* text = gltCreateText();
+    gltSetText(text, config.text);
+    gltDrawText2D(text, pos.x, WIN_H - pos.y, config.size.y);
+    gltEndDraw();
+    gltDeleteText(text);
+    gltTerminate();
+    return false;
+}
+
+bool button(UIContext context, uuid id, ButtonConfig config) {
+    bool mouseUp = Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
+    bool mouseDown = !mouseUp;
     bool inside = false;
+
+    auto drawButton = [&]() {
+        Renderer::drawQuad(config.position, config.size, glm::vec4{1.f},
+                           "white");
+        text(context, id, config.textConfig);
+    };
 
     if (active(context, id)) {
         if (mouseUp) {
             if (hot(context, id)) {
+                drawButton();
                 return true;
             }
             set_not_active(context, id);
@@ -208,7 +339,7 @@ bool button(UIContext context, uuid id, const char* text) {
     if (inside) {
         set_hot(context, id);
     }
-    // draw button
+    drawButton();
     return false;
 }
 

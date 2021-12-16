@@ -50,11 +50,13 @@ struct OrthoCameraController {
     bool rotationEnabled;
     OrthoCamera camera;
 
-    OrthoCameraController(float ratio, bool rotation = true)
+    OrthoCameraController(float ratio, bool rotation = true,
+                          float defaultZoom = 1.f, float cameraSpeed = 5.f,
+                          float rotationSpeed = 180.f)
         : aspectRatio(ratio),
-          zoomLevel(1.f),
-          camSpeed(5.f),
-          rotSpeed(180.f),
+          zoomLevel(defaultZoom),
+          camSpeed(cameraSpeed),
+          rotSpeed(rotationSpeed),
           rotationEnabled(rotation),
           camera(-ratio * zoomLevel, ratio * zoomLevel, -zoomLevel, zoomLevel) {
     }

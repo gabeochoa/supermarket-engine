@@ -47,6 +47,8 @@ struct Event {
 
     friend struct EventDispatcher;
 
+    virtual ~Event() {}
+
     virtual EventType getEventType() const = 0;
     virtual const char* getName() const = 0;
     virtual int getCategoryFlags() const = 0;

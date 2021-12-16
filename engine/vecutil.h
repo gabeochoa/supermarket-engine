@@ -35,3 +35,15 @@ struct VectorHash {
         return std::hash<float>()(a.x) ^ ((std::hash<float>()(a.y) << 1) >> 1);
     }
 };
+
+inline glm::vec3 worldToScreen(const glm::vec3& position, const glm::mat4& view,
+                        const glm::mat4& projection,
+                        const glm::vec4& viewport) {
+    return glm::project(position, view, projection, viewport);
+}
+
+inline glm::vec3 screenToWorld(const glm::vec3& position, const glm::mat4& view,
+                        const glm::mat4& projection,
+                        const glm::vec4& viewport) {
+    return glm::unProject(position, view, projection, viewport);
+}

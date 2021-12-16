@@ -11,6 +11,9 @@
 struct MenuLayer : public Layer {
     MenuLayer() : Layer("Supermarket") {
         Menu::get().state = Menu::State::Root;
+
+        menuCameraController.reset(
+            new OrthoCameraController(WIN_RATIO, true, 10.f, 0.f, 0.f));
     }
 
     virtual ~MenuLayer() {}
@@ -38,10 +41,29 @@ struct MenuLayer : public Layer {
         gltColor(1.0f, 1.0f, 1.0f, 1.0f);
         GLTtext* text = gltCreateText();
         gltSetText(text, stateToString(Menu::get().state));
-        gltDrawText2D(text, 150, 150, 10.f);
+        gltDrawText2D(text, 150, 150, 5.f);
         gltEndDraw();
         gltDeleteText(text);
         gltTerminate();
+
+        Renderer::begin(menuCameraController->camera);
+        ui_test();
+        Renderer::end();
+    }
+
+    void ui_test() {
+        auto textConfig = IUI::TextConfig({.text = "button",
+                                           .position = glm::vec2{2.f, 1.f},
+                                           .size = glm::vec2{1.f, 1.f}});
+        auto buttonConfig = IUI::ButtonConfig({.textConfig = textConfig,
+                                               .position = glm::vec2{2.f, 1.f},
+                                               .size = glm::vec2{2.f, 1.f}});
+
+        if (IUI::button(*IUI::get(),
+                        IUI::uuid({.owner = 0, .item = 0, .index = 0}),
+                        buttonConfig)) {
+            // log_info("button was clicked ");
+        }
     }
 
     bool onMouseButtonPressed(Mouse::MouseButtonPressedEvent& e) {

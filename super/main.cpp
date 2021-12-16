@@ -15,6 +15,7 @@ constexpr float WIN_RATIO = (WIN_W * 1.f) / WIN_H;
 constexpr bool IS_DEBUG = true;
 
 static std::shared_ptr<OrthoCameraController> cameraController;
+static std::shared_ptr<OrthoCameraController> menuCameraController;
 
 // Requires access to the camera and entitites
 #include "debug_layers.h"
