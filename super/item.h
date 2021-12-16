@@ -20,10 +20,10 @@ struct Item {
 static constexpr std::array<std::pair<int, Item>, 4> items_{
     //
     {
-        {0, {"apple", 1.f, "face", glm::vec4{1.f}}},   //
-        {1, {"apple", 1.f, "box", glm::vec4{1.f}}},    //
-        {2, {"apple", 1.f, "shelf", glm::vec4{1.f}}},  //
-        {3, {"apple", 1.f, "face", glm::vec4{1.f}}},   //
+        {0, {"egg", 1.f, "egg", glm::vec4{1.f}}},   //
+        {1, {"milk", 1.f, "milk", glm::vec4{1.f}}},    //
+        {2, {"peanutbutter", 1.f, "peanutbutter", glm::vec4{1.f}}},  //
+        {3, {"pizza", 1.f, "pizza", glm::vec4{1.f}}},   //
     }
     //
 };

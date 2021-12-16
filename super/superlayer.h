@@ -27,6 +27,14 @@ struct SuperLayer : public Layer {
         Renderer::addSubtexture("character_tilesheet", "player3", 1, 1, 4.f,
                                 4.f);
 
+        Renderer::addTexture("./resources/item_sheet.png");
+        Renderer::addSubtexture("item_sheet", "egg", 0, 0, 16.f, 16.f);
+        Renderer::addSubtexture("item_sheet", "milk", 1, 0, 16.f, 16.f);
+        Renderer::addSubtexture("item_sheet", "peanutbutter", 2, 0, 16.f, 16.f);
+        Renderer::addSubtexture("item_sheet", "pizza", 3, 0, 16.f, 16.f);
+
+
+
         ////////////////////////////////////////////////////////
         auto storage = std::make_shared<Storage>(
             glm::vec2{1.f, 1.f}, glm::vec2{1.f, 1.f}, 0.f,
@@ -54,14 +62,14 @@ struct SuperLayer : public Layer {
             "player3",
         };
 
-        for (int i = 0; i < 5; i++) {
-            auto emp = Employee();
-            emp.color = gen_rand_vec4(0.3f, 1.0f);
-            emp.color.w = 1.f;
-            emp.size = {0.6f, 0.6f};
-            emp.textureName = peopleSprites[i % num_people_sprites];
-            entities.push_back(std::make_shared<Employee>(emp));
-        }
+        // for (int i = 0; i < 5; i++) {
+            // auto emp = Employee();
+            // emp.color = gen_rand_vec4(0.3f, 1.0f);
+            // emp.color.w = 1.f;
+            // emp.size = {0.6f, 0.6f};
+            // emp.textureName = peopleSprites[i % num_people_sprites];
+            // entities.push_back(std::make_shared<Employee>(emp));
+        // }
     }
 
     virtual ~SuperLayer() {}
