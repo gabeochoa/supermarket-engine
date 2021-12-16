@@ -9,6 +9,8 @@
 
 struct SuperLayer : public Layer {
     SuperLayer() : Layer("Supermarket") {
+        isMinimized = true;
+
         cameraController.reset(new OrthoCameraController(WIN_RATIO, true));
 
         Renderer::addTexture("./resources/face.png");
@@ -32,8 +34,6 @@ struct SuperLayer : public Layer {
         Renderer::addSubtexture("item_sheet", "milk", 1, 0, 16.f, 16.f);
         Renderer::addSubtexture("item_sheet", "peanutbutter", 2, 0, 16.f, 16.f);
         Renderer::addSubtexture("item_sheet", "pizza", 3, 0, 16.f, 16.f);
-
-
 
         ////////////////////////////////////////////////////////
         auto storage = std::make_shared<Storage>(
@@ -62,31 +62,19 @@ struct SuperLayer : public Layer {
             "player3",
         };
 
-        // for (int i = 0; i < 5; i++) {
-            // auto emp = Employee();
-            // emp.color = gen_rand_vec4(0.3f, 1.0f);
-            // emp.color.w = 1.f;
-            // emp.size = {0.6f, 0.6f};
-            // emp.textureName = peopleSprites[i % num_people_sprites];
-            // entities.push_back(std::make_shared<Employee>(emp));
-        // }
+        for (int i = 0; i < 5; i++) {
+            auto emp = Employee();
+            emp.color = gen_rand_vec4(0.3f, 1.0f);
+            emp.color.w = 1.f;
+            emp.size = {0.6f, 0.6f};
+            emp.textureName = peopleSprites[i % num_people_sprites];
+            entities.push_back(std::make_shared<Employee>(emp));
+        }
     }
 
     virtual ~SuperLayer() {}
     virtual void onAttach() override {}
     virtual void onDetach() override {}
-
-    virtual void onUpdate(Time dt) override {
-        log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
-        prof(__PROFILE_FUNC__);  //
-        Renderer::stats.reset();
-        Renderer::stats.begin();
-        child_updates(dt);    // move things around
-        render();             // draw everything
-        fillJobQueue();       // add more jobs if needed
-        JobQueue::cleanup();  // Cleanup all completed jobs
-        Renderer::stats.end();
-    }
 
     void child_updates(Time dt) {
         cameraController->onUpdate(dt);
@@ -153,11 +141,36 @@ struct SuperLayer : public Layer {
         return false;
     }
 
+    bool onKeyPressed(KeyPressedEvent& event) {
+        if (event.keycode == Key::mapping["Esc"]) {
+            Menu::get().state = Menu::State::Root;
+            return true;
+        }
+    }
+
+    virtual void onUpdate(Time dt) override {
+        if (Menu::get().state != Menu::State::Game) return;
+
+        log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
+        prof(__PROFILE_FUNC__);  //
+
+        Renderer::stats.reset();
+        Renderer::stats.begin();
+        child_updates(dt);    // move things around
+        render();             // draw everything
+        fillJobQueue();       // add more jobs if needed
+        JobQueue::cleanup();  // Cleanup all completed jobs
+        Renderer::stats.end();
+    }
+
     virtual void onEvent(Event& event) override {
-        log_trace(event.toString().c_str());
+        if (Menu::get().state != Menu::State::Game) return;
+        // log_warn(event.toString().c_str());
         cameraController->onEvent(event);
         EventDispatcher dispatcher(event);
         dispatcher.dispatch<Mouse::MouseButtonPressedEvent>(std::bind(
             &SuperLayer::onMouseButtonPressed, this, std::placeholders::_1));
+        dispatcher.dispatch<KeyPressedEvent>(
+            std::bind(&SuperLayer::onKeyPressed, this, std::placeholders::_1));
     }
 };

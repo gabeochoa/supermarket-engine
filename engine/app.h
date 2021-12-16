@@ -19,7 +19,10 @@ struct AppSettings {
     int width;
     int height;
     const char* title;
-    bool clearEnabled;
+    // should the app manager clear before drawing layers?
+    bool clearEnabled = false;
+    // should this close the window when user hits escape?
+    bool escClosesWindow = false;
 };
 
 struct App;
@@ -29,7 +32,7 @@ struct App {
     std::unique_ptr<Window> window;
     Time time;
     bool isMinimized;
-    bool clearEnabled;
+    AppSettings settings;
 
     bool running;
     LayerStack layerstack;
@@ -41,13 +44,13 @@ struct App {
     inline static App& get() { return *app; }
 
     App(AppSettings settings) {
+        this->settings = settings;
         running = true;
 
         WindowConfig config;
         config.width = settings.width;
         config.height = settings.height;
         config.title = settings.title;
-        clearEnabled = settings.clearEnabled;
 
         window = std::unique_ptr<Window>(Window::create(config));
 
@@ -69,9 +72,7 @@ struct App {
     }
 
     bool onKeyPressed(KeyPressedEvent& event) {
-        // TODO should i be creating a window close event instead of just
-        // stopping run?
-        if (event.keycode == Key::mapping["Esc"]) {
+        if (event.keycode == Key::mapping["Esc"] && settings.escClosesWindow) {
             running = false;
             return true;
         }
@@ -116,7 +117,7 @@ struct App {
             prof(__PROFILE_FUNC__);
             time.end();
             if (isMinimized) continue;
-            if (clearEnabled)
+            if (settings.clearEnabled)
                 Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
             for (Layer* layer : layerstack) {
                 layer->onUpdate(time);

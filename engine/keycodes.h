@@ -152,8 +152,8 @@ static inline void default_keys() {
     mapping["Rotate Clockwise"] = KeyCode::E;
     mapping["Rotate Counterclockwise"] = KeyCode::Q;
 
-    mapping["1"] = KeyCode::D0;
-    mapping["2"] = KeyCode::D1;
+    mapping["1"] = KeyCode::D1;
+    mapping["2"] = KeyCode::D2;
 
     mapping["Open Profiler"] = KeyCode::GraveAccent;  // tilde
     mapping["Show Entity Overlay"] = KeyCode::Insert;

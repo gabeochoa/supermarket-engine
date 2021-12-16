@@ -6,6 +6,7 @@
 #include "custom_fmt.h"
 #include "entities.h"
 #include "job.h"
+#include "menu.h"
 #include "util.h"
 
 constexpr int WIN_W = 1920;
@@ -17,6 +18,7 @@ static std::shared_ptr<OrthoCameraController> cameraController;
 
 // Requires access to the camera and entitites
 #include "debug_layers.h"
+#include "menulayer.h"
 #include "superlayer.h"
 #include "tests.h"
 
@@ -35,10 +37,14 @@ int main(int argc, char** argv) {
         .height = WIN_H,
         .title = "SuperMarket",
         .clearEnabled = true,
+        .escClosesWindow = false,
     }));
 
     Layer* super = new SuperLayer();
     App::get().pushLayer(super);
+
+    Layer* menu = new MenuLayer();
+    App::get().pushLayer(menu);
 
     Layer* profile = new ProfileLayer();
     App::get().pushLayer(profile);

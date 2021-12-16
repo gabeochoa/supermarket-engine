@@ -24,6 +24,9 @@ struct JobLayer : public Layer {
         if (isMinimized) {
             return;
         }
+        if (Menu::get().state != Menu::State::Game) {
+            return;
+        }
 
         int y = 10;
         float scale = 1.f;
@@ -83,6 +86,9 @@ struct ProfileLayer : public Layer {
         (void)dt;
 
         if (isMinimized) {
+            return;
+        }
+        if (Menu::get().state != Menu::State::Game) {
             return;
         }
 
@@ -171,6 +177,9 @@ struct EntityDebugLayer : public Layer {
     virtual void onUpdate(Time dt) override {
         (void)dt;
         if (isMinimized) {
+            return;
+        }
+        if (Menu::get().state != Menu::State::Game) {
             return;
         }
 
