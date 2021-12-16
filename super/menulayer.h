@@ -4,6 +4,7 @@
 #include "../engine/camera.h"
 #include "../engine/layer.h"
 #include "../engine/pch.hpp"
+#include "../engine/ui.h"
 //
 #include "entities.h"
 
@@ -51,7 +52,9 @@ struct MenuLayer : public Layer {
         // glm::unProject(glm::vec3{mouse.x, WIN_H - mouse.y, 0.f},
         // cameraController->camera.view,
         // cameraController->camera.projection, viewport);
-        Menu::get().state = Menu::State::Game;
+        if (e.GetMouseButton() == Mouse::MouseCode::ButtonRight) {
+            Menu::get().state = Menu::State::Game;
+        }
         return false;
     }
 

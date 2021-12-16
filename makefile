@@ -2,7 +2,8 @@ MAKEFLAGS := --jobs=16
 MAKEFLAGS += --output-sync=target
 
 # FLAGS = -std=c++2a -stdlib=libc++ -Wall -Wextra -g -fsanitize=address
-FLAGS = -std=c++2a -stdlib=libc++ -Wall -Wextra -g
+# FLAGS = -std=c++2a -stdlib=libc++ -Wall -Wextra -g
+FLAGS = -std=c++2a -stdlib=libc++ -g
 LIBS = -lglfw -lGLEW  
 FRAMEWORKS = -Ivendor/ -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon
 

@@ -146,6 +146,7 @@ struct SuperLayer : public Layer {
             Menu::get().state = Menu::State::Root;
             return true;
         }
+        return false;
     }
 
     virtual void onUpdate(Time dt) override {
