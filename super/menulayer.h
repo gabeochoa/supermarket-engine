@@ -17,10 +17,17 @@ struct MenuLayer : public Layer {
         menuCameraController->camera.setPosition(glm::vec3{15.f, 0.f, 0.f});
 
         Renderer::addTexture("./resources/letters.png");
-        auto s = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
+        auto s = (        //
+            "ABCDEFGHIJ"  //
+            "KLMNOPQRST"  //
+            "UVWXYZ !?."  //
+            "abcdefghij"  //
+            "klmnopqrst"  //
+            "uvwxyz@*()"  //
+        );
         int a = 0;
         int b = 0;
-        for (int i = 0; i < 27; i++) {
+        for (int i = 0; i < 60; i++) {
             Renderer::addSubtexture("letters",             //
                                     std::string(1, s[i]),  //
                                     a, b, 16.f, 16.f);
@@ -69,18 +76,27 @@ struct MenuLayer : public Layer {
     }
 
     void ui_test() {
-        auto textConfig =
-            IUI::TextConfig({.text = "THE LAZY BROWN DOG JUMPS OVER THE LOG",
-                             .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
-                             .position = glm::vec2{0.f, 0.f},
-                             .size = glm::vec2{2.f, 2.f}});
+        auto textConfig = IUI::TextConfig(
+            {.text = " .?! THE FIVE BOXING WIZARDS JUMP QUICKLY",
+             .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+             .position = glm::vec2{0.f, 0.f},
+             .size = glm::vec2{2.f, 2.f}});
         auto buttonConfig = IUI::ButtonConfig({.textConfig = textConfig,
                                                .position = glm::vec2{2.f, 1.f},
                                                .color = glm::vec4{1.f},
                                                .size = glm::vec2{2.f, 1.f}});
 
+        if (IUI::text(*IUI::get(),
+                      IUI::uuid({.owner = 0, .item = 0, .index = 0}),
+                      IUI::TextConfig(
+                          {.text = "(@*) the five boxing wizards jump quickly",
+                           .color = glm::vec4{0.8, 0.3f, 0.7f, 1.0f},
+                           .position = glm::vec2{0.f, -2.f},
+                           .size = glm::vec2{2.f, 2.f}}))) {
+            //
+        }
         if (IUI::button(*IUI::get(),
-                        IUI::uuid({.owner = 0, .item = 0, .index = 0}),
+                        IUI::uuid({.owner = 0, .item = 1, .index = 0}),
                         buttonConfig)) {
             // log_info("button was clicked ");
         }
