@@ -31,6 +31,11 @@ struct OrthoCamera : public Camera {
         updateViewMat();
     }
 
+    void setPosition(glm::vec3 newpos) {
+        position = newpos;
+        updateViewMat();
+    }
+
     void updateViewMat() {
         glm::mat4 transform =
             glm::translate(glm::mat4(1.0f), position) *

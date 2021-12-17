@@ -13,38 +13,23 @@ struct MenuLayer : public Layer {
         Menu::get().state = Menu::State::Root;
 
         menuCameraController.reset(
-            new OrthoCameraController(WIN_RATIO, true, 10.f, 0.f, 0.f));
+            new OrthoCameraController(WIN_RATIO, true, 10.f, 5.f, 0.f));
+        menuCameraController->camera.setPosition(glm::vec3{15.f, 0.f, 0.f});
 
         Renderer::addTexture("./resources/letters.png");
-
-        auto s = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        auto s = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
         int a = 0;
         int b = 0;
-        for (int i = 0; i < 26; i++) {
-            Renderer::addSubtexture("letters", std::string(1, s[i]), a, b, 16.f,
-                                    16.f);
+        for (int i = 0; i < 27; i++) {
+            Renderer::addSubtexture("letters",             //
+                                    std::string(1, s[i]),  //
+                                    a, b, 16.f, 16.f);
             a++;
             if (a == 10) {
                 b++;
+                a = 0;
             }
         }
-        // Renderer::addSubtexture("letters", "A", 5, 0, 16.f, 16.f);
-        // Renderer::addSubtexture("letters", "B", 5, 0, 16.f, 16.f);
-        //
-        // Renderer::addSubtexture("letters", "E", 4, 4, 16.f, 16.f);
-        // Renderer::addSubtexture("letters", "F", 5, 4, 16.f, 16.f);
-        //
-        // Renderer::addSubtexture("letters", "K", 0, 3, 16.f, 16.f);
-        // Renderer::addSubtexture("letters", "L", 1, 2, 16.f, 16.f);
-        // Renderer::addSubtexture("letters", "M", 2, 3, 16.f, 16.f);
-        // Renderer::addSubtexture("letters", "N", 3, 3, 16.f, 16.f);
-        // Renderer::addSubtexture("letters", "O", 4, 3, 16.f, 16.f);
-        //
-        // Renderer::addSubtexture("letters", "U", 0, 2, 16.f, 16.f);
-        // Renderer::addSubtexture("letters", "V", 1, 3, 16.f, 16.f);
-        // Renderer::addSubtexture("letters", "W", 2, 2, 16.f, 16.f);
-        // Renderer::addSubtexture("letters", "X", 3, 2, 16.f, 16.f);
-        // Renderer::addSubtexture("letters", "Y", 4, 2, 16.f, 16.f);
     }
 
     virtual ~MenuLayer() {}
@@ -66,6 +51,7 @@ struct MenuLayer : public Layer {
         if (Menu::get().state == Menu::State::Game) {
             return;
         }
+        menuCameraController->onUpdate(dt);
 
         gltInit();
         gltBeginDraw();
@@ -84,7 +70,7 @@ struct MenuLayer : public Layer {
 
     void ui_test() {
         auto textConfig =
-            IUI::TextConfig({.text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            IUI::TextConfig({.text = "THE LAZY BROWN DOG JUMPS OVER THE LOG",
                              .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
                              .position = glm::vec2{0.f, 0.f},
                              .size = glm::vec2{2.f, 2.f}});
@@ -118,7 +104,7 @@ struct MenuLayer : public Layer {
         // log_warn(event.toString().c_str());
         if (Menu::get().state == Menu::State::Game) return;
 
-        cameraController->onEvent(event);
+        menuCameraController->onEvent(event);
         EventDispatcher dispatcher(event);
         dispatcher.dispatch<Mouse::MouseButtonPressedEvent>(std::bind(
             &MenuLayer::onMouseButtonPressed, this, std::placeholders::_1));

@@ -296,7 +296,7 @@ bool text(UIContext context, uuid id, TextConfig config) {
     int i = 0;
     for (auto c : config.text) {
         i++;
-        Renderer::drawQuad(config.position + glm::vec2{i * 1.5f, 0.f},
+        Renderer::drawQuad(config.position + glm::vec2{i * 1.6f, 0.f},
                            config.size, config.color, std::string(1, c));
     }
     return false;
