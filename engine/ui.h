@@ -6,25 +6,6 @@
 
 namespace IUI {
 
-struct Style {
-    glm::vec4 margin;
-    glm::vec4 padding;
-    glm::vec4 bgColor;
-    glm::vec4 borderColor;
-    glm::vec4 borderWidth;
-    glm::vec4 cornerRadius;
-
-    Style(const Style& s) {
-        this->margin = s.margin;
-        this->padding = s.padding;
-        this->bgColor = s.bgColor;
-        this->borderColor = s.borderColor;
-        this->borderWidth = s.borderWidth;
-        this->cornerRadius = s.cornerRadius;
-    }
-};
-typedef std::vector<Style> Styles;
-
 struct uuid {
     int owner;
     int item;
@@ -34,8 +15,90 @@ struct uuid {
         return owner == other.owner && item == other.item &&
                index == other.index;
     }
+
+    bool operator<(const uuid& other) const {
+        return owner < other.owner && item < other.item && index < other.index;
+    }
 };
 
+struct UIContext {
+    uuid hotID;     // probably about to be touched
+    uuid activeID;  // currently being touched
+    glm::vec2 mousePosition;
+    bool lmouseDown;
+
+    // std::map<uuid, std::shared_ptr<BaseState> > states;
+};
+
+uuid rootID = uuid({.owner = -1, .item = 0, .index = 0});
+uuid fakeID = uuid({.owner = -2, .item = 0, .index = 0});
+static std::shared_ptr<UIContext> globalContext;
+
+std::shared_ptr<UIContext> get() {
+    if (!globalContext) globalContext.reset(new UIContext());
+    return globalContext;
+}
+
+void init_context() {
+    get()->hotID = rootID;
+    get()->activeID = rootID;
+    get()->lmouseDown = false;
+    get()->mousePosition = Input::getMousePosition();
+}
+
+bool isMouseInside(glm::vec4 rect) {
+    auto mouseScreen = glm::vec3{Input::getMousePosition(), 0.f};
+    mouseScreen.y = WIN_H - mouseScreen.y;
+
+    auto mouse = screenToWorld(mouseScreen,                              //
+                               menuCameraController->camera.view,        //
+                               menuCameraController->camera.projection,  //
+                               glm::vec4{0, 0, WIN_W, WIN_H});
+    // log_warn("{} => {}, inside? {}", Input::getMousePosition(), mouse, rect);
+    return mouse.x >= rect.x && mouse.x <= rect.x + rect.z &&
+           mouse.y >= rect.y && mouse.y <= rect.y + rect.w;
+}
+
+bool button(uuid id, glm::vec2 position, glm::vec2 size) {
+    bool inside =
+        isMouseInside(glm::vec4{position.x, position.y, size.x, size.y});
+
+    // everything is drawn from the center so move it so its not the center that
+    // way the mouse collision works
+    position.x += size.x / 2.f;
+    position.y += size.y / 2.f;
+
+    if (inside) {
+        get()->hotID = id;
+        if (get()->activeID == rootID && get()->lmouseDown) {
+            get()->activeID = id;
+        }
+    }
+
+    auto white = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
+    auto red = glm::vec4{1.0f, 0.0f, 0.0f, 1.0f};
+    auto green = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
+    auto blue = glm::vec4{0.0f, 0.0f, 1.0f, 1.0f};
+
+    Renderer::drawQuad(position, size, white, "white");
+
+    if (get()->hotID == id) {
+        if (get()->activeID == id) {
+            Renderer::drawQuad(position, size, red, "white");
+        } else {
+            Renderer::drawQuad(position, size, green, "white");
+        }
+    } else {
+        Renderer::drawQuad(position, size, blue, "white");
+    }
+
+    if (!get()->lmouseDown && get()->hotID == id && get()->activeID == id) {
+        return true;
+    }
+    return false;
+}
+
+/*
 enum UILayoutType {
     Row,
     Column,
@@ -43,13 +106,12 @@ enum UILayoutType {
 };
 
 struct FocusState {};
-struct State {};
 struct StateInfo {};
 
 enum ControlFlags {
     can_focus = 1,
-    can_press = 2,  // active when mouse / key down
-    can_toggle = 4,
+    can_press = 2,   // active when mouse / key down
+    can_toggle = 4,  //
     can_select = 8,  // set on press/release pair
     can_v_scroll = 16,
     can_h_scroll = 32
@@ -80,7 +142,6 @@ struct Control {
     std::vector<Style> styles;
 };
 
-/*
 
 std::shared_ptr<Control> get_or_insert(uuid id) { return nullptr; }
 void update_state(std::shared_ptr<Control> control) {}
@@ -235,34 +296,125 @@ void frame_end() {
     clear_events();
 }
 
-*/
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
+
+struct Style {
+    glm::vec4 margin;
+    glm::vec4 padding;
+    glm::vec4 bgColor;
+    glm::vec4 borderColor;
+    glm::vec4 borderWidth;
+    glm::vec4 cornerRadius;
+
+    Style(const Style& s) {
+        this->margin = s.margin;
+        this->padding = s.padding;
+        this->bgColor = s.bgColor;
+        this->borderColor = s.borderColor;
+        this->borderWidth = s.borderWidth;
+        this->cornerRadius = s.cornerRadius;
+    }
+};
+typedef std::vector<Style> Styles;
+struct UIContext;
+template <typename T>
+struct State {
+   private:
+    T value;
+
+   public:
+    State() {}
+    State(T val) : value(val) {}
+    State(const State<T>& s) : value(s.value) {}
+    State<T>& operator=(const State<T>& other) {
+        this->value = other.value;
+        return *this;
+    }
+    operator T() { return value; }
+
+    T get() { return value; }
+    void set(T v) { value = v; }
+};
+
+struct BaseState {
+    BaseState() {}
+    virtual ~BaseState() {}
+};
+
+struct ToggleState : public BaseState {
+    State<bool> on;
+
+    ToggleState(const State<bool> o) : on(o) {}
+};
+
+struct DropdownState : public BaseState {
+    State<int> selectedIndex;
+    State<bool> isOpen;
+
+    DropdownState(const State<int> index, const State<bool> open)
+        : selectedIndex(index), isOpen(open) {}
+
+    DropdownState(const DropdownState& other) {
+        selectedIndex = other.selectedIndex;
+        isOpen = other.isOpen;
+    }
+};
 
 struct UIContext {
     uuid hotID;     // probably about to be touched
     uuid activeID;  // currently being touched
+
+    std::map<uuid, std::shared_ptr<BaseState> > states;
 };
 
-uuid rootID = uuid({.owner = -1, .item = 0, .index = 0});
-static std::shared_ptr<UIContext> globalContext;
+struct TextConfig {
+    std::string text;
+    glm::vec2 position;
+    glm::vec2 size;
+    glm::vec4 color;
+};
 
-std::shared_ptr<UIContext> get() {
-    if (!globalContext) globalContext.reset(new UIContext());
-    return globalContext;
+struct ButtonConfig {
+    // TODO color
+    glm::vec2 position;
+    glm::vec2 size;
+    glm::vec4 color;
+    TextConfig textConfig;
+};
+
+struct DropdownConfig {
+    // TODO color
+    glm::vec2 position;
+    glm::vec2 size;
+    glm::vec4 color;
+    std::vector<TextConfig> textConfigs;
+};
+
+struct ToggleConfig {
+    // TODO color
+    glm::vec2 position;
+    glm::vec2 size;
+    glm::vec4 color;
+};
+
+glm::vec4 darker(glm::vec4 color, float d = 0.5) {
+    auto c = color - glm::vec4{d};
+    c.w = color.w;
+    return c;
+}
+
+
+#include <type_traits>
+template <typename T>
+std::shared_ptr<T> getState(uuid id, T initialState) {
+    if (!std::is_base_of<BaseState, T>::value) {
+        log_error("Type is not a child of BaseState");
+    }
+    std::shared_ptr<UIContext> context = get();
+    if (context->states.find(id) == context->states.end()) {
+        context->states[id] = std::make_shared<T>(initialState);
+    }
+    return dynamic_pointer_cast<T>(context->states[id]);
 }
 
 bool active(const std::shared_ptr<UIContext> context, uuid id) {
@@ -286,21 +438,6 @@ void set_not_active(const std::shared_ptr<UIContext> context, uuid id) {
 void set_not_hot(const std::shared_ptr<UIContext> context, uuid id) {
     context->hotID = rootID;
 }
-
-struct TextConfig {
-    std::string text;
-    glm::vec2 position;
-    glm::vec2 size;
-    glm::vec4 color;
-};
-
-struct ButtonConfig {
-    // TODO color
-    glm::vec2 position;
-    glm::vec2 size;
-    glm::vec4 color;
-    TextConfig textConfig;
-};
 
 bool isMouseInside(glm::vec4 rect) {
     auto mouseScreen = glm::vec3{Input::getMousePosition(), 0.f};
@@ -333,16 +470,8 @@ bool button(const std::shared_ptr<UIContext>& context, uuid id,
     bool mouseDown = !mouseUp;
     bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
                                           config.size.x, config.size.y});
-
-    auto darker = [](glm::vec4 color, float d = 0.5) {
-        auto c = color - glm::vec4{d};
-        c.w = color.w;
-        return c;
-    };
-
-    // everything is drawn from the center
-    // so move it so its not the center
-    // that way the mouse collision works
+    // everything is drawn from the center so move it so its not the center that
+    // way the mouse collision works
     config.position.x += config.size.x / 2.f;
     config.position.y += config.size.y / 2.f;
 
@@ -381,5 +510,75 @@ bool button(const std::shared_ptr<UIContext>& context, uuid id,
     drawButton(false);
     return false;
 }
+
+std::shared_ptr<ToggleState> toggle(const std::shared_ptr<UIContext>& context,
+                                    uuid id,
+                                    std::array<ToggleConfig, 2> configs,
+                                    ToggleState initialState) {
+    auto currentState = getState<ToggleState>(id, initialState);
+    if (!currentState) {
+        log_warn("Had matching state for ID but not correct dynamic type");
+    }
+    int item = 0;
+
+    auto config = configs[currentState->on ? 1 : 0];
+    bool mouseUp = Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
+    bool mouseDown = !mouseUp;
+    bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
+                                          config.size.x, config.size.y});
+
+    auto textConfig = TextConfig({.text = currentState->on ? "ON" : "OFF",
+                                  .color = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f},
+                                  .position = glm::vec2{0.f, 0.f},
+                                  .size = glm::vec2{0.25f, 0.25f}});
+
+    auto buttonConfig = ButtonConfig({.textConfig = textConfig,
+                                      .position = config.position,
+                                      .color = config.color,
+                                      .size = config.size});
+
+    if (button(get(), uuid({id.item, item++, 0}), buttonConfig)) {
+        if (mouseUp) {
+            currentState->on = !currentState->on;
+        }
+    }
+
+    return currentState;
+}
+
+std::shared_ptr<DropdownState> dropdown(
+    const std::shared_ptr<UIContext>& context, uuid id, DropdownConfig config,
+    DropdownState initialState) {
+    int item = 0;
+    auto currentState = getState<DropdownState>(id, initialState);
+    if (!currentState) {
+        log_warn("Had matching state for ID but not correct dynamic type");
+    }
+    return currentState;
+
+    auto selectedTextConfig = config.textConfigs[currentState->selectedIndex];
+    auto buttonConfig = ButtonConfig({
+        .textConfig = selectedTextConfig,
+        .color = config.color,
+        .position = config.position,
+        .size = config.size,
+    });
+
+    if (currentState->isOpen) {
+        // todo
+        if (button(get(), uuid({id.item, item++, 0}), buttonConfig)) {
+            log_info("closed dropdown");
+            currentState->isOpen = false;
+        }
+    } else {
+        if (button(get(), uuid({id.item, item++, 0}), buttonConfig)) {
+            log_info("opened dropdown");
+            currentState->isOpen = true;
+        }
+    }
+
+    return currentState;
+}
+*/
 
 }  // namespace IUI

@@ -37,6 +37,7 @@ struct MenuLayer : public Layer {
                 a = 0;
             }
         }
+        IUI::init_context();
     }
 
     virtual ~MenuLayer() {}
@@ -78,6 +79,30 @@ struct MenuLayer : public Layer {
     void ui_test(Time dt) {
         using namespace IUI;
 
+        // before
+        {
+            get()->hotID = IUI::rootID;
+            get()->lmouseDown =
+                Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
+            get()->mousePosition = Input::getMousePosition();
+        }
+
+        if (button(uuid({0, 0, 0}), glm::vec2{0.f, 0.f}, glm::vec2{2.f, 1.f})) {
+            log_info("clicked button");
+        }
+
+        // after
+        {
+            if (get()->lmouseDown) {
+                if (get()->activeID == IUI::rootID) {
+                    get()->activeID = fakeID;
+                }
+            } else {
+                get()->activeID = IUI::rootID;
+            }
+        }
+
+        /*
         int item = 0;
 
         auto upperCaseConfig =
@@ -109,6 +134,46 @@ struct MenuLayer : public Layer {
         if (button(get(), uuid({0, item++, 0}), buttonConfig)) {
             Menu::get().state = Menu::State::Game;
         }
+
+        auto whiteC = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
+        auto ddsize = glm::vec2{0.25f};
+
+        std::array<ToggleConfig, 2> toggleConfigs = {
+            ToggleConfig({.position = glm::vec2{4.f, 0.f},
+                          .color = glm::vec4{0.4f, 0.3f, 0.8f, 1.f},
+                          .size = glm::vec2{4.f, 1.f}}),
+            ToggleConfig({.position = glm::vec2{4.f, 0.f},
+                          .color = glm::vec4{0.8f, 0.4f, 0.3f, 1.f},
+                          .size = glm::vec2{4.f, 1.f}}),
+        };
+        ToggleState toggleState = ToggleState(false);
+        auto t =
+            toggle(get(), uuid({0, item++, 0}), toggleConfigs, toggleState);
+        (void)t;
+        */
+
+        // std::vector<TextConfig> ddtextConfigs = std::vector<TextConfig>({
+        // TextConfig({.text = "Option 1",
+        // .color = whiteC,
+        // .position = glm::vec2{0.f, 0.f},
+        // .size = ddsize}),
+        // TextConfig({.text = "Option 2",
+        // .color = whiteC,
+        // .position = glm::vec2{0.f, 0.f},
+        // .size = ddsize}),
+        // TextConfig({.text = "Option 3",
+        // .color = whiteC,
+        // .position = glm::vec2{0.f, 0.f},
+        // .size = ddsize}),
+        // });
+        // auto dropdownConfig =
+        // DropdownConfig({.textConfigs = ddtextConfigs,
+        // .position = glm::vec2{3.f, 0.f},
+        // .color = glm::vec4{0.4f, 0.3f, 0.8f, 1.f},
+        // .size = glm::vec2{4.f, 1.f}});
+        //
+        // DropdownState dropdownState = DropdownState(0, false);
+        // dropdown(get(), uuid({0, item++, 0}), dropdownConfig, dropdownState);
 
         // uuid active = get()->activeID;
         // uuid hot = get()->hotID;
