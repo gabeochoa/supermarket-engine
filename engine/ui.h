@@ -278,37 +278,27 @@ void set_not_active(UIContext context, uuid id) { context.activeID = rootID; }
 void set_not_hot(UIContext context, uuid id) { context.hotID = rootID; }
 
 struct TextConfig {
-    const char* text;
+    std::string text;
     glm::vec2 position;
     glm::vec2 size;
-    // TODO color
+    glm::vec4 color;
 };
 
 struct ButtonConfig {
     // TODO color
     glm::vec2 position;
     glm::vec2 size;
+    glm::vec4 color;
     TextConfig textConfig;
 };
 
 bool text(UIContext context, uuid id, TextConfig config) {
-    // for text it uses screen coords, so we have to convert from
-    // world coords
-    glm::vec4 viewport = {0, 0, WIN_W, WIN_H};
-    glm::vec3 pos =
-        worldToScreen(glm::vec3{config.position.x, config.position.y, 0.f},
-                      menuCameraController->camera.view,
-                      menuCameraController->camera.projection, viewport);
-
-    gltInit();
-    gltBeginDraw();
-    gltColor(0.7f, 0.2f, 1.0f, 1.0f);
-    GLTtext* text = gltCreateText();
-    gltSetText(text, config.text);
-    gltDrawText2D(text, pos.x, WIN_H - pos.y, config.size.y);
-    gltEndDraw();
-    gltDeleteText(text);
-    gltTerminate();
+    int i = 0;
+    for (auto c : config.text) {
+        i++;
+        Renderer::drawQuad(config.position + glm::vec2{i * 1.5f, 0.f},
+                           config.size, config.color, std::string(1, c));
+    }
     return false;
 }
 
@@ -317,9 +307,16 @@ bool button(UIContext context, uuid id, ButtonConfig config) {
     bool mouseDown = !mouseUp;
     bool inside = false;
 
+    auto darker = [](glm::vec4 color, float d = 0.5) {
+        auto c = color - glm::vec4{d};
+        c.w = color.w;
+        return c;
+    };
+
     auto drawButton = [&]() {
-        Renderer::drawQuad(config.position, config.size, glm::vec4{1.f},
-                           "white");
+        // Renderer::drawQuad(config.position, config.size, config.color,
+        // "white"); Renderer::drawQuad(config.position + glm::vec2{0.03f,
+        // -0.03f}, config.size, darker(config.color), "white");
         text(context, id, config.textConfig);
     };
 
