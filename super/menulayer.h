@@ -71,11 +71,11 @@ struct MenuLayer : public Layer {
         gltTerminate();
 
         Renderer::begin(menuCameraController->camera);
-        ui_test();
+        ui_test(dt);
         Renderer::end();
     }
 
-    void ui_test() {
+    void ui_test(Time dt) {
         using namespace IUI;
 
         int item = 0;
