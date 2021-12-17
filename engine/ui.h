@@ -257,7 +257,7 @@ struct UIContext {
     uuid activeID;  // currently being touched
 };
 
-uuid rootID;
+uuid rootID = uuid({.owner = -1, .item = 0, .index = 0});
 static std::shared_ptr<UIContext> globalContext;
 
 std::shared_ptr<UIContext> get() {
@@ -265,17 +265,27 @@ std::shared_ptr<UIContext> get() {
     return globalContext;
 }
 
-bool active(UIContext context, uuid id) { return context.activeID == id; }
-bool hot(UIContext context, uuid id) { return context.hotID == id; }
-void set_active(UIContext context, uuid id) { context.activeID = id; }
-void set_hot(UIContext context, uuid id) {
+bool active(const std::shared_ptr<UIContext> context, uuid id) {
+    return context->activeID == id;
+}
+bool hot(const std::shared_ptr<UIContext> context, uuid id) {
+    return context->hotID == id;
+}
+void set_active(const std::shared_ptr<UIContext> context, uuid id) {
+    context->activeID = id;
+}
+void set_hot(const std::shared_ptr<UIContext> context, uuid id) {
     // if theres already an active item, then do nothing
     // you couldve hovered over the mouse while doing something else
     if (active(context, id)) return;
-    context.hotID = id;
+    context->hotID = id;
 }
-void set_not_active(UIContext context, uuid id) { context.activeID = rootID; }
-void set_not_hot(UIContext context, uuid id) { context.hotID = rootID; }
+void set_not_active(const std::shared_ptr<UIContext> context, uuid id) {
+    context->activeID = rootID;
+}
+void set_not_hot(const std::shared_ptr<UIContext> context, uuid id) {
+    context->hotID = rootID;
+}
 
 struct TextConfig {
     std::string text;
@@ -292,20 +302,37 @@ struct ButtonConfig {
     TextConfig textConfig;
 };
 
-bool text(UIContext context, uuid id, TextConfig config) {
+bool isMouseInside(glm::vec4 rect) {
+    auto mouseScreen = glm::vec3{Input::getMousePosition(), 0.f};
+    mouseScreen.y = WIN_H - mouseScreen.y;
+
+    auto mouse = screenToWorld(mouseScreen,                              //
+                               menuCameraController->camera.view,        //
+                               menuCameraController->camera.projection,  //
+                               glm::vec4{0, 0, WIN_W, WIN_H});
+    // log_warn("{} => {}, inside? {}", Input::getMousePosition(), mouse, rect);
+    return mouse.x >= rect.x && mouse.x <= rect.x + rect.z &&
+           mouse.y >= rect.y && mouse.y <= rect.y + rect.w;
+}
+
+bool text(const std::shared_ptr<UIContext>& context, uuid id, TextConfig config,
+          glm::vec2 offset = {0.f, 0.f}) {
     int i = 0;
     for (auto c : config.text) {
         i++;
-        Renderer::drawQuad(config.position + glm::vec2{i * 1.6f, 0.f},
-                           config.size, config.color, std::string(1, c));
+        Renderer::drawQuad(
+            offset + config.position + glm::vec2{i * config.size.x, 0.f},
+            config.size, config.color, std::string(1, c));
     }
     return false;
 }
 
-bool button(UIContext context, uuid id, ButtonConfig config) {
+bool button(const std::shared_ptr<UIContext>& context, uuid id,
+            ButtonConfig config) {
     bool mouseUp = Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
     bool mouseDown = !mouseUp;
-    bool inside = false;
+    bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
+                                          config.size.x, config.size.y});
 
     auto darker = [](glm::vec4 color, float d = 0.5) {
         auto c = color - glm::vec4{d};
@@ -313,30 +340,45 @@ bool button(UIContext context, uuid id, ButtonConfig config) {
         return c;
     };
 
-    auto drawButton = [&]() {
-        // Renderer::drawQuad(config.position, config.size, config.color,
-        // "white"); Renderer::drawQuad(config.position + glm::vec2{0.03f,
-        // -0.03f}, config.size, darker(config.color), "white");
-        text(context, id, config.textConfig);
+    // everything is drawn from the center
+    // so move it so its not the center
+    // that way the mouse collision works
+    config.position.x += config.size.x / 2.f;
+    config.position.y += config.size.y / 2.f;
+
+    auto drawButton = [&](bool pressed) {
+        text(context, id, config.textConfig, {0.f, 0.5f});
+        Renderer::drawQuad(config.position, config.size, config.color, "white");
+        if (!pressed) {
+            Renderer::drawQuad(config.position + glm::vec2{0.03f, -0.03f},
+                               config.size, darker(config.color), "white");
+        }
     };
 
+    // if we are active it means last frame
+    // we were being clicked down
     if (active(context, id)) {
+        // did we raise the mouse since last frame?
         if (mouseUp) {
+            // are we still over the button?
             if (hot(context, id)) {
-                drawButton();
+                drawButton(true);
                 return true;
             }
             set_not_active(context, id);
         }
+        // we werent clicked, but were we hovered?
     } else if (hot(context, id)) {
+        // are we currently pressing the mouse?
         if (mouseDown) {
             set_active(context, id);
         }
     }
+    // are we hovering over the button?
     if (inside) {
         set_hot(context, id);
     }
-    drawButton();
+    drawButton(false);
     return false;
 }
 
