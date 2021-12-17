@@ -9,6 +9,8 @@
 #include "entities.h"
 
 struct MenuLayer : public Layer {
+    float value = 0.05f;
+
     MenuLayer() : Layer("Supermarket") {
         Menu::get().state = Menu::State::Root;
 
@@ -84,11 +86,20 @@ struct MenuLayer : public Layer {
             get()->hotID = IUI::rootID;
             get()->lmouseDown =
                 Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
-            get()->mousePosition = Input::getMousePosition();
+            get()->mousePosition =
+                screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
+                              menuCameraController->camera.view,        //
+                              menuCameraController->camera.projection,  //
+                              glm::vec4{0, 0, WIN_W, WIN_H});
         }
 
         if (button(uuid({0, 0, 0}), glm::vec2{0.f, 0.f}, glm::vec2{2.f, 1.f})) {
             log_info("clicked button");
+        }
+
+        if (slider(uuid({0, 1, 0}), glm::vec2{3.f, 0.f}, glm::vec2{1.f, 3.f},
+                   &value, 0.05f, 0.95f)) {
+            // log_info("idk moved slider? ");
         }
 
         // after

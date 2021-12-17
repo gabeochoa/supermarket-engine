@@ -98,6 +98,55 @@ bool button(uuid id, glm::vec2 position, glm::vec2 size) {
     return false;
 }
 
+bool slider(uuid id, glm::vec2 position, glm::vec2 size, float* value,
+            float mnf, float mxf) {
+    bool inside =
+        isMouseInside(glm::vec4{position.x, position.y, size.x, size.y});
+
+    float min = position.y - size.y / 2.f;
+    float max = position.y + size.y / 2.f;
+    float ypos = min + ((max - min) * (*value));
+
+    if (inside) {
+        get()->hotID = id;
+        if (get()->activeID == rootID && get()->lmouseDown) {
+            get()->activeID = id;
+        }
+    }
+
+    auto white = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
+    auto red = glm::vec4{1.0f, 0.0f, 0.0f, 1.0f};
+    auto green = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
+    auto blue = glm::vec4{0.0f, 0.0f, 1.0f, 1.0f};
+
+    auto col = white;
+    if (get()->activeID == id || get()->hotID == id) {
+        col = green;
+    } else {
+        col = blue;
+    }
+
+    // everything is drawn from the center so move it so its not the center that
+    // way the mouse collision works
+    auto pos =
+        glm::vec2{position.x + (size.x / 2.f), position.y + (size.y / 2.f)};
+    Renderer::drawQuad(pos + glm::vec2{0.f, ypos}, glm::vec2{0.5f}, col,
+                       "white");
+    Renderer::drawQuad(pos, size, red, "white");
+
+    if (get()->activeID == id) {
+        float v = (position.y - get()->mousePosition.y) / size.y;
+        if (v < mnf) v = mnf;
+        if (v > mxf) v = mxf;
+        if (v != *value) {
+            *value = v;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /*
 enum UILayoutType {
     Row,
