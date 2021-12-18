@@ -103,11 +103,16 @@ bool isMouseInside(glm::vec4 rect) {
 // from http://sol.gfxile.net/imgui/
 // Like actually, I tried 3 times :)
 
+struct WidgetConfig;
+
 struct WidgetConfig {
     std::string text;
     glm::vec2 position;
     glm::vec2 size;
-    glm::vec4 color;
+    glm::vec4 color = white;
+    bool transparent = false;
+
+    WidgetConfig* child;
 };
 
 bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
@@ -141,7 +146,8 @@ bool button(uuid id, WidgetConfig config) {
     try_to_grab_kb(id);
 
     {  // start render
-        Renderer::drawQuad(config.position, config.size, white, "white");
+        Renderer::drawQuad(config.position, config.size, config.color, "white");
+
         if (get()->hotID == id) {
             if (get()->activeID == id) {
                 Renderer::drawQuad(config.position, config.size, red, "white");
@@ -181,6 +187,13 @@ bool button(uuid id, WidgetConfig config) {
         return true;
     }
     return false;
+}
+
+bool button_with_label(uuid id, WidgetConfig config) {
+    int item = 0;
+    text(uuid({id.item, item++, 0}), *config.child, config.position);
+    auto pressed = button(id, config);
+    return pressed;
 }
 
 bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
