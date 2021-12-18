@@ -10,11 +10,15 @@ namespace Key {
 enum KeyCode : uint16_t {
     // From glfw3.h
     Space = 32,
-    Apostrophe = 39, /* ' */
-    Comma = 44,      /* , */
-    Minus = 45,      /* - */
-    Period = 46,     /* . */
-    Slash = 47,      /* / */
+    Exclaimation = 33, /* ! */
+    Apostrophe = 39,   /* ' */
+    LeftParen = 40,    /* ( */
+    RightParen = 41,   /* ) */
+    Asterisk = 42,     /* * */
+    Comma = 44,        /* , */
+    Minus = 45,        /* - */
+    Period = 46,       /* . */
+    Slash = 47,        /* / */
 
     D0 = 48, /* 0 */
     D1 = 49, /* 1 */
@@ -29,6 +33,9 @@ enum KeyCode : uint16_t {
 
     Semicolon = 59, /* ; */
     Equal = 61,     /* = */
+
+    QuestionMark = 63, /* ?  */
+    At = 64,           /* @ */
 
     A = 65,
     B = 66,

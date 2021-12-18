@@ -11,6 +11,8 @@
 struct MenuLayer : public Layer {
     float value = 0.05f;
     std::string content = "";
+    const int TYPABLE_START = 32;
+    const int TYPABLE_END = 123;
 
     MenuLayer() : Layer("Supermarket") {
         Menu::get().state = Menu::State::Root;
@@ -20,22 +22,14 @@ struct MenuLayer : public Layer {
         menuCameraController->camera.setPosition(glm::vec3{15.f, 0.f, 0.f});
 
         Renderer::addTexture("./resources/letters.png");
-        auto s = (        //
-            "ABCDEFGHIJ"  //
-            "KLMNOPQRST"  //
-            "UVWXYZ !?."  //
-            "abcdefghij"  //
-            "klmnopqrst"  //
-            "uvwxyz@*()"  //
-        );
         int a = 0;
         int b = 0;
-        for (int i = 0; i < 60; i++) {
-            Renderer::addSubtexture("letters",             //
-                                    std::string(1, s[i]),  //
+        for (int i = TYPABLE_START; i < TYPABLE_END; i++) {
+            Renderer::addSubtexture("letters",                //
+                                    std::string(1, (char)i),  //
                                     a, b, 16.f, 16.f);
             a++;
-            if (a == 10) {
+            if (a == 20) {
                 b++;
                 a = 0;
             }
@@ -59,7 +53,7 @@ struct MenuLayer : public Layer {
         if (event.keycode == Key::mapping["Widget Mod"]) {
             IUI::get()->mod = static_cast<Key::KeyCode>(event.keycode);
         }
-        if (event.keycode >= 65 && event.keycode <= 90) {
+        if (event.keycode >= TYPABLE_START && event.keycode <= TYPABLE_END) {
             IUI::get()->keychar = static_cast<Key::KeyCode>(event.keycode);
         }
         if (IUI::get()->textfieldMod.count(
@@ -128,19 +122,33 @@ struct MenuLayer : public Layer {
         }
 
         auto upperCaseConfig =
-            WidgetConfig({.text = " .?! THE FIVE BOXING WIZARDS JUMP QUICKLY",
+            WidgetConfig({.text = "THE FIVE BOXING WIZARDS JUMP QUICKLY",
                           .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
                           .position = glm::vec2{0.f, -4.f},
                           .size = glm::vec2{1.f, 1.f}});
 
         auto lowerCaseConfig =
-            WidgetConfig({.text = "(@*) the five boxing wizards jump quickly",
+            WidgetConfig({.text = "the five boxing wizards jump quickly",
                           .color = glm::vec4{0.8, 0.3f, 0.7f, 1.0f},
                           .position = glm::vec2{0.f, -6.f},
                           .size = glm::vec2{1.f, 1.f}});
 
+        auto numbersConfig =
+            WidgetConfig({.text = "0123456789",
+                          .color = glm::vec4{0.7, 0.5f, 0.8f, 1.0f},
+                          .position = glm::vec2{0.f, -8.f},
+                          .size = glm::vec2{1.f, 1.f}});
+
+        auto extrasConfig =
+            WidgetConfig({.text = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
+                          .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+                          .position = glm::vec2{0.f, -10.f},
+                          .size = glm::vec2{1.f, 1.f}});
+
         text(uuid({0, item++, 0}), upperCaseConfig);
         text(uuid({0, item++, 0}), lowerCaseConfig);
+        text(uuid({0, item++, 0}), numbersConfig);
+        text(uuid({0, item++, 0}), extrasConfig);
 
         if (textfield(uuid({0, item++, 0}), glm::vec2{2.f, 2.f},
                       glm::vec2{3.f, 1.f}, content)) {
