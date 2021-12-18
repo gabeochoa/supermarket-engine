@@ -41,7 +41,6 @@ struct UIContext {
     uuid lastProcessed;
 
     const std::set<Key::KeyCode> textfieldMod = {{
-        Key::mapping["Text Space"],
         Key::mapping["Text Backspace"],
     }};
     Key::KeyCode keychar;
@@ -329,10 +328,6 @@ bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
         }
         if (get()->keychar != Key::KeyCode()) {
             buffer.append(std::string(1, get()->keychar));
-            changed = true;
-        }
-        if (get()->modchar == Key::mapping["Text Space"]) {
-            buffer.append(" ");
             changed = true;
         }
         if (get()->modchar == Key::mapping["Text Backspace"]) {
