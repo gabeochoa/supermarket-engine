@@ -160,7 +160,7 @@ bool button(uuid id, glm::vec2 position, glm::vec2 size) {
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::mapping["Widget Next"])) {
             get()->kbFocusID = rootID;
-            if (get()->pressed(Key::mapping["Widget Mod"])) {
+            if (Input::isKeyPressed(Key::mapping["Widget Mod"])) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
@@ -224,7 +224,7 @@ bool slider(uuid id, glm::vec2 position, glm::vec2 size, float* value,
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::mapping["Widget Next"])) {
             get()->kbFocusID = rootID;
-            if (get()->pressed(Key::mapping["Widget Mod"])) {
+            if (Input::isKeyPressed(Key::mapping["Widget Mod"])) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
@@ -280,25 +280,25 @@ bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
     try_to_grab_kb(id);
 
     {  // start render
-        // Draw Input Cursor
         float tSize = 0.3f;
+        auto tStartLocation = position - glm::vec2{size.x / 2.f, 0.f};
+        auto tCursorPosition =
+            tStartLocation + glm::vec2{buffer.size() * tSize, 0.f};
         text(uuid({id.item, item++, 0}),
              WidgetConfig({.text = buffer,
                            .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
-                           .position = position + glm::vec2{0.f, -4.f},
+                           .position = tStartLocation,
                            .size = glm::vec2{tSize}
 
              }));
         draw_if_kb_focus(id, [&]() {
             text(uuid({id.item, item++, 0}),
-                 WidgetConfig(
-                     {.text = "_",
-                      .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
-                      .position =
-                          position + glm::vec2{tSize * buffer.size(), -4.f},
-                      .size = glm::vec2{tSize}
+                 WidgetConfig({.text = "_",
+                               .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+                               .position = tCursorPosition,
+                               .size = glm::vec2{tSize}
 
-                     }));
+                 }));
         });
         Renderer::drawQuad(position, size, white, "white");
         if (get()->hotID == id) {
@@ -321,7 +321,7 @@ bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::mapping["Widget Next"])) {
             get()->kbFocusID = rootID;
-            if (get()->pressed(Key::mapping["Widget Mod"])) {
+            if (Input::isKeyPressed(Key::mapping["Widget Mod"])) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }

@@ -58,6 +58,10 @@ struct MenuLayer : public Layer {
         if (event.keycode == Key::mapping["Widget Mod"]) {
             IUI::get()->mod = static_cast<Key::KeyCode>(event.keycode);
         }
+        if (IUI::get()->textfieldMod.count(
+                static_cast<Key::KeyCode>(event.keycode)) == 1) {
+            IUI::get()->modchar = static_cast<Key::KeyCode>(event.keycode);
+        }
         return false;
     }
 
@@ -161,7 +165,7 @@ struct MenuLayer : public Layer {
     }
 
     virtual void onEvent(Event& event) override {
-        // log_warn(event.toString().c_str());
+        log_warn(event.toString().c_str());
         if (Menu::get().state == Menu::State::Game) return;
 
         menuCameraController->onEvent(event);
