@@ -45,6 +45,10 @@ struct UITestLayer : public Layer {
         if (event.keycode == Key::mapping["Widget Mod"]) {
             IUI::get()->mod = static_cast<Key::KeyCode>(event.keycode);
         }
+        if (IUI::get()->textfieldMod.count(
+                static_cast<Key::KeyCode>(event.keycode)) == 1) {
+            IUI::get()->modchar = static_cast<Key::KeyCode>(event.keycode);
+        }
         return false;
     }
 
@@ -94,8 +98,12 @@ struct UITestLayer : public Layer {
                 log_info("clicked button 3");
             }
 
-            if (slider(uuid({0, item++, 0}), glm::vec2{9.f, 0.f},
-                       glm::vec2{1.f, 3.f}, &value, 0.08f, 0.95f)) {
+            if (slider(uuid({0, item++, 0}),
+                       WidgetConfig({
+                           .position = glm::vec2{9.f, 0.f},
+                           .size = glm::vec2{1.f, 3.f},
+                       }),
+                       &value, 0.08f, 0.95f)) {
                 // log_info("idk moved slider? ");
             }
 
@@ -147,7 +155,7 @@ struct UITestLayer : public Layer {
 
     virtual void onEvent(Event& event) override {
         // log_warn(event.toString().c_str());
-        if (Menu::get().state == Menu::State::Game) return;
+        if (Menu::get().state != Menu::State::UITest) return;
 
         uiTestCameraController->onEvent(event);
         EventDispatcher dispatcher(event);

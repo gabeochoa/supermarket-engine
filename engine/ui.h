@@ -183,13 +183,12 @@ bool button(uuid id, WidgetConfig config) {
     return false;
 }
 
-bool slider(uuid id, glm::vec2 position, glm::vec2 size, float* value,
-            float mnf, float mxf) {
-    bool inside =
-        isMouseInside(glm::vec4{position.x, position.y, size.x, size.y});
+bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
+    bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
+                                          config.size.x, config.size.y});
 
-    float min = position.y - size.y / 2.f;
-    float max = position.y + size.y / 2.f;
+    float min = config.position.y - config.size.y / 2.f;
+    float max = config.position.y + config.size.y / 2.f;
     float ypos = min + ((max - min) * (*value));
 
     if (inside) {
@@ -211,14 +210,15 @@ bool slider(uuid id, glm::vec2 position, glm::vec2 size, float* value,
 
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
-    auto pos =
-        glm::vec2{position.x + (size.x / 2.f), position.y + (size.y / 2.f)};
+    auto pos = glm::vec2{config.position.x + (config.size.x / 2.f),
+                         config.position.y + (config.size.y / 2.f)};
     Renderer::drawQuad(pos + glm::vec2{0.f, ypos}, glm::vec2{0.5f}, col,
                        "white");
-    Renderer::drawQuad(pos, size, red, "white");
+    Renderer::drawQuad(pos, config.size, red, "white");
 
     draw_if_kb_focus(id, [&]() {
-        Renderer::drawQuad(position, size + glm::vec2{0.1f}, teal, "white");
+        Renderer::drawQuad(config.position, config.size + glm::vec2{0.1f}, teal,
+                           "white");
     });
 
     // all drawing has to happen before this ///
@@ -247,7 +247,7 @@ bool slider(uuid id, glm::vec2 position, glm::vec2 size, float* value,
 
     if (get()->activeID == id) {
         get()->kbFocusID = id;
-        float v = (position.y - get()->mousePosition.y) / size.y;
+        float v = (config.position.y - get()->mousePosition.y) / config.size.y;
         if (v < mnf) v = mnf;
         if (v > mxf) v = mxf;
         if (v != *value) {

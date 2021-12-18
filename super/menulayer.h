@@ -118,7 +118,7 @@ struct MenuLayer : public Layer {
 
     virtual void onEvent(Event& event) override {
         // log_warn(event.toString().c_str());
-        if (Menu::get().state == Menu::State::Game) return;
+        if (Menu::get().state != Menu::State::Root) return;
 
         menuCameraController->onEvent(event);
         EventDispatcher dispatcher(event);
