@@ -75,18 +75,22 @@ struct UITestLayer : public Layer {
     void ui_test(Time dt) {
         using namespace IUI;
         int item = 0;
-        begin();
+        begin(uiTestCameraController);
         {
-            if (button(uuid({0, item++, 0}), glm::vec2{0.f, 0.f},
-                       glm::vec2{2.f, 1.f})) {
+            if (button(uuid({0, item++, 0}),
+                       WidgetConfig({.position = glm::vec2{0.f, 0.f},
+                                     .size = glm::vec2{2.f, 1.f}}))) {
                 log_info("clicked button");
+                Menu::get().state = Menu::State::Root;
             }
-            if (button(uuid({0, item++, 0}), glm::vec2{3.f, 0.f},
-                       glm::vec2{2.f, 1.f})) {
+            if (button(uuid({0, item++, 0}),
+                       WidgetConfig({.position = glm::vec2{3.f, 0.f},
+                                     .size = glm::vec2{2.f, 1.f}}))) {
                 log_info("clicked button 2");
             }
-            if (button(uuid({0, item++, 0}), glm::vec2{6.f, 0.f},
-                       glm::vec2{2.f, 1.f})) {
+            if (button(uuid({0, item++, 0}),
+                       WidgetConfig({.position = glm::vec2{6.f, 0.f},
+                                     .size = glm::vec2{2.f, 1.f}}))) {
                 log_info("clicked button 3");
             }
 
@@ -145,7 +149,7 @@ struct UITestLayer : public Layer {
         // log_warn(event.toString().c_str());
         if (Menu::get().state == Menu::State::Game) return;
 
-        menuCameraController->onEvent(event);
+        uiTestCameraController->onEvent(event);
         EventDispatcher dispatcher(event);
         dispatcher.dispatch<Mouse::MouseButtonPressedEvent>(std::bind(
             &UITestLayer::onMouseButtonPressed, this, std::placeholders::_1));

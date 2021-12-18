@@ -87,10 +87,11 @@ struct MenuLayer : public Layer {
     void ui_test(Time dt) {
         using namespace IUI;
         int item = 0;
-        begin();
+        begin(menuCameraController);
         {
-            if (button(uuid({0, item++, 0}), glm::vec2{0.f, 0.f},
-                       glm::vec2{2.f, 1.f})) {
+            if (button(uuid({0, item++, 0}),
+                       WidgetConfig({.position = glm::vec2{0.f, 0.f},
+                                     .size = glm::vec2{2.f, 1.f}}))) {
                 Menu::get().state = Menu::State::UITest;
             }
         }
@@ -112,7 +113,7 @@ struct MenuLayer : public Layer {
     }
 
     virtual void onEvent(Event& event) override {
-        log_warn(event.toString().c_str());
+        // log_warn(event.toString().c_str());
         if (Menu::get().state == Menu::State::Game) return;
 
         menuCameraController->onEvent(event);

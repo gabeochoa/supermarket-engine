@@ -22,6 +22,7 @@ struct uuid {
 };
 
 struct UIContext {
+    std::shared_ptr<OrthoCameraController> camController;
     uuid hotID;     // probably about to be touched
     uuid activeID;  // currently being touched
 
@@ -91,8 +92,8 @@ bool isMouseInside(glm::vec4 rect) {
     mouseScreen.y = WIN_H - mouseScreen.y;
 
     auto mouse = screenToWorld(mouseScreen,                              //
-                               menuCameraController->camera.view,        //
-                               menuCameraController->camera.projection,  //
+                               get()->camController->camera.view,        //
+                               get()->camController->camera.projection,  //
                                glm::vec4{0, 0, WIN_W, WIN_H});
     // log_warn("{} => {}, inside? {}", Input::getMousePosition(), mouse, rect);
     return mouse.x >= rect.x && mouse.x <= rect.x + rect.z &&
@@ -121,14 +122,13 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
     return false;
 }
 
-bool button(uuid id, glm::vec2 position, glm::vec2 size) {
-    bool inside =
-        isMouseInside(glm::vec4{position.x, position.y, size.x, size.y});
+bool button(uuid id, WidgetConfig config) {
+    bool inside = isMouseInside(glm::vec4{config.position, config.size});
 
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
-    position.x += size.x / 2.f;
-    position.y += size.y / 2.f;
+    config.position.x += config.size.x / 2.f;
+    config.position.y += config.size.y / 2.f;
 
     if (inside) {
         get()->hotID = id;
@@ -142,18 +142,20 @@ bool button(uuid id, glm::vec2 position, glm::vec2 size) {
     try_to_grab_kb(id);
 
     {  // start render
-        Renderer::drawQuad(position, size, white, "white");
+        Renderer::drawQuad(config.position, config.size, white, "white");
         if (get()->hotID == id) {
             if (get()->activeID == id) {
-                Renderer::drawQuad(position, size, red, "white");
+                Renderer::drawQuad(config.position, config.size, red, "white");
             } else {
-                Renderer::drawQuad(position, size, green, "white");
+                Renderer::drawQuad(config.position, config.size, green,
+                                   "white");
             }
         } else {
-            Renderer::drawQuad(position, size, blue, "white");
+            Renderer::drawQuad(config.position, config.size, blue, "white");
         }
         draw_if_kb_focus(id, [&]() {
-            Renderer::drawQuad(position, size + glm::vec2{0.1f}, teal, "white");
+            Renderer::drawQuad(config.position, config.size + glm::vec2{0.1f},
+                               teal, "white");
         });
     }  // end render
 
@@ -349,14 +351,15 @@ bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
     return changed;
 }
 
-void begin() {
+void begin(const std::shared_ptr<OrthoCameraController> controller) {
+    get()->camController = controller;
     get()->hotID = IUI::rootID;
     get()->lmouseDown =
         Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
     get()->mousePosition =
         screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
-                      menuCameraController->camera.view,        //
-                      menuCameraController->camera.projection,  //
+                      get()->camController->camera.view,        //
+                      get()->camController->camera.projection,  //
                       glm::vec4{0, 0, WIN_W, WIN_H});
 }
 void end() {
