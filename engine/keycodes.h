@@ -155,6 +155,13 @@ static inline void default_keys() {
     mapping["1"] = KeyCode::D1;
     mapping["2"] = KeyCode::D2;
 
+    // widget control things
+    mapping["Widget Next"] = KeyCode::Tab;
+    mapping["Widget Mod"] = KeyCode::LeftShift;
+    mapping["Widget Press"] = KeyCode::Enter;
+    mapping["Value Up"] = KeyCode::Up;
+    mapping["Value Down"] = KeyCode::Down;
+
     mapping["Open Profiler"] = KeyCode::GraveAccent;  // tilde
     mapping["Show Entity Overlay"] = KeyCode::Insert;
     mapping["Profiler Hide Filenames"] = KeyCode::Delete;

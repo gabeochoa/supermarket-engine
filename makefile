@@ -27,6 +27,7 @@ EXE := $(OBJ_DIR)/super.exe
 all: super
 
 super: pch $(LIBRARY) $(OBJ_FILES)
+	rm -f ./resources/keybindings.ini
 	clang++ $(FLAGS) $(LIBS) $(FRAMEWORKS) -o $(EXE) ./super/main.cpp $(LIBRARY)
 	DEBUG=123 ./$(EXE)
 
