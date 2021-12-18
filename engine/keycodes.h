@@ -169,7 +169,6 @@ static inline void default_keys() {
     mapping["Value Up"] = KeyCode::Up;
     mapping["Value Down"] = KeyCode::Down;
 
-    mapping["Text Cap Mod"] = KeyCode::LeftShift;
     mapping["Text Backspace"] = KeyCode::Backspace;
     mapping["Text Space"] = KeyCode::Space;
 
