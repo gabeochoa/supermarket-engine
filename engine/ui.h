@@ -51,16 +51,6 @@ struct UIContext {
         if (a) key = Key::KeyCode();
         return a;
     }
-
-    // const std::array<Key::KeyCode, 5> widgetKeys = {{
-    // Key::mapping["Widget Next"],
-    // Key::mapping["Widget Mod"],
-    // Key::mapping["Widget Press"],
-    // Key::mapping["Value Up"],
-    // Key::mapping["Value Down"],
-    // }};
-
-    // std::map<uuid, std::shared_ptr<BaseState> > states;
 };
 
 uuid rootID = uuid({.owner = -1, .item = 0, .index = 0});
@@ -300,7 +290,7 @@ bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
         draw_if_kb_focus(id, [&]() {
             text(uuid({id.item, item++, 0}),
                  WidgetConfig(
-                     {.text = "*",
+                     {.text = "_",
                       .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
                       .position =
                           position + glm::vec2{tSize * buffer.size(), -4.f},
@@ -334,10 +324,14 @@ bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
             }
         }
         if (get()->keychar != Key::KeyCode()) {
-            auto shiftDown = Input::isKeyPressed(Key::mapping["Text Cap Mod"]);
-            char c = (char)(get()->keychar + (shiftDown ? 0 : 32));
-            log_info("typed {}", c);
-            buffer.append(std::string(1, c));
+            if (get()->keychar >= 48 && get()->keychar <= 57) {
+                buffer.append(std::string(1, get()->keychar));
+            } else {
+                auto shiftDown =
+                    Input::isKeyPressed(Key::mapping["Text Cap Mod"]);
+                char c = (char)(get()->keychar + (shiftDown ? 0 : 32));
+                buffer.append(std::string(1, c));
+            }
             changed = true;
         }
         if (get()->modchar == Key::mapping["Text Space"]) {
@@ -358,6 +352,31 @@ bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
     }
 
     return changed;
+}
+
+void begin() {
+    get()->hotID = IUI::rootID;
+    get()->lmouseDown =
+        Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
+    get()->mousePosition =
+        screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
+                      menuCameraController->camera.view,        //
+                      menuCameraController->camera.projection,  //
+                      glm::vec4{0, 0, WIN_W, WIN_H});
+}
+void end() {
+    if (get()->lmouseDown) {
+        if (get()->activeID == IUI::rootID) {
+            get()->activeID = fakeID;
+        }
+    } else {
+        get()->activeID = IUI::rootID;
+    }
+    get()->key = Key::KeyCode();
+    get()->mod = Key::KeyCode();
+
+    get()->keychar = Key::KeyCode();
+    get()->modchar = Key::KeyCode();
 }
 
 /*
