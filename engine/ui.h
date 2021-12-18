@@ -111,6 +111,7 @@ struct WidgetConfig {
     glm::vec2 size;
     glm::vec4 color = white;
     bool transparent = false;
+    std::string texture = "white";
 
     WidgetConfig* child;
 };
@@ -146,21 +147,24 @@ bool button(uuid id, WidgetConfig config) {
     try_to_grab_kb(id);
 
     {  // start render
-        Renderer::drawQuad(config.position, config.size, config.color, "white");
+        Renderer::drawQuad(config.position, config.size, config.color,
+                           config.texture);
 
         if (get()->hotID == id) {
             if (get()->activeID == id) {
-                Renderer::drawQuad(config.position, config.size, red, "white");
+                Renderer::drawQuad(config.position, config.size, red,
+                                   config.texture);
             } else {
                 Renderer::drawQuad(config.position, config.size, green,
-                                   "white");
+                                   config.texture);
             }
         } else {
-            Renderer::drawQuad(config.position, config.size, blue, "white");
+            Renderer::drawQuad(config.position, config.size, blue,
+                               config.texture);
         }
         draw_if_kb_focus(id, [&]() {
             Renderer::drawQuad(config.position, config.size + glm::vec2{0.1f},
-                               teal, "white");
+                               teal, config.texture);
         });
     }  // end render
 
@@ -226,12 +230,12 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     auto pos = glm::vec2{config.position.x + (config.size.x / 2.f),
                          config.position.y + (config.size.y / 2.f)};
     Renderer::drawQuad(pos + glm::vec2{0.f, ypos}, glm::vec2{0.5f}, col,
-                       "white");
-    Renderer::drawQuad(pos, config.size, red, "white");
+                       config.texture);
+    Renderer::drawQuad(pos, config.size, red, config.texture);
 
     draw_if_kb_focus(id, [&]() {
         Renderer::drawQuad(config.position, config.size + glm::vec2{0.1f}, teal,
-                           "white");
+                           config.texture);
     });
 
     // all drawing has to happen before this ///
@@ -271,16 +275,15 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     return false;
 }
 
-bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
-               std::string& buffer) {
+bool textfield(uuid id, WidgetConfig config, std::string& buffer) {
     int item = 0;
-    bool inside =
-        isMouseInside(glm::vec4{position.x, position.y, size.x, size.y});
+    bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
+                                          config.size.x, config.size.y});
 
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
-    position.x += size.x / 2.f;
-    position.y += size.y / 2.f;
+    config.position.x += config.size.x / 2.f;
+    config.position.y += config.size.y / 2.f;
 
     if (inside) {
         get()->hotID = id;
@@ -295,7 +298,8 @@ bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
 
     {  // start render
         float tSize = 0.3f;
-        auto tStartLocation = position - glm::vec2{size.x / 2.f, 0.f};
+        auto tStartLocation =
+            config.position - glm::vec2{config.size.x / 2.f, 0.f};
         auto tCursorPosition =
             tStartLocation + glm::vec2{buffer.size() * tSize, 0.f};
         text(uuid({id.item, item++, 0}),
@@ -314,19 +318,24 @@ bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
 
                  }));
         });
-        Renderer::drawQuad(position, size, white, "white");
+        Renderer::drawQuad(config.position, config.size, config.color,
+                           config.texture);
         if (get()->hotID == id) {
             if (get()->activeID == id) {
-                Renderer::drawQuad(position, size, red, "white");
+                Renderer::drawQuad(config.position, config.size, red,
+                                   config.texture);
             } else {
-                Renderer::drawQuad(position, size, green, "white");
+                Renderer::drawQuad(config.position, config.size, green,
+                                   config.texture);
             }
         } else {
-            Renderer::drawQuad(position, size, blue, "white");
+            Renderer::drawQuad(config.position, config.size, blue,
+                               config.texture);
         }
         // Draw focus ring
         draw_if_kb_focus(id, [&]() {
-            Renderer::drawQuad(position, size + glm::vec2{0.1f}, teal, "white");
+            Renderer::drawQuad(config.position, config.size + glm::vec2{0.1f},
+                               teal, config.texture);
         });
     }  // end render
 
