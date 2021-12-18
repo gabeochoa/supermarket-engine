@@ -11,6 +11,9 @@ struct Menu {
         Root = 0,
         Game,
         Paused,
+
+        UITest,
+        Any = 99,
     };
 
     State state;
@@ -29,6 +32,8 @@ inline const char* stateToString(Menu::State state) {
             return "Game";
         case Menu::State::Paused:
             return "Paused";
+        case Menu::State::UITest:
+            return "UI Test";
         default:
             log_warn("Missing menu state in stateToString ");
             return "MenuState no stateToString";
