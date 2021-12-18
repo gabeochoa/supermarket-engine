@@ -20,6 +20,7 @@ enum class EventType {
     KeyPressed,
     KeyReleased,
     KeyTyped,
+    CharPressed,
 };
 
 #define BIT(x) (1 << x)
@@ -73,6 +74,27 @@ struct EventDispatcher {
             return true;
         }
         return false;
+    }
+};
+
+struct CharEvent : public Event {
+    CharEvent(int c) : charcode(c) {}
+    int charcode;
+    int getCharCode() const { return charcode; }
+
+    MACRO_EVENT_CATEGORY(EventCategoryKeyboard | EventCategoryInput);
+};
+
+struct CharPressedEvent : public CharEvent {
+    MACRO_EVENT_TYPE(CharPressed)
+
+    CharPressedEvent(int c, int r) : CharEvent(c), repeatCount(r) {}
+    int repeatCount;
+    int getRepeatCount() const { return repeatCount; }
+
+    std::string toString() const override {
+        return fmt::format("CharPressedEvent: {} ({} repeats)", charcode,
+                           repeatCount);
     }
 };
 

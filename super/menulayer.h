@@ -9,7 +9,7 @@
 #include "entities.h"
 
 struct MenuLayer : public Layer {
-    float value = 0.05f;
+    float value = 0.08f;
     std::string content = "";
     const int TYPABLE_START = 32;
     const int TYPABLE_END = 126;
@@ -41,6 +41,11 @@ struct MenuLayer : public Layer {
     virtual void onAttach() override {}
     virtual void onDetach() override {}
 
+    bool onCharPressed(CharPressedEvent& event) {
+        IUI::get()->keychar = static_cast<Key::KeyCode>(event.charcode);
+        return false;
+    }
+
     bool onKeyPressed(KeyPressedEvent& event) {
         if (event.keycode == Key::mapping["Esc"]) {
             App::get().running = false;
@@ -52,13 +57,6 @@ struct MenuLayer : public Layer {
         }
         if (event.keycode == Key::mapping["Widget Mod"]) {
             IUI::get()->mod = static_cast<Key::KeyCode>(event.keycode);
-        }
-        if (event.keycode >= TYPABLE_START && event.keycode <= TYPABLE_END) {
-            IUI::get()->keychar = static_cast<Key::KeyCode>(event.keycode);
-        }
-        if (IUI::get()->textfieldMod.count(
-                static_cast<Key::KeyCode>(event.keycode)) == 1) {
-            IUI::get()->modchar = static_cast<Key::KeyCode>(event.keycode);
         }
         return false;
     }
@@ -106,7 +104,7 @@ struct MenuLayer : public Layer {
             }
 
             if (slider(uuid({0, item++, 0}), glm::vec2{9.f, 0.f},
-                       glm::vec2{1.f, 3.f}, &value, 0.05f, 0.95f)) {
+                       glm::vec2{1.f, 3.f}, &value, 0.08f, 0.95f)) {
                 // log_info("idk moved slider? ");
             }
 
@@ -172,5 +170,7 @@ struct MenuLayer : public Layer {
             &MenuLayer::onMouseButtonPressed, this, std::placeholders::_1));
         dispatcher.dispatch<KeyPressedEvent>(
             std::bind(&MenuLayer::onKeyPressed, this, std::placeholders::_1));
+        dispatcher.dispatch<CharPressedEvent>(
+            std::bind(&MenuLayer::onCharPressed, this, std::placeholders::_1));
     }
 };

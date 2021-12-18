@@ -176,6 +176,7 @@ bool button(uuid id, glm::vec2 position, glm::vec2 size) {
         }
     }
     if (!get()->lmouseDown && get()->hotID == id && get()->activeID == id) {
+        get()->kbFocusID = id;
         return true;
     }
     return false;
@@ -244,6 +245,7 @@ bool slider(uuid id, glm::vec2 position, glm::vec2 size, float* value,
     get()->lastProcessed = id;
 
     if (get()->activeID == id) {
+        get()->kbFocusID = id;
         float v = (position.y - get()->mousePosition.y) / size.y;
         if (v < mnf) v = mnf;
         if (v > mxf) v = mxf;
@@ -324,14 +326,7 @@ bool textfield(uuid id, glm::vec2 position, glm::vec2 size,
             }
         }
         if (get()->keychar != Key::KeyCode()) {
-            if (get()->keychar >= 48 && get()->keychar <= 57) {
-                buffer.append(std::string(1, get()->keychar));
-            } else {
-                auto shiftDown =
-                    Input::isKeyPressed(Key::mapping["Text Cap Mod"]);
-                char c = (char)(get()->keychar + (shiftDown ? 0 : 32));
-                buffer.append(std::string(1, c));
-            }
+            buffer.append(std::string(1, get()->keychar));
             changed = true;
         }
         if (get()->modchar == Key::mapping["Text Space"]) {

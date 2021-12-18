@@ -71,6 +71,12 @@ void OpenGLWindow::init(const WindowConfig& config) {
             }
         });
 
+    glfwSetCharCallback(window, [](GLFWwindow* w, unsigned int codepoint) {
+        WindowInfo& info = *(WindowInfo*)glfwGetWindowUserPointer(w);
+        CharPressedEvent event(codepoint, 0);
+        info.callback(event);
+    });
+
     glfwSetMouseButtonCallback(
         window, [](GLFWwindow* w, int button, int action, int mods) {
             (void)mods;
