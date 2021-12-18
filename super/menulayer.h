@@ -10,12 +10,13 @@
 
 struct MenuLayer : public Layer {
     float value = 0.05f;
+    std::string content = "";
 
     MenuLayer() : Layer("Supermarket") {
         Menu::get().state = Menu::State::Root;
 
         menuCameraController.reset(
-            new OrthoCameraController(WIN_RATIO, true, 10.f, 5.f, 0.f));
+            new OrthoCameraController(WIN_RATIO, true, 10.f, 0.f, 0.f));
         menuCameraController->camera.setPosition(glm::vec3{15.f, 0.f, 0.f});
 
         Renderer::addTexture("./resources/letters.png");
@@ -58,6 +59,13 @@ struct MenuLayer : public Layer {
         if (event.keycode == Key::mapping["Widget Mod"]) {
             IUI::get()->mod = static_cast<Key::KeyCode>(event.keycode);
         }
+        if (event.keycode >= 65 && event.keycode <= 90) {
+            IUI::get()->keychar = static_cast<Key::KeyCode>(event.keycode);
+        }
+        if (IUI::get()->textfieldMod.count(
+                static_cast<Key::KeyCode>(event.keycode)) == 1) {
+            IUI::get()->modchar = static_cast<Key::KeyCode>(event.keycode);
+        }
         return false;
     }
 
@@ -88,6 +96,7 @@ struct MenuLayer : public Layer {
     void ui_test(Time dt) {
         using namespace IUI;
 
+        int item = 0;
         // before
         {
             get()->hotID = IUI::rootID;
@@ -100,19 +109,42 @@ struct MenuLayer : public Layer {
                               glm::vec4{0, 0, WIN_W, WIN_H});
         }
 
-        if (button(uuid({0, 0, 0}), glm::vec2{0.f, 0.f}, glm::vec2{2.f, 1.f})) {
+        if (button(uuid({0, item++, 0}), glm::vec2{0.f, 0.f},
+                   glm::vec2{2.f, 1.f})) {
             log_info("clicked button");
         }
-        if (button(uuid({0, 1, 0}), glm::vec2{3.f, 0.f}, glm::vec2{2.f, 1.f})) {
+        if (button(uuid({0, item++, 0}), glm::vec2{3.f, 0.f},
+                   glm::vec2{2.f, 1.f})) {
             log_info("clicked button 2");
         }
-        if (button(uuid({0, 2, 0}), glm::vec2{6.f, 0.f}, glm::vec2{2.f, 1.f})) {
+        if (button(uuid({0, item++, 0}), glm::vec2{6.f, 0.f},
+                   glm::vec2{2.f, 1.f})) {
             log_info("clicked button 3");
         }
 
-        if (slider(uuid({0, 3, 0}), glm::vec2{7.f, 0.f}, glm::vec2{1.f, 3.f},
-                   &value, 0.05f, 0.95f)) {
+        if (slider(uuid({0, item++, 0}), glm::vec2{9.f, 0.f},
+                   glm::vec2{1.f, 3.f}, &value, 0.05f, 0.95f)) {
             // log_info("idk moved slider? ");
+        }
+
+        auto upperCaseConfig =
+            WidgetConfig({.text = " .?! THE FIVE BOXING WIZARDS JUMP QUICKLY",
+                          .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+                          .position = glm::vec2{0.f, -4.f},
+                          .size = glm::vec2{1.f, 1.f}});
+
+        auto lowerCaseConfig =
+            WidgetConfig({.text = "(@*) the five boxing wizards jump quickly",
+                          .color = glm::vec4{0.8, 0.3f, 0.7f, 1.0f},
+                          .position = glm::vec2{0.f, -6.f},
+                          .size = glm::vec2{1.f, 1.f}});
+
+        text(uuid({0, item++, 0}), upperCaseConfig);
+        text(uuid({0, item++, 0}), lowerCaseConfig);
+
+        if (textfield(uuid({0, item++, 0}), glm::vec2{2.f, 2.f},
+                      glm::vec2{3.f, 1.f}, content)) {
+            log_info("{}", content);
         }
 
         // after
@@ -126,25 +158,12 @@ struct MenuLayer : public Layer {
             }
             get()->key = Key::KeyCode();
             get()->mod = Key::KeyCode();
+
+            get()->keychar = Key::KeyCode();
+            get()->modchar = Key::KeyCode();
         }
 
         /*
-        int item = 0;
-
-        auto upperCaseConfig =
-            TextConfig({.text = " .?! THE FIVE BOXING WIZARDS JUMP QUICKLY",
-                        .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
-                        .position = glm::vec2{0.f, -4.f},
-                        .size = glm::vec2{1.f, 1.f}});
-
-        auto lowerCaseConfig =
-            TextConfig({.text = "(@*) the five boxing wizards jump quickly",
-                        .color = glm::vec4{0.8, 0.3f, 0.7f, 1.0f},
-                        .position = glm::vec2{0.f, -6.f},
-                        .size = glm::vec2{1.f, 1.f}});
-
-        text(get(), uuid({0, item++, 0}), upperCaseConfig);
-        text(get(), uuid({0, item++, 0}), lowerCaseConfig);
 
         auto textConfig =
             TextConfig({.text = "Resume Game",
