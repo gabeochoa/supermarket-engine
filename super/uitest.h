@@ -18,7 +18,7 @@ struct UITestLayer : public Layer {
         Menu::get().state = Menu::State::UITest;
 
         uiTestCameraController.reset(
-            new OrthoCameraController(WIN_RATIO, true, 10.f, 0.f, 0.f));
+            new OrthoCameraController(WIN_RATIO, 10.f, 0.f, 0.f));
         uiTestCameraController->camera.setPosition(glm::vec3{15.f, 0.f, 0.f});
 
         IUI::init_context();

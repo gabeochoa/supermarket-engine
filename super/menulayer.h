@@ -16,7 +16,7 @@ struct MenuLayer : public Layer {
 
     MenuLayer() : Layer("Supermarket") {
         menuCameraController.reset(
-            new OrthoCameraController(WIN_RATIO, true, 10.f, 0.f, 0.f));
+            new OrthoCameraController(WIN_RATIO, 10.f, 0.f, 0.f));
         menuCameraController->camera.setPosition(glm::vec3{15.f, 0.f, 0.f});
 
         Renderer::addTexture("./resources/letters.png");
