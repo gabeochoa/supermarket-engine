@@ -51,6 +51,13 @@ struct MenuLayer : public Layer {
             App::get().running = false;
             return true;
         }
+        if (IUI::get()->widgetKeys.count(
+                static_cast<Key::KeyCode>(event.keycode)) == 1) {
+            IUI::get()->key = static_cast<Key::KeyCode>(event.keycode);
+        }
+        if (event.keycode == Key::mapping["Widget Mod"]) {
+            IUI::get()->mod = static_cast<Key::KeyCode>(event.keycode);
+        }
         return false;
     }
 
@@ -96,8 +103,14 @@ struct MenuLayer : public Layer {
         if (button(uuid({0, 0, 0}), glm::vec2{0.f, 0.f}, glm::vec2{2.f, 1.f})) {
             log_info("clicked button");
         }
+        if (button(uuid({0, 1, 0}), glm::vec2{3.f, 0.f}, glm::vec2{2.f, 1.f})) {
+            log_info("clicked button 2");
+        }
+        if (button(uuid({0, 2, 0}), glm::vec2{6.f, 0.f}, glm::vec2{2.f, 1.f})) {
+            log_info("clicked button 3");
+        }
 
-        if (slider(uuid({0, 1, 0}), glm::vec2{3.f, 0.f}, glm::vec2{1.f, 3.f},
+        if (slider(uuid({0, 3, 0}), glm::vec2{7.f, 0.f}, glm::vec2{1.f, 3.f},
                    &value, 0.05f, 0.95f)) {
             // log_info("idk moved slider? ");
         }
@@ -111,6 +124,8 @@ struct MenuLayer : public Layer {
             } else {
                 get()->activeID = IUI::rootID;
             }
+            get()->key = Key::KeyCode();
+            get()->mod = Key::KeyCode();
         }
 
         /*
