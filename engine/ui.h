@@ -17,9 +17,20 @@ struct uuid {
     }
 
     bool operator<(const uuid& other) const {
-        return owner < other.owner && item < other.item && index < other.index;
+        if (owner < other.owner) return true;
+        if (owner > other.owner) return false;
+        if (item < other.item) return true;
+        if (item > other.item) return false;
+        if (index < other.index) return true;
+        if (index > other.index) return false;
+        return false;
     }
 };
+std::ostream& operator<<(std::ostream& os, const uuid& obj) {
+    os << fmt::format("owner: {} item: {} index: {}", obj.owner, obj.item,
+                      obj.index);
+    return os;
+}
 
 template <typename T>
 struct State {
@@ -37,6 +48,10 @@ struct State {
     operator T() { return value; }
     T get() { return value; }
     void set(T v) { value = v; }
+
+    // TODO how can we support += and -=?
+    // is there a simple way to unfold the types,
+    // tried and seeing nullptr for checkboxstate
 };
 
 // Base statetype for any UI component
@@ -47,6 +62,10 @@ struct UIState {
 struct CheckboxState : public UIState {
     State<bool> checked = false;
     virtual ~CheckboxState() {}
+};
+
+struct SliderState : public UIState {
+    State<float> value;
 };
 
 struct StateManager {
@@ -66,6 +85,10 @@ struct StateManager {
 
     std::shared_ptr<UIState> get(uuid id) { return states[id]; }
 };
+
+// TODO Would we rather have the user specify an output
+// or just let them search the UIContext?
+// Something like get()->statemanager.get(uuid)
 
 struct UIContext {
     StateManager statemanager;
@@ -323,13 +346,18 @@ bool dropdown(uuid id, WidgetConfig config,
 }
 
 bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
+    // TODO these lines have to be done for basically
+    // any stateful ui item
     std::shared_ptr<UIState> gen_state =  //
         get()->statemanager.getAndCreateIfNone(
             id, std::make_shared<CheckboxState>());
     std::shared_ptr<CheckboxState> state =
         dynamic_pointer_cast<CheckboxState>(gen_state);
-
+    if (state == nullptr) {
+        log_error("State for checkbox of wrong type or nullptr");
+    }
     int item = 0;
+
     bool changed = false;
     auto textConf = WidgetConfig({
         .text = state->checked ? "X" : " ",
@@ -346,23 +374,26 @@ bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
         changed = true;
     }
 
-    // TODO Would we rather have the user specify an output
-    // or just let them search the UIContext?
-    // Something like get()->statemanager.get(uuid)
-
     // If the user specified an output
     if (cbState) (*cbState) = state->checked;
-
     return changed;
 }
 
 bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
+    std::shared_ptr<UIState> gen_state = get()->statemanager.getAndCreateIfNone(
+        id, std::make_shared<SliderState>());
+    std::shared_ptr<SliderState> state =
+        dynamic_pointer_cast<SliderState>(gen_state);
+    if (state == nullptr) {
+        log_error("State for slider of wrong type or nullptr");
+    }
+
     bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
                                           config.size.x, config.size.y});
 
     float min = config.position.y - config.size.y / 2.f;
     float max = config.position.y + config.size.y / 2.f;
-    float ypos = min + ((max - min) * (*value));
+    float ypos = min + ((max - min) * state->value);
 
     if (inside) {
         get()->hotID = id;
@@ -403,16 +434,20 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
             }
         }
         if (get()->pressed(Key::mapping["Widget Press"])) {
+            (*value) = state->value;
             return true;
         }
         if (Input::isKeyPressed(Key::mapping["Value Up"])) {
-            (*value) += 0.005;
-            if (*value > mxf) *value = mxf;
+            state->value = state->value + 0.005;
+            if (state->value > mxf) state->value = mxf;
+
+            (*value) = state->value;
             return true;
         }
         if (Input::isKeyPressed(Key::mapping["Value Down"])) {
-            (*value) -= 0.005;
-            if (*value < mnf) *value = mnf;
+            state->value = state->value - 0.005;
+            if (state->value < mnf) state->value = mnf;
+            (*value) = state->value;
             return true;
         }
     }
@@ -424,7 +459,9 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
         if (v < mnf) v = mnf;
         if (v > mxf) v = mxf;
         if (v != *value) {
-            *value = v;
+            state->value = v;
+
+            (*value) = state->value;
             return true;
         }
     }
