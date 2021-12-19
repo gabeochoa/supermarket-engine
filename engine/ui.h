@@ -224,13 +224,23 @@ bool button_with_label(uuid id, WidgetConfig config) {
 bool dropdown(uuid id, WidgetConfig config,
               const std::vector<WidgetConfig>& configs, bool* dropdownState,
               int* selectedIndex) {
-    text(uuid({id.item, 0, 0}), configs[*selectedIndex],
-         config.position + glm::vec2{0.f, 0.5f});
+    int item = 0;
+
+    text(uuid({id.item, item++, 0}),
+         WidgetConfig({
+             .text = (*dropdownState) ? "v" : "^",
+         }),
+         config.position + glm::vec2{-0.4f, 0.5f});
+
+    text(uuid({id.item, item++, 0}), configs[*selectedIndex],
+         config.position + glm::vec2{0.3f, 0.5f});
+
     if (*dropdownState) {
         float spacing = 1.0f;
+        int button_item_id = item++;
 
         for (size_t i = 0; i < configs.size(); i++) {
-            uuid button_id({id.item, 2, static_cast<int>(i)});
+            uuid button_id({id.item, button_item_id, static_cast<int>(i)});
             if (*selectedIndex == button_id.index) {
                 get()->kbFocusID = button_id;
             }
