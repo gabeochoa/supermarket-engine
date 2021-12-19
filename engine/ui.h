@@ -192,6 +192,43 @@ struct WidgetConfig {
     WidgetConfig* child;
 };
 
+#include <string_view>
+
+template <typename T>
+constexpr auto type_name() {
+    std::string_view name, prefix, suffix;
+#ifdef __clang__
+    name = __PRETTY_FUNCTION__;
+    prefix = "auto type_name() [T = ";
+    suffix = "]";
+#elif defined(__GNUC__)
+    name = __PRETTY_FUNCTION__;
+    prefix = "constexpr auto type_name() [with T = ";
+    suffix = "]";
+#elif defined(_MSC_VER)
+    name = __FUNCSIG__;
+    prefix = "auto __cdecl type_name<";
+    suffix = ">(void)";
+#endif
+    name.remove_prefix(prefix.size());
+    name.remove_suffix(suffix.size());
+    return name;
+}
+
+template <typename T>
+std::shared_ptr<T> widget_init(uuid id) {
+    std::shared_ptr<UIState> gen_state =  //
+        get()->statemanager.getAndCreateIfNone(id, std::make_shared<T>());
+    std::shared_ptr<T> state = dynamic_pointer_cast<T>(gen_state);
+    if (state == nullptr) {
+        log_error(
+            "State for id{} of wrong type or nullptr, expected {}. Check to "
+            "make sure your id's are globally unique",
+            id, type_name<T>());
+    }
+    return state;
+}
+
 bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
     // NOTE: currently id is only used for focus and hot/active,
     // we could potentially also track "selections"
@@ -351,16 +388,7 @@ bool dropdown(uuid id, WidgetConfig config,
 }
 
 bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
-    // TODO these lines have to be done for basically
-    // any stateful ui item
-    std::shared_ptr<UIState> gen_state =  //
-        get()->statemanager.getAndCreateIfNone(
-            id, std::make_shared<CheckboxState>());
-    std::shared_ptr<CheckboxState> state =
-        dynamic_pointer_cast<CheckboxState>(gen_state);
-    if (state == nullptr) {
-        log_error("State for checkbox of wrong type or nullptr");
-    }
+    auto state = widget_init<CheckboxState>(id);
     int item = 0;
 
     bool changed = false;
@@ -385,13 +413,7 @@ bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
 }
 
 bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
-    std::shared_ptr<UIState> gen_state = get()->statemanager.getAndCreateIfNone(
-        id, std::make_shared<SliderState>());
-    std::shared_ptr<SliderState> state =
-        dynamic_pointer_cast<SliderState>(gen_state);
-    if (state == nullptr) {
-        log_error("State for slider of wrong type or nullptr");
-    }
+    auto state = widget_init<SliderState>(id);
 
     bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
                                           config.size.x, config.size.y});
@@ -477,15 +499,9 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
 }
 
 bool textfield(uuid id, WidgetConfig config, std::string& content) {
-    std::shared_ptr<UIState> gen_state = get()->statemanager.getAndCreateIfNone(
-        id, std::make_shared<TextfieldState>());
-    std::shared_ptr<TextfieldState> state =
-        dynamic_pointer_cast<TextfieldState>(gen_state);
-    if (state == nullptr) {
-        log_error("State for textfield of wrong type or nullptr");
-    }
-
+    auto state = widget_init<TextfieldState>(id);
     int item = 0;
+
     bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
                                           config.size.x, config.size.y});
 
