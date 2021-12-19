@@ -121,15 +121,6 @@ struct MenuLayer : public Layer {
                                "menu_1_bg"));
         b2->center = false;
         screen0.push_back(b2);
-
-        std::shared_ptr<Billboard> bg_2;
-        bg_2.reset(new Billboard(
-            camPosInterp.camPositions[1] + glm::vec2{7.f, 5.f},  //
-            glm::vec2{54.f, 32.f},                               //
-            0.f,                                                 //
-            glm::vec4{1.f},                                      //
-            "menu_2_bg"));
-        billys.push_back(bg_2);
     }
 
     virtual ~MenuLayer() {}
@@ -170,31 +161,8 @@ struct MenuLayer : public Layer {
         return false;
     }
 
-    virtual void onUpdate(Time dt) override {
-        log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
-        prof(__PROFILE_FUNC__);
-
-        if (Menu::get().state != Menu::State::Root) {
-            return;
-        }
-
-        menuCameraController->onUpdate(dt);
-
-        gltInit();
-        gltBeginDraw();
-        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
-        GLTtext* text = gltCreateText();
-        gltSetText(text, stateToString(Menu::get().state));
-        gltDrawText2D(text, 150, 150, 5.f);
-        gltEndDraw();
-        gltDeleteText(text);
-        gltTerminate();
-
-        Renderer::begin(menuCameraController->camera);
-        ui_test();
-
+    void camerate(Time dt) {
         auto mvt_speed = 25.f;
-
         // Target position is pos0 but we have extra,
         // move the right one back to where it was
         // by how much extra we had to wait after we
@@ -241,11 +209,103 @@ struct MenuLayer : public Layer {
         }
         left_convey->render();
         right_convey->render();
+    }
+
+    virtual void onUpdate(Time dt) override {
+        log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
+        prof(__PROFILE_FUNC__);
+
+        if (Menu::get().state != Menu::State::Root) {
+            return;
+        }
+
+        menuCameraController->onUpdate(dt);
+
+        Renderer::begin(menuCameraController->camera);
+        ui_test();
+
+        camerate(dt);
 
         for (auto& billy : billys) {
             billy->render();
         }
         Renderer::end();
+    }
+
+    void cam_pos_0(int parent) {
+        if (camPosInterp.camPosIndex != 0) return;
+
+        int item = 0;
+        auto startPos = glm::vec2{-17.f, -10.f};
+        auto textConfig = IUI::WidgetConfig({
+            .text = "Tap to continue",
+            .position = glm::vec2{1.f, 3.f},           //
+            .size = glm::vec2{2.f, 2.f},               //
+            .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
+        });
+        auto buttonConfig = IUI::WidgetConfig({
+            .position = startPos,           //
+            .size = glm::vec2{40.f, 20.f},  //
+            .transparent = true,            //
+            .child = &textConfig,           //
+            .texture = "transparent",       //
+        });
+
+        if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
+                                   buttonConfig)) {
+            camPosInterp.set(1);
+        }
+    }
+
+    void cam_pos_1(int parent) {
+        if (camPosInterp.camPosIndex != 1) return;
+
+        int item = 0;
+        {
+            auto startPos =
+                camPosInterp.camPositions[1] + glm::vec2{-15.f, -8.f};
+            auto textConfig = IUI::WidgetConfig({
+                .text = "Play",
+                .position = glm::vec2{-0.25f, 1.5f},        //
+                .size = glm::vec2{2.f, 2.f},                //
+                .color = glm::vec4{1.0f, 1.0f, 1.0f, 1.f},  //
+            });
+            auto buttonConfig = IUI::WidgetConfig({
+                .position = startPos,                         //
+                .size = glm::vec2{9.f, 3.0f},                 //
+                .child = &textConfig,                         //
+                .transparent = false,                         //
+                .texture = "white",                           //
+                .color = glm::vec4{0.75f, 0.4f, 0.34f, 1.f},  //
+            });
+
+            if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
+                                       buttonConfig)) {
+                Menu::get().state = Menu::State::Game;
+            }
+        }
+
+        {
+            auto startPos = camPosInterp.camPositions[1] + glm::vec2{0.f, 0.f};
+            auto textConfig = IUI::WidgetConfig({
+                .text = "Settings",                        //
+                .position = glm::vec2{0.0f, 1.0f},         //
+                .size = glm::vec2{1.f, 1.f},               //
+                .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
+            });
+            auto buttonConfig = IUI::WidgetConfig({
+                .position = startPos,                         //
+                .size = glm::vec2{9.f, 3.f},                  //
+                .texture = "white",                           //
+                .color = glm::vec4{0.75f, 0.4f, 0.34f, 1.f},  //
+                .child = &textConfig,                         //
+            });
+
+            if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
+                                       buttonConfig)) {
+                camPosInterp.set(2);
+            }
+        }
     }
 
     void ui_test() {
@@ -254,34 +314,11 @@ struct MenuLayer : public Layer {
                       menuCameraController->camera.position.z};
 
         using namespace IUI;
-        int item = 0;
-        int parent = 0;
         begin(menuCameraController);
-        {
-            auto startPos = glm::vec2{-17.f, -10.f};
+        int parent = 0;
+        cam_pos_0(parent++);
+        cam_pos_1(parent++);
 
-            // glm::vec2{menuCameraController->camera.position.x - 17.f,
-            // menuCameraController->camera.position.y + -10.f};
-
-            auto textConfig = IUI::WidgetConfig({
-                .text = "Tap to continue",
-                .position = glm::vec2{1.f, 3.f},           //
-                .size = glm::vec2{2.f, 2.f},               //
-                .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
-            });
-            auto buttonConfig = IUI::WidgetConfig({
-                .position = startPos,           //
-                .size = glm::vec2{40.f, 20.f},  //
-                .transparent = true,            //
-                .child = &textConfig,           //
-                .texture = "transparent",       //
-            });
-
-            if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
-                                       buttonConfig)) {
-                camPosInterp.set(1);
-            }
-        }
         end();
     }
 
