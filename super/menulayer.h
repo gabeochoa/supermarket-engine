@@ -102,6 +102,12 @@ struct MenuLayer : public Layer {
             }
             return true;
         }
+
+        if (event.keycode == Key::mapping["Enter"]) {
+            camPosInterp.next();
+            return true;
+        }
+
         if (IUI::get()->widgetKeys.count(
                 static_cast<Key::KeyCode>(event.keycode)) == 1) {
             IUI::get()->key = static_cast<Key::KeyCode>(event.keycode);

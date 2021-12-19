@@ -178,6 +178,7 @@ static inline void default_keys() {
     mapping["Profiler Clear Stats"] = KeyCode::LeftControl;
 
     mapping["Esc"] = KeyCode::Escape;
+    mapping["Enter"] = KeyCode::Enter;
 }
 
 static void load_keys() {
