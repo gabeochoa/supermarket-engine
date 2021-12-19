@@ -46,8 +46,9 @@ struct State {
         return *this;
     }
     operator T() { return value; }
-    T get() { return value; }
-    void set(T v) { value = v; }
+    T& asT() { return value; }
+    T& get() { return value; }
+    void set(const T& v) { value = v; }
 
     // TODO how can we support += and -=?
     // is there a simple way to unfold the types,
@@ -66,6 +67,10 @@ struct CheckboxState : public UIState {
 
 struct SliderState : public UIState {
     State<float> value;
+};
+
+struct TextfieldState : public UIState {
+    State<std::string> buffer;
 };
 
 struct StateManager {
@@ -425,6 +430,10 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
                            config.texture);
     });
 
+    // TODO can we have a single return statement here?
+    // does it matter that the rest of the code
+    // runs after changing state?
+
     // all drawing has to happen before this ///
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::mapping["Widget Next"])) {
@@ -460,7 +469,6 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
         if (v > mxf) v = mxf;
         if (v != *value) {
             state->value = v;
-
             (*value) = state->value;
             return true;
         }
@@ -468,7 +476,15 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     return false;
 }
 
-bool textfield(uuid id, WidgetConfig config, std::string& buffer) {
+bool textfield(uuid id, WidgetConfig config, std::string& content) {
+    std::shared_ptr<UIState> gen_state = get()->statemanager.getAndCreateIfNone(
+        id, std::make_shared<TextfieldState>());
+    std::shared_ptr<TextfieldState> state =
+        dynamic_pointer_cast<TextfieldState>(gen_state);
+    if (state == nullptr) {
+        log_error("State for textfield of wrong type or nullptr");
+    }
+
     int item = 0;
     bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
                                           config.size.x, config.size.y});
@@ -494,9 +510,9 @@ bool textfield(uuid id, WidgetConfig config, std::string& buffer) {
         auto tStartLocation =
             config.position - glm::vec2{config.size.x / 2.f, 0.f};
         auto tCursorPosition =
-            tStartLocation + glm::vec2{buffer.size() * tSize, 0.f};
+            tStartLocation + glm::vec2{state->buffer.asT().size() * tSize, 0.f};
         text(uuid({id.item, item++, 0}),
-             WidgetConfig({.text = buffer,
+             WidgetConfig({.text = state->buffer,
                            .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
                            .position = tStartLocation,
                            .size = glm::vec2{tSize}
@@ -542,11 +558,11 @@ bool textfield(uuid id, WidgetConfig config, std::string& buffer) {
             }
         }
         if (get()->keychar != Key::KeyCode()) {
-            buffer.append(std::string(1, get()->keychar));
+            state->buffer.asT().append(std::string(1, get()->keychar));
             changed = true;
         }
         if (get()->modchar == Key::mapping["Text Backspace"]) {
-            buffer.pop_back();
+            state->buffer.asT().pop_back();
             changed = true;
         }
     }
@@ -558,6 +574,7 @@ bool textfield(uuid id, WidgetConfig config, std::string& buffer) {
         get()->kbFocusID = id;
     }
 
+    content = state->buffer;
     return changed;
 }
 
