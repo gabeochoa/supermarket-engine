@@ -251,7 +251,7 @@ struct TextureLibrary {
             ((y + 1) * spriteHeight) / texture->height,
         };
 
-        log_info("Adding subtexture \"{}\" to our library", name);
+        log_trace("Adding subtexture \"{}\" to our library", name);
         subtextures[name] = std::make_shared<Subtexture>(texture, min, max);
     }
 

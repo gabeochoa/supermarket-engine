@@ -41,12 +41,14 @@ struct CameraPositionInterpolation {
     }
 
     void back() {
+        steps = 1;
         lastCamPos = camPositions[camPosIndex];
         camPosIndex = fmax(0.f, camPosIndex - 1);
         update_target_camera_position();
     }
 
     void next() {
+        steps = 250;
         lastCamPos = camPositions[camPosIndex];
         camPosIndex = fmin(camPosIndex + 1, camPositions.size());
         update_target_camera_position();
@@ -65,7 +67,8 @@ struct MenuLayer : public Layer {
     CameraPositionInterpolation camPosInterp;
     glm::vec2 b1Pos;
     glm::vec2 b1Size;
-    float b1extra = 0.f;
+    float leftextra = 0.f;
+    float rightextra = 0.f;
     std::shared_ptr<Billboard> left_convey;
     std::shared_ptr<Billboard> right_convey;
 
@@ -100,7 +103,7 @@ struct MenuLayer : public Layer {
         IUI::init_context();
 
         b1Pos = camPosInterp.camPositions[0] + glm::vec2{7.f, 5.f};
-        b1Size = glm::vec2{54.f, 32.f};
+        b1Size = glm::vec2{48.f, 32.f};
         std::shared_ptr<Billboard> b1;
         b1.reset(new Billboard(b1Pos,           //
                                b1Size,          //
@@ -190,15 +193,18 @@ struct MenuLayer : public Layer {
         Renderer::begin(menuCameraController->camera);
         ui_test();
 
-        auto mvt_speed = 15.f;
+        auto mvt_speed = 25.f;
 
         // Target position is pos0 but we have extra,
         // move the right one back to where it was
         // by how much extra we had to wait after we
         // went to pos1
-        if (b1extra > 0.f && camPosInterp.camPosIndex == 0) {
-            right_convey->position.x += b1extra;
-            b1extra = 0.f;
+        if ((rightextra > 0.f || leftextra > 0.f) &&
+            camPosInterp.camPosIndex == 0) {
+            right_convey->position.x += rightextra;
+            rightextra = 0.f;
+            left_convey->position.x += leftextra;
+            leftextra = 0.f;
         }
 
         // always have the left one be the left one
@@ -223,11 +229,14 @@ struct MenuLayer : public Layer {
                 left_convey->position.x = left_convey->size.x;
             }
         } else {
-            if (right_convey->position.x + right_convey->size.x >
-                camPosInterp.camPositions[1].x) {
-                float dst = mvt_speed * dt.s();
+            float dst = mvt_speed * dt.s();
+            if (left_convey->position.x + left_convey->size.x > 0) {
+                left_convey->position.x -= dst;
+                leftextra += dst;
+            }
+            if (right_convey->position.x + right_convey->size.x > 0) {
                 right_convey->position.x -= dst;
-                b1extra += dst;
+                rightextra += dst;
             }
         }
         left_convey->render();
