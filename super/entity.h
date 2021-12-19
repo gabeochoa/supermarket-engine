@@ -19,6 +19,7 @@ struct Entity {
     float angle;
     glm::vec4 color;
     std::string textureName;
+    bool center = true;
 
     Entity()
         : id(ENTITY_ID_GEN),
@@ -78,9 +79,14 @@ struct Entity {
         // computing angle transforms are expensive so
         // if the angle is under thresh, just render it square
         if (angle <= 5.f) {
-            Renderer::drawQuad(
-                {position.x + size.x / 2, position.y + size.y / 2}, size, color,
-                textureName);
+            auto loc = glm::vec2{
+                position.x,
+                position.y,
+            };
+            if (center) {
+                loc = loc + glm::vec2{size.x / 2, size.y / 2};
+            }
+            Renderer::drawQuad(loc, size, color, textureName);
         } else {
             Renderer::drawQuadRotated(position, size, glm::radians(angle),
                                       color, textureName);

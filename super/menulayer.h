@@ -12,8 +12,8 @@ struct CameraPositionInterpolation {
     int camPosIndex = 0;
     std::array<glm::vec2, 3> camPositions = {{
         glm::vec2{0.f, 0.f},
-        glm::vec2{40.f, 0.f},
-        glm::vec2{100.f, 0.f},
+        glm::vec2{50.f, 0.f},
+        glm::vec2{150.f, 0.f},
     }};
     glm::vec2 lastCamPos;
     glm::vec2 targetCamPos;
@@ -53,12 +53,24 @@ struct CameraPositionInterpolation {
     }
 };
 
+// TODO add a default texture that isnt just white
+// make it obvious that the texture you are trying
+// to draw doesnt exist
+
 struct MenuLayer : public Layer {
     float value = 0.08f;
     std::string content = "";
     const int TYPABLE_START = 32;
     const int TYPABLE_END = 126;
     CameraPositionInterpolation camPosInterp;
+    glm::vec2 b1Pos;
+    glm::vec2 b1Size;
+    float b1extra = 0.f;
+    std::shared_ptr<Billboard> left_convey;
+    std::shared_ptr<Billboard> right_convey;
+
+    std::vector<std::shared_ptr<Billboard>> screen0;
+    std::vector<std::shared_ptr<Billboard>> billys;
 
     MenuLayer() : Layer("Supermarket") {
         menuCameraController.reset(
@@ -67,6 +79,10 @@ struct MenuLayer : public Layer {
         // TODO have to make sure this resource
         // exists as part of the engine
         // and not the game textures
+        Renderer::addTexture("./resources/menu_bg.png");
+        Renderer::addSubtexture("menu_bg", "menu_1_bg", 0, 0, 53.f, 32.f);
+        Renderer::addSubtexture("menu_bg", "menu_2_bg", 1, 0, 56.f, 32.f);
+
         Renderer::addTexture("./resources/transparent.png");
         Renderer::addTexture("./resources/letters.png");
         int a = 0;
@@ -82,6 +98,35 @@ struct MenuLayer : public Layer {
             }
         }
         IUI::init_context();
+
+        b1Pos = camPosInterp.camPositions[0] + glm::vec2{7.f, 5.f};
+        b1Size = glm::vec2{54.f, 32.f};
+        std::shared_ptr<Billboard> b1;
+        b1.reset(new Billboard(b1Pos,           //
+                               b1Size,          //
+                               0.f,             //
+                               glm::vec4{1.f},  //
+                               "menu_1_bg"));
+        b1->center = false;
+        screen0.push_back(b1);
+
+        std::shared_ptr<Billboard> b2;
+        b2.reset(new Billboard(b1Pos + glm::vec2{b1Size.x, 0.f},  //
+                               b1Size,                            //
+                               0.f,                               //
+                               glm::vec4{1.f},                    //
+                               "menu_1_bg"));
+        b2->center = false;
+        screen0.push_back(b2);
+
+        std::shared_ptr<Billboard> bg_2;
+        bg_2.reset(new Billboard(
+            camPosInterp.camPositions[1] + glm::vec2{7.f, 5.f},  //
+            glm::vec2{54.f, 32.f},                               //
+            0.f,                                                 //
+            glm::vec4{1.f},                                      //
+            "menu_2_bg"));
+        billys.push_back(bg_2);
     }
 
     virtual ~MenuLayer() {}
@@ -103,7 +148,7 @@ struct MenuLayer : public Layer {
             return true;
         }
 
-        if (event.keycode == Key::mapping["Enter"]) {
+        if (camPosInterp.camPosIndex == 0) {
             camPosInterp.next();
             return true;
         }
@@ -144,6 +189,53 @@ struct MenuLayer : public Layer {
 
         Renderer::begin(menuCameraController->camera);
         ui_test();
+
+        auto mvt_speed = 15.f;
+
+        // Target position is pos0 but we have extra,
+        // move the right one back to where it was
+        // by how much extra we had to wait after we
+        // went to pos1
+        if (b1extra > 0.f && camPosInterp.camPosIndex == 0) {
+            right_convey->position.x += b1extra;
+            b1extra = 0.f;
+        }
+
+        // always have the left one be the left one
+        left_convey = screen0[0];
+        right_convey = screen0[1];
+        if (screen0[0]->position.x > screen0[1]->position.x) {
+            left_convey = screen0[1];
+            right_convey = screen0[0];
+        }
+
+        // if we are at pos0, then scroll the conveyer
+        if (glm::distance(
+                glm::vec2{
+                    menuCameraController->camera.position.x,
+                    menuCameraController->camera.position.y,
+                },
+                camPosInterp.camPositions[0]) < 10.f) {
+            left_convey->position.x -= mvt_speed * dt.s();
+            right_convey->position.x -= mvt_speed * dt.s();
+
+            if (left_convey->position.x + left_convey->size.x < 0.f) {
+                left_convey->position.x = left_convey->size.x;
+            }
+        } else {
+            if (right_convey->position.x + right_convey->size.x >
+                camPosInterp.camPositions[1].x) {
+                float dst = mvt_speed * dt.s();
+                right_convey->position.x -= dst;
+                b1extra += dst;
+            }
+        }
+        left_convey->render();
+        right_convey->render();
+
+        for (auto& billy : billys) {
+            billy->render();
+        }
         Renderer::end();
     }
 

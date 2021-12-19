@@ -7,8 +7,7 @@
 struct Billboard : public Entity {
     // Billboard is a textured ent that never moves
     Billboard(const glm::vec2& position, const glm::vec2& size, float angle,
-              const glm::vec4& color,
-              const std::string& textureName = "white")
+              const glm::vec4& color, const std::string& textureName = "white")
         : Entity(position, size, angle, color, textureName) {}
 
     virtual ~Billboard() {}
