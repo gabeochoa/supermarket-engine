@@ -36,6 +36,16 @@ int main(int argc, char** argv) {
     {
         theta_test();
         point_collision_test();
+
+        {  // make sure linear interp always goes up
+            float c = 0.f;
+            auto a = LinearInterp(0.f, 1.f, 100);
+            for (int i = 0; i < 100; i++) {
+                auto b = a.next();
+                M_ASSERT(c - b < 0.1, "should linearly interpolate");
+                c += 0.01;
+            }
+        }
     }
 
     app.reset(App::create({
@@ -64,8 +74,8 @@ int main(int argc, char** argv) {
     Layer* jobLayer = new JobLayer();
     App::get().pushLayer(jobLayer);
 
-    // Menu::get().state = Menu::State::Root;
-    Menu::get().state = Menu::State::UITest;
+    Menu::get().state = Menu::State::Root;
+    // Menu::get().state = Menu::State::UITest;
 
     App::get().run();
 

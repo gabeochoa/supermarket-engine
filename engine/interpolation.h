@@ -10,6 +10,11 @@ struct BaseInterp {
     int step;
     float x;
 
+    BaseInterp() : min(0.f), max(0.f), steps(10) {
+        x = min;
+        step = 0;
+    }
+
     BaseInterp(float mn, float mx, int s) : min(mn), max(mx), steps(s) {
         x = min;
         step = 0;
@@ -19,9 +24,13 @@ struct BaseInterp {
 };
 
 struct LinearInterp : public BaseInterp {
+    LinearInterp() : BaseInterp() {}
+    LinearInterp(float mn, float mx, int s) : BaseInterp(mn, mx, s) {}
+
     virtual float next() override {
-        float pct = step / steps;
-        x = (min * pct) + (max * (1 - pct));
+        float pct = fmin(1.f, 1.f * step / steps);
+        x = (max * pct) + (min * (1 - pct));
+        step++;
         return x;
     }
 };
@@ -30,7 +39,8 @@ struct LinearInterp : public BaseInterp {
 struct SmoothstepInterp : public BaseInterp {
     virtual float next() override {
         float pct = M_SMOOTHSTEP(step / steps);
-        x = (min * pct) + (max * (1 - pct));
+        x = (max * pct) + (min * (1 - pct));
+        step++;
         return x;
     }
 };
@@ -39,7 +49,8 @@ struct SmoothstepInterp : public BaseInterp {
 struct SmootherstepInterp : public BaseInterp {
     virtual float next() override {
         float pct = M_SMOOTHERSTEP(step / steps);
-        x = (min * pct) + (max * (1 - pct));
+        x = (max * pct) + (min * (1 - pct));
+        step++;
         return x;
     }
 };
@@ -48,7 +59,8 @@ struct SlowAccelInterp : public BaseInterp {
     virtual float next() override {
         float pct = (step / steps);
         pct = pct * pct;
-        x = (min * pct) + (max * (1 - pct));
+        x = (max * pct) + (min * (1 - pct));
+        step++;
         return x;
     }
 };
@@ -57,7 +69,8 @@ struct SlowDecellInterp : public BaseInterp {
     virtual float next() override {
         float pct = (step / steps);
         pct = 1 - (1 - pct) * (1 - pct);
-        x = (min * pct) + (max * (1 - pct));
+        x = (max * pct) + (min * (1 - pct));
+        step++;
         return x;
     }
 };

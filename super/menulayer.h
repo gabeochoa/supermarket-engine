@@ -8,11 +8,57 @@
 //
 #include "entities.h"
 
+struct CameraPositionInterpolation {
+    int camPosIndex = 0;
+    std::array<glm::vec2, 3> camPositions = {{
+        glm::vec2{0.f, 0.f},
+        glm::vec2{40.f, 0.f},
+        glm::vec2{100.f, 0.f},
+    }};
+    glm::vec2 lastCamPos;
+    glm::vec2 targetCamPos;
+    LinearInterp xinterp;
+    LinearInterp yinterp;
+    int steps = 100;
+
+    CameraPositionInterpolation() {
+        lastCamPos = camPositions[0];
+        targetCamPos = camPositions[0];
+        xinterp = LinearInterp(lastCamPos.x, targetCamPos.x, steps);
+        yinterp = LinearInterp(lastCamPos.y, targetCamPos.y, steps);
+    }
+
+    void update_target_camera_position() {
+        targetCamPos = camPositions[camPosIndex];
+        xinterp = LinearInterp(lastCamPos.x, targetCamPos.x, steps);
+        yinterp = LinearInterp(lastCamPos.y, targetCamPos.y, steps);
+    }
+
+    void set(int index) {
+        lastCamPos = camPositions[camPosIndex];
+        camPosIndex = index;
+        update_target_camera_position();
+    }
+
+    void back() {
+        lastCamPos = camPositions[camPosIndex];
+        camPosIndex = fmax(0.f, camPosIndex - 1);
+        update_target_camera_position();
+    }
+
+    void next() {
+        lastCamPos = camPositions[camPosIndex];
+        camPosIndex = fmin(camPosIndex + 1, camPositions.size());
+        update_target_camera_position();
+    }
+};
+
 struct MenuLayer : public Layer {
     float value = 0.08f;
     std::string content = "";
     const int TYPABLE_START = 32;
     const int TYPABLE_END = 126;
+    CameraPositionInterpolation camPosInterp;
 
     MenuLayer() : Layer("Supermarket") {
         menuCameraController.reset(
@@ -49,7 +95,11 @@ struct MenuLayer : public Layer {
 
     bool onKeyPressed(KeyPressedEvent& event) {
         if (event.keycode == Key::mapping["Esc"]) {
-            App::get().running = false;
+            if (camPosInterp.camPosIndex == 0) {
+                App::get().running = false;
+            } else {
+                camPosInterp.back();
+            }
             return true;
         }
         if (IUI::get()->widgetKeys.count(
@@ -92,14 +142,19 @@ struct MenuLayer : public Layer {
     }
 
     void ui_test() {
+        menuCameraController->camera.position =
+            glm::vec3{camPosInterp.xinterp.next(), camPosInterp.yinterp.next(),
+                      menuCameraController->camera.position.z};
+
         using namespace IUI;
         int item = 0;
         int parent = 0;
         begin(menuCameraController);
         {
-            auto startPos =
-                glm::vec2{menuCameraController->camera.position.x - 17.f,
-                          menuCameraController->camera.position.y + -10.f};
+            auto startPos = glm::vec2{-17.f, -10.f};
+
+            // glm::vec2{menuCameraController->camera.position.x - 17.f,
+            // menuCameraController->camera.position.y + -10.f};
 
             auto textConfig = IUI::WidgetConfig({
                 .text = "Tap to continue",
@@ -117,7 +172,7 @@ struct MenuLayer : public Layer {
 
             if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
                                        buttonConfig)) {
-                Menu::get().state = Menu::State::UITest;
+                camPosInterp.set(1);
             }
         }
         end();
