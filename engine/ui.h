@@ -106,9 +106,9 @@ bool isMouseInside(glm::vec4 rect) {
 struct WidgetConfig;
 
 struct WidgetConfig {
-    std::string text;
-    glm::vec2 position;
-    glm::vec2 size;
+    std::string text = "";
+    glm::vec2 position = glm::vec2{0.f};
+    glm::vec2 size = glm::vec2{1.f};
     glm::vec4 color = white;
     bool transparent = false;
     std::string texture = "white";
@@ -205,6 +205,26 @@ bool button_with_label(uuid id, WidgetConfig config) {
     return pressed;
 }
 
+bool checkbox(uuid id, WidgetConfig config, bool* state) {
+    int item = 0;
+    bool changed = false;
+    auto textConf = WidgetConfig({
+        .text = *state ? "X" : " ",
+        .color = glm::vec4{0.f, 0.f, 0.f, 1.f},
+        .position = glm::vec2{-0.5f, 0.5f},
+    });
+    auto conf = WidgetConfig({
+        .position = config.position,  //
+        .size = config.size,          //
+        .child = &textConf,           //
+    });
+    if (button_with_label(uuid({id.item, item++, 0}), conf)) {
+        *state = !(*state);
+        changed = true;
+    }
+    return changed;
+}
+
 bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
                                           config.size.x, config.size.y});
@@ -230,8 +250,8 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     // dont mind if i do
     try_to_grab_kb(id);
 
-    // everything is drawn from the center so move it so its not the center that
-    // way the mouse collision works
+    // everything is drawn from the center so move it so its not the center
+    // that way the mouse collision works
     auto pos = glm::vec2{config.position.x + (config.size.x / 2.f),
                          config.position.y + (config.size.y / 2.f)};
     Renderer::drawQuad(pos + glm::vec2{0.f, ypos}, glm::vec2{0.5f}, col,
@@ -285,8 +305,8 @@ bool textfield(uuid id, WidgetConfig config, std::string& buffer) {
     bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
                                           config.size.x, config.size.y});
 
-    // everything is drawn from the center so move it so its not the center that
-    // way the mouse collision works
+    // everything is drawn from the center so move it so its not the center
+    // that way the mouse collision works
     config.position.x += config.size.x / 2.f;
     config.position.y += config.size.y / 2.f;
 

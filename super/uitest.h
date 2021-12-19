@@ -13,6 +13,7 @@ struct UITestLayer : public Layer {
     std::string content = "";
     const int TYPABLE_START = 32;
     const int TYPABLE_END = 126;
+    bool checkbox_state = false;
 
     UITestLayer() : Layer("UI Test") {
         Menu::get().state = Menu::State::UITest;
@@ -162,6 +163,18 @@ struct UITestLayer : public Layer {
                     })                                              //
                     )) {
                 Menu::get().state = Menu::State::UITest;
+            }
+
+            if (IUI::checkbox(                  //
+                    IUI::uuid({0, item++, 0}),  //
+                    IUI::WidgetConfig({
+                        .position = glm::vec2{4.f, 4.f},            //
+                        .size = glm::vec2{1.f, 1.f},                //
+                        .transparent = false,                       //
+                        .color = glm::vec4{0.6f, 0.3f, 0.3f, 1.f},  //
+                    }),                                             //
+                    &checkbox_state)) {
+                log_info("checkbox changed");
             }
         }
 
