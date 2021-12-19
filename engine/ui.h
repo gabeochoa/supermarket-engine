@@ -152,6 +152,20 @@ bool button(uuid id, WidgetConfig config) {
     try_to_grab_kb(id);
 
     {  // start render
+        if (config.text.size() != 0) {
+            text(uuid({id.item, 0, 0}),
+                 WidgetConfig({
+                     .position = config.position - glm::vec2{4.f, 0.f},
+                     .text = config.text,
+                     // TODO detect if the button color is dark
+                     // and change the color to white automatically
+                     .color =
+                         glm::vec4{1.f - config.color.r, 1.f - config.color.g,
+                                   1.f - config.color.b, 1.f},
+                     .size = glm::vec2{1.f, 1.f},
+                 }));
+        }
+
         Renderer::drawQuad(config.position, config.size, config.color,
                            config.texture);
 
@@ -200,7 +214,52 @@ bool button(uuid id, WidgetConfig config) {
 
 bool button_with_label(uuid id, WidgetConfig config) {
     int item = 0;
-    text(uuid({id.item, item++, 0}), *config.child, config.position);
+    if (config.text == "") {
+        text(uuid({id.item, item++, 0}), *config.child, config.position);
+    }
+    auto pressed = button(id, config);
+    return pressed;
+}
+
+bool dropdown(uuid id, WidgetConfig config,
+              const std::vector<WidgetConfig>& configs, bool* dropdownState,
+              int* selectedIndex) {
+    text(uuid({id.item, 0, 0}), configs[*selectedIndex],
+         config.position + glm::vec2{0.f, 0.5f});
+    if (*dropdownState) {
+        float spacing = 1.0f;
+
+        for (size_t i = 0; i < configs.size(); i++) {
+            uuid button_id({id.item, 2, static_cast<int>(i)});
+            if (*selectedIndex == button_id.index) {
+                get()->kbFocusID = button_id;
+            }
+            if (button_with_label(
+                    button_id,
+                    WidgetConfig({
+                        .position = config.position +
+                                    glm::vec2{0.f, -1.f * spacing * (i + 1)},
+                        .size = config.size,
+                        .color = config.color,
+                        .text = configs[i].text,
+                    }))) {
+                *selectedIndex = i;
+                *dropdownState = false;
+                get()->kbFocusID = id;
+            }
+        }
+
+        if (Input::isKeyPressed(Key::mapping["Value Up"])) {
+            (*selectedIndex) -= 1;
+            if (*selectedIndex < 0) *selectedIndex = 0;
+        }
+
+        if (Input::isKeyPressed(Key::mapping["Value Down"])) {
+            (*selectedIndex) += 1;
+            if (*selectedIndex > (int)configs.size() - 1)
+                *selectedIndex = configs.size() - 1;
+        }
+    }
     auto pressed = button(id, config);
     return pressed;
 }

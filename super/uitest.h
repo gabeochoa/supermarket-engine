@@ -14,12 +14,14 @@ struct UITestLayer : public Layer {
     const int TYPABLE_START = 32;
     const int TYPABLE_END = 126;
     bool checkbox_state = false;
+    int dropdownIndex = 0;
+    bool dropdownState = false;
 
     UITestLayer() : Layer("UI Test") {
         Menu::get().state = Menu::State::UITest;
 
         uiTestCameraController.reset(
-            new OrthoCameraController(WIN_RATIO, 10.f, 0.f, 0.f));
+            new OrthoCameraController(WIN_RATIO, 10.f, 5.f, 0.f));
         uiTestCameraController->camera.setPosition(glm::vec3{15.f, 0.f, 0.f});
 
         IUI::init_context();
@@ -175,6 +177,29 @@ struct UITestLayer : public Layer {
                     }),                                             //
                     &checkbox_state)) {
                 log_info("checkbox changed");
+            }
+
+            {
+                std::vector<WidgetConfig> dropdownConfigs;
+                dropdownConfigs.push_back(
+                    IUI::WidgetConfig({.text = "option1"}));
+                dropdownConfigs.push_back(
+                    IUI::WidgetConfig({.text = "option2"}));
+
+                WidgetConfig dropdownMain = IUI::WidgetConfig({
+                    .position = glm::vec2{12.f, -1.f},          //
+                    .size = glm::vec2{8.f, 1.f},                //
+                    .transparent = false,                       //
+                    .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
+                    .child = &textConfig,                       //
+                    .text = ""                                  //
+                });
+
+                if (IUI::dropdown(IUI::uuid({0, item++, 0}), dropdownMain,
+                                  dropdownConfigs, &dropdownState,
+                                  &dropdownIndex)) {
+                    dropdownState = !dropdownState;
+                }
             }
         }
 
