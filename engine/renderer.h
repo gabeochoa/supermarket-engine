@@ -116,7 +116,7 @@ struct Renderer {
     static SceneData* sceneData;
 
     // TODO lets add something similar for shaders
-    static void addTexture(const std::string& filepath, float tiling = 1.f) {
+    static void addTexture(const std::string& filepath) {
         if ((int)textureLibrary.size() >= MAX_TEX) {
             log_error("Cant have more than MAX TEX textures (16)");
             return;

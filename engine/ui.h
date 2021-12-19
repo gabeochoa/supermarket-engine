@@ -40,9 +40,9 @@ struct UIContext {
     Key::KeyCode mod;
     uuid lastProcessed;
 
-    const std::set<Key::KeyCode> textfieldMod = {{
+    const std::set<Key::KeyCode> textfieldMod = std::set<Key::KeyCode>({
         Key::mapping["Text Backspace"],
-    }};
+    });
     Key::KeyCode keychar;
     Key::KeyCode modchar;
 
@@ -117,6 +117,11 @@ struct WidgetConfig {
 };
 
 bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
+    // NOTE: currently id is only used for focus and hot/active,
+    // we could potentially also track "selections"
+    // with a range so the user can highlight text
+    // not needed for supermarket but could be in the future?
+    (void)id;
     int i = 0;
     for (auto c : config.text) {
         i++;

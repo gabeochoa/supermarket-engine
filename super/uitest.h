@@ -72,11 +72,11 @@ struct UITestLayer : public Layer {
         gltTerminate();
 
         Renderer::begin(uiTestCameraController->camera);
-        ui_test(dt);
+        ui_test();
         Renderer::end();
     }
 
-    void ui_test(Time dt) {
+    void ui_test() {
         using namespace IUI;
         int item = 0;
         begin(uiTestCameraController);
