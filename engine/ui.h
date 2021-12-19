@@ -21,7 +21,55 @@ struct uuid {
     }
 };
 
+template <typename T>
+struct State {
+   private:
+    T value;
+
+   public:
+    State() {}
+    State(T val) : value(val) {}
+    State(const State<T>& s) : value(s.value) {}
+    State<T>& operator=(const State<T>& other) {
+        this->value = other.value;
+        return *this;
+    }
+    operator T() { return value; }
+    T get() { return value; }
+    void set(T v) { value = v; }
+};
+
+// Base statetype for any UI component
+struct UIState {
+    virtual ~UIState() {}
+};
+
+struct CheckboxState : public UIState {
+    State<bool> checked = false;
+    virtual ~CheckboxState() {}
+};
+
+struct StateManager {
+    std::map<uuid, std::shared_ptr<UIState>> states;
+
+    void addState(uuid id, const std::shared_ptr<UIState>& state) {
+        states[id] = state;
+    }
+
+    std::shared_ptr<UIState> getAndCreateIfNone(
+        uuid id, const std::shared_ptr<UIState>& state) {
+        if (states.find(id) == states.end()) {
+            addState(id, state);
+        }
+        return get(id);
+    }
+
+    std::shared_ptr<UIState> get(uuid id) { return states[id]; }
+};
+
 struct UIContext {
+    StateManager statemanager;
+
     std::shared_ptr<OrthoCameraController> camController;
     uuid hotID;     // probably about to be touched
     uuid activeID;  // currently being touched
@@ -274,11 +322,17 @@ bool dropdown(uuid id, WidgetConfig config,
     return pressed;
 }
 
-bool checkbox(uuid id, WidgetConfig config, bool* state) {
+bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
+    std::shared_ptr<UIState> gen_state =  //
+        get()->statemanager.getAndCreateIfNone(
+            id, std::make_shared<CheckboxState>());
+    std::shared_ptr<CheckboxState> state =
+        dynamic_pointer_cast<CheckboxState>(gen_state);
+
     int item = 0;
     bool changed = false;
     auto textConf = WidgetConfig({
-        .text = *state ? "X" : " ",
+        .text = state->checked ? "X" : " ",
         .color = glm::vec4{0.f, 0.f, 0.f, 1.f},
         .position = glm::vec2{-0.5f, 0.5f},
     });
@@ -288,9 +342,17 @@ bool checkbox(uuid id, WidgetConfig config, bool* state) {
         .child = &textConf,           //
     });
     if (button_with_label(uuid({id.item, item++, 0}), conf)) {
-        *state = !(*state);
+        state->checked = !state->checked;
         changed = true;
     }
+
+    // TODO Would we rather have the user specify an output
+    // or just let them search the UIContext?
+    // Something like get()->statemanager.get(uuid)
+
+    // If the user specified an output
+    if (cbState) (*cbState) = state->checked;
+
     return changed;
 }
 

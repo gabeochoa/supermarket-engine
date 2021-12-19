@@ -176,7 +176,7 @@ struct UITestLayer : public Layer {
                         .color = glm::vec4{0.6f, 0.3f, 0.3f, 1.f},  //
                     }),                                             //
                     &checkbox_state)) {
-                log_info("checkbox changed");
+                log_info("checkbox changed {}", checkbox_state);
             }
 
             {
