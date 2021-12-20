@@ -17,6 +17,8 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 
+// //
+
 #include <cstdint>
 #include <fstream>
 #include <functional>
@@ -35,6 +37,8 @@
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #include "../vendor/stb_image.h"
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "../vendor/stb_truetype.h"
 #define FMT_HEADER_ONLY
 #include "../vendor/fmt/format.h"
 #define GLT_IMPLEMENTATION
