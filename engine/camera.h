@@ -13,6 +13,7 @@ struct OrthoCamera : public Camera {
     glm::mat4 view;
     glm::mat4 viewProjection;
     glm::vec3 position;
+    glm::vec4 viewport;
     // TODO maybe switch to quaternion later?
     float rotation;
 
@@ -23,6 +24,10 @@ struct OrthoCamera : public Camera {
           position(0.0f),
           rotation(0.0f) {
         updateViewMat();
+    }
+
+    void setViewport(const glm::vec4& vp){
+        viewport = vp;
     }
 
     void setProjection(float left, float right, float bottom, float top) {

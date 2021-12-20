@@ -3,8 +3,6 @@
 
 #include <array>
 
-#include "pch.hpp"
-
 template <typename Key, typename Value, std::size_t Size>
 struct CEMap {
     std::array<std::pair<Key, Value>, Size> data;

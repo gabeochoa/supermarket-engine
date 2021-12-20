@@ -6,7 +6,10 @@
 #include "../engine/pch.hpp"
 #include "../engine/ui.h"
 //
+#include "global.h"
+//
 #include "entities.h"
+#include "menu.h"
 
 struct UITestLayer : public Layer {
     float value = 0.08f;
@@ -23,6 +26,8 @@ struct UITestLayer : public Layer {
         uiTestCameraController.reset(
             new OrthoCameraController(WIN_RATIO, 10.f, 5.f, 0.f));
         uiTestCameraController->camera.setPosition(glm::vec3{15.f, 0.f, 0.f});
+        uiTestCameraController->camera.setViewport(
+            glm::vec4{0, 0, WIN_W, WIN_H});
 
         IUI::init_context();
     }

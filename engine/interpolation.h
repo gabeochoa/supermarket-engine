@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "pch.hpp"
+#include <cmath>
 
 struct BaseInterp {
     float min;

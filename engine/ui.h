@@ -1,10 +1,15 @@
-
 #pragma once
 
+#include <set>
 #include <string_view>
 
-#include "input.h"
+//
 #include "pch.hpp"
+
+//
+#include "camera.h"
+#include "input.h"
+#include "renderer.h"
 
 namespace IUI {
 
@@ -187,12 +192,13 @@ void draw_if_kb_focus(uuid id, std::function<void(void)> cb) {
 
 bool isMouseInside(glm::vec4 rect) {
     auto mouseScreen = glm::vec3{Input::getMousePosition(), 0.f};
-    mouseScreen.y = WIN_H - mouseScreen.y;
+    mouseScreen.y = get()->camController->camera.viewport.w - mouseScreen.y;
 
     auto mouse = screenToWorld(mouseScreen,                              //
                                get()->camController->camera.view,        //
                                get()->camController->camera.projection,  //
-                               glm::vec4{0, 0, WIN_W, WIN_H});
+                               get()->camController->camera.viewport     //
+    );
     // log_warn("{} => {}, inside? {}", Input::getMousePosition(), mouse, rect);
     return mouse.x >= rect.x && mouse.x <= rect.x + rect.z &&
            mouse.y >= rect.y && mouse.y <= rect.y + rect.w;
@@ -603,8 +609,10 @@ void begin(const std::shared_ptr<OrthoCameraController> controller) {
         screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
                       get()->camController->camera.view,        //
                       get()->camController->camera.projection,  //
-                      glm::vec4{0, 0, WIN_W, WIN_H});
+                      get()->camController->camera.viewport     //
+        );
 }
+
 void end() {
     if (get()->lmouseDown) {
         if (get()->activeID == IUI::rootID) {

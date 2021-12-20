@@ -1,12 +1,17 @@
 
 #pragma once
 
+#include "../engine/app.h"
 #include "../engine/camera.h"
 #include "../engine/layer.h"
 #include "../engine/pch.hpp"
+#include "../engine/renderer.h"
 #include "../engine/ui.h"
 //
+#include "global.h"
+//
 #include "entities.h"
+#include "menu.h"
 
 struct CameraPositionInterpolation {
     int camPosIndex = 0;
@@ -78,6 +83,7 @@ struct MenuLayer : public Layer {
     MenuLayer() : Layer("Supermarket") {
         menuCameraController.reset(
             new OrthoCameraController(WIN_RATIO, 10.f, 0.f, 0.f));
+        menuCameraController->camera.setViewport(glm::vec4{0, 0, WIN_W, WIN_H});
 
         // TODO have to make sure this resource
         // exists as part of the engine
@@ -213,7 +219,7 @@ struct MenuLayer : public Layer {
 
     virtual void onUpdate(Time dt) override {
         log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
-        prof(__PROFILE_FUNC__);
+        prof p(__PROFILE_FUNC__);
 
         if (Menu::get().state != Menu::State::Root) {
             return;

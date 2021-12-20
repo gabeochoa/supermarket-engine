@@ -4,12 +4,13 @@
 #include "../engine/pch.hpp"
 #include "../engine/thetastar.h"
 #include "entity.h"
+#include "item.h"
 #include "job.h"
 
 const float REACH_DIST = 1.4f;
 const float TRAVEL_DIST = 0.2f;
 
-bool isWalkable(const glm::vec2& size, const glm::vec2& pos) {
+inline bool isWalkable(const glm::vec2& size, const glm::vec2& pos) {
     // is valid location
     for (auto& e : entities) {
         auto s = dynamic_pointer_cast<Shelf>(e);

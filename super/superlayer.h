@@ -4,14 +4,20 @@
 #include "../engine/camera.h"
 #include "../engine/layer.h"
 #include "../engine/pch.hpp"
+#include "../engine/renderer.h"
+//
+#include "global.h"
 //
 #include "entities.h"
+#include "job.h"
+#include "menu.h"
 
 struct SuperLayer : public Layer {
     SuperLayer() : Layer("Supermarket") {
         isMinimized = true;
 
         cameraController.reset(new OrthoCameraController(WIN_RATIO, true));
+        cameraController->camera.setViewport(glm::vec4{0, 0, WIN_W, WIN_H});
 
         Renderer::addTexture("./resources/face.png");
         Renderer::addTexture("./resources/box.png");

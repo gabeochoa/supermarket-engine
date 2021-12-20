@@ -51,9 +51,9 @@ clean:
 
 trace:
 	rm -f super.exe.trace
-	../apitracedyld/build/apitrace trace --api gl $(EXE)
+	../apitracedyld/build/apitrace trace -o ./output/super.trace --api gl $(EXE)
 
 view:
-	../apitrace/build/qapitrace super.exe.trace
+	../apitrace/build/qapitrace ./output/super.trace
 
 .PHONY: all clean

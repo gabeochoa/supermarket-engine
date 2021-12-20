@@ -1,10 +1,9 @@
 
 #pragma once
+
 #include <regex>
 #include <string>
 #include <vector>
-
-#include "pch.hpp"
 
 // string split
 inline std::vector<std::string> split(const std::string& input,
