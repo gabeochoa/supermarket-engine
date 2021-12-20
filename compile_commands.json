@@ -1,0 +1,150 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-std=c++2a",
+      "-stdlib=libc++",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-c",
+      "-o",
+      "output/engine/pch.o",
+      "engine/pch.cpp"
+    ],
+    "directory": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket",
+    "file": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/engine/pch.cpp",
+    "output": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/output/engine/pch.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-std=c++2a",
+      "-stdlib=libc++",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-c",
+      "-o",
+      "output/engine/openglwindow.o",
+      "engine/openglwindow.cpp"
+    ],
+    "directory": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket",
+    "file": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/engine/openglwindow.cpp",
+    "output": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/output/engine/openglwindow.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-std=c++2a",
+      "-stdlib=libc++",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-c",
+      "-o",
+      "output/engine/renderer.o",
+      "engine/renderer.cpp"
+    ],
+    "directory": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket",
+    "file": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/engine/renderer.cpp",
+    "output": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/output/engine/renderer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-c",
+      "-std=c++2a",
+      "-stdlib=libc++",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-o",
+      "./output/pch.d",
+      "engine/pch.hpp"
+    ],
+    "directory": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket",
+    "file": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/engine/pch.hpp",
+    "output": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/output/pch.d"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-std=c++2a",
+      "-stdlib=libc++",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-c",
+      "-o",
+      "output/super/main.o",
+      "super/main.cpp"
+    ],
+    "directory": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket",
+    "file": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/super/main.cpp",
+    "output": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/output/super/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-std=c++2a",
+      "-stdlib=libc++",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-c",
+      "-o",
+      "output/engine/main.o",
+      "engine/main.cpp"
+    ],
+    "directory": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket",
+    "file": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/engine/main.cpp",
+    "output": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/output/engine/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-std=c++2a",
+      "-stdlib=libc++",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-c",
+      "-o",
+      "output/engine/buffer.o",
+      "engine/buffer.cpp"
+    ],
+    "directory": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket",
+    "file": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/engine/buffer.cpp",
+    "output": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/output/engine/buffer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-c",
+      "-std=c++2a",
+      "-stdlib=libc++",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Ivendor/",
+      "-framework",
+      "CoreVideo",
+      "-framework",
+      "OpenGL",
+      "-framework",
+      "IOKit",
+      "-framework",
+      "Cocoa",
+      "-framework",
+      "Carbon",
+      "./output/libengine.a",
+      "-o",
+      "./output/super/super.exe",
+      "./super/main.cpp"
+    ],
+    "directory": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket",
+    "file": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/super/main.cpp",
+    "output": "/Users/gabeochoa/Dropbox (Meta)/P/supermarket/output/super/super.exe"
+  }
+]
