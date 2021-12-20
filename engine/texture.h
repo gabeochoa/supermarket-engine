@@ -28,6 +28,7 @@ struct Texture {
           height(tex.height),
           tilingFactor(tex.tilingFactor) {}
     virtual void setData(void *data) { (void)data; }
+    virtual void setBitmapData(void *data) { (void)data; }
 
     virtual ~Texture() {}
     // its const from a C++ pov but
@@ -53,8 +54,15 @@ struct Texture2D : public Texture {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
+
     virtual void setData(void *data) override {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
+                     GL_UNSIGNED_BYTE, data);
+    }
+
+    virtual void setBitmapData(void *data) override {
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA8, width, height, 0, GL_RGBA,
                      GL_UNSIGNED_BYTE, data);
     }
 
