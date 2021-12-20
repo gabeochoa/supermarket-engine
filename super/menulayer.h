@@ -318,14 +318,12 @@ struct MenuLayer : public Layer {
         menuCameraController->camera.position =
             glm::vec3{camPosInterp.xinterp.next(), camPosInterp.yinterp.next(),
                       menuCameraController->camera.position.z};
-
-        using namespace IUI;
-        begin(menuCameraController);
-        int parent = 0;
-        cam_pos_0(parent++);
-        cam_pos_1(parent++);
-
-        end();
+        {
+            IUI::UIFrame frame(menuCameraController);
+            int parent = 0;
+            cam_pos_0(parent++);
+            cam_pos_1(parent++);
+        }
     }
 
     bool onMouseButtonPressed(Mouse::MouseButtonPressedEvent& e) {

@@ -88,8 +88,11 @@ struct UITestLayer : public Layer {
     void ui_test() {
         using namespace IUI;
         int item = 0;
-        begin(uiTestCameraController);
         {
+            // uses RAII to handle begin()/end() automatically
+            UIFrame BandE(uiTestCameraController);
+            //
+
             if (button(uuid({0, item++, 0}),
                        WidgetConfig({.position = glm::vec2{0.f, 0.f},
                                      .size = glm::vec2{2.f, 1.f}}))) {
@@ -207,9 +210,8 @@ struct UITestLayer : public Layer {
                     dropdownState = !dropdownState;
                 }
             }
+            // end with BandE
         }
-
-        end();
     }
 
     bool onMouseButtonPressed(Mouse::MouseButtonPressedEvent& e) {

@@ -160,37 +160,38 @@ struct UIContext {
 uuid rootID = uuid({.owner = -1, .item = 0, .index = 0});
 uuid fakeID = uuid({.owner = -2, .item = 0, .index = 0});
 static std::shared_ptr<UIContext> globalContext;
+
 auto white = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
 auto red = glm::vec4{1.0f, 0.0f, 0.0f, 1.0f};
 auto green = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
 auto blue = glm::vec4{0.0f, 0.0f, 1.0f, 1.0f};
 auto teal = glm::vec4{0.0f, 1.0f, 1.0f, 1.0f};
 
-std::shared_ptr<UIContext> get() {
+inline std::shared_ptr<UIContext> get() {
     if (!globalContext) globalContext.reset(new UIContext());
     return globalContext;
 }
 
-void init_context() {
+inline void init_context() {
     get()->hotID = rootID;
     get()->activeID = rootID;
     get()->lmouseDown = false;
     get()->mousePosition = Input::getMousePosition();
 }
 
-void try_to_grab_kb(uuid id) {
+inline void try_to_grab_kb(uuid id) {
     if (get()->kbFocusID == rootID) {
         get()->kbFocusID = id;
     }
 }
 
-bool has_kb_focus(uuid id) { return (get()->kbFocusID == id); }
+inline bool has_kb_focus(uuid id) { return (get()->kbFocusID == id); }
 
-void draw_if_kb_focus(uuid id, std::function<void(void)> cb) {
+inline void draw_if_kb_focus(uuid id, std::function<void(void)> cb) {
     if (has_kb_focus(id)) cb();
 }
 
-bool isMouseInside(glm::vec4 rect) {
+inline bool isMouseInside(glm::vec4 rect) {
     auto mouseScreen = glm::vec3{Input::getMousePosition(), 0.f};
     mouseScreen.y = get()->camController->camera.viewport.w - mouseScreen.y;
 
@@ -600,33 +601,34 @@ bool textfield(uuid id, WidgetConfig config, std::string& content) {
     return changed;
 }
 
-void begin(const std::shared_ptr<OrthoCameraController> controller) {
-    get()->camController = controller;
-    get()->hotID = IUI::rootID;
-    get()->lmouseDown =
-        Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
-    get()->mousePosition =
-        screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
-                      get()->camController->camera.view,        //
-                      get()->camController->camera.projection,  //
-                      get()->camController->camera.viewport     //
-        );
-}
-
-void end() {
-    if (get()->lmouseDown) {
-        if (get()->activeID == IUI::rootID) {
-            get()->activeID = fakeID;
-        }
-    } else {
-        get()->activeID = IUI::rootID;
+struct UIFrame {
+    UIFrame(const std::shared_ptr<OrthoCameraController> controller) {
+        get()->camController = controller;
+        get()->hotID = IUI::rootID;
+        get()->lmouseDown =
+            Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
+        get()->mousePosition =
+            screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
+                          get()->camController->camera.view,        //
+                          get()->camController->camera.projection,  //
+                          get()->camController->camera.viewport     //
+            );
     }
-    get()->key = Key::KeyCode();
-    get()->mod = Key::KeyCode();
+    ~UIFrame() {
+        if (get()->lmouseDown) {
+            if (get()->activeID == IUI::rootID) {
+                get()->activeID = fakeID;
+            }
+        } else {
+            get()->activeID = IUI::rootID;
+        }
+        get()->key = Key::KeyCode();
+        get()->mod = Key::KeyCode();
 
-    get()->keychar = Key::KeyCode();
-    get()->modchar = Key::KeyCode();
-}
+        get()->keychar = Key::KeyCode();
+        get()->modchar = Key::KeyCode();
+    }
+};
 
 /*
 enum UILayoutType {
