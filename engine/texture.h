@@ -1,7 +1,12 @@
 
 #pragma once
 
-#include "pch.hpp"
+#include <array>
+#include <string>
+
+#include "external_include.h"
+#include "log.h"
+#include "strutil.h"
 
 struct Texture {
     const std::array<glm::vec2, 4> textureCoords = {

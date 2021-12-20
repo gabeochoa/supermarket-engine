@@ -32,12 +32,12 @@ inline bool isWalkable(const glm::vec2& size, const glm::vec2& pos) {
     return true;
 }
 
-std::vector<glm::vec2> generateWalkablePath(  //
-    int skipID,                               //
-    float movement,                           //
-    const glm::vec2& start,                   //
-    const glm::vec2& end,                     //
-    const glm::vec2& size                     //
+inline std::vector<glm::vec2> generateWalkablePath(  //
+    int skipID,                                      //
+    float movement,                                  //
+    const glm::vec2& start,                          //
+    const glm::vec2& end,                            //
+    const glm::vec2& size                            //
 ) {
     (void)skipID;
     (void)movement;

@@ -1,8 +1,8 @@
 
-
 #pragma once
 
 #include "../engine/pch.hpp"
+#include "../engine/log.h"
 
 // Lower number means lower priority
 enum JobType {
