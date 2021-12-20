@@ -91,7 +91,6 @@ struct UITestLayer : public Layer {
         {
             // uses RAII to handle begin()/end() automatically
             UIFrame BandE(uiTestCameraController);
-            //
 
             if (button(uuid({0, item++, 0}),
                        WidgetConfig({.position = glm::vec2{0.f, 0.f},
