@@ -58,7 +58,7 @@ struct Renderer {
         glm::vec4 color;
         glm::vec2 texcoord;
         float texindex;
-        float tilingfactor;
+        // float tilingfactor;
     };
 
     struct Statistics {
@@ -117,12 +117,8 @@ struct Renderer {
 
     // TODO lets add something similar for shaders
     static void addTexture(const std::string& filepath) {
-        if ((int)textureLibrary.size() >= MAX_TEX) {
-            log_error("Cant have more than MAX TEX textures (16)");
-            return;
-        }
         auto texName = textureLibrary.load(filepath);
-        textureLibrary.get(texName)->tilingFactor = 2.f;
+        textureLibrary.get(texName)->tilingFactor = 1.f;
     }
 
     static void addSubtexture(const std::string& textureName,
@@ -165,7 +161,7 @@ struct Renderer {
             {"i_color", BufferType::Float4},
             {"i_texcoord", BufferType::Float2},
             {"i_texindex", BufferType::Float},
-            {"i_tilingfactor", BufferType::Float},
+            // {"i_tilingfactor", BufferType::Float},
         });
         sceneData->quadVA->addVertexBuffer(sceneData->quadVB);
 
@@ -302,14 +298,14 @@ struct Renderer {
         }
 
         // Load the corresponding Texture into the texture slots
-        int textureIndex = 0;
+        float textureIndex = 0.f;
         if (texture                        // tex is valid (ie not nullptr)
             && textureName != DEFAULT_TEX  // default tex is always loaded
             && textureStatus != -1  // set to default tex so already loaded
         ) {
             for (int i = 1; i < sceneData->nextTexSlot; i++) {
                 if (*(sceneData->textureSlots[i]) == *texture) {
-                    textureIndex = i;
+                    textureIndex = (float)i;
                     break;
                 }
             }
@@ -340,10 +336,8 @@ struct Renderer {
             sceneData->qvbufferptr->texcoord =
                 textureStatus != 1 ? texture->textureCoords[i]
                                    : subtexture->textureCoords[i];
-            sceneData->qvbufferptr->texindex = (float)textureIndex;
-            // TODO FIX - for some reason the "->tilingFactor" controls the
-            // texture index in the shader
-            sceneData->qvbufferptr->tilingfactor = (float)textureIndex;
+            sceneData->qvbufferptr->texindex = textureIndex;
+            // sceneData->qvbufferptr->tilingfactor = texture->tilingFactor;
             // sceneData->qvbufferptr->entityID = entityID;
             sceneData->qvbufferptr++;
         }

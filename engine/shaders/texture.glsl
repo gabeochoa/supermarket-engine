@@ -10,7 +10,7 @@
     in vec4 i_color;
     in vec2 i_texcoord;
     in float i_texindex;
-    in float i_tilingfactor;
+    // in float i_tilingfactor;
 
     uniform mat4 viewProjection;
 
@@ -24,7 +24,7 @@
         v_texcoord = i_texcoord;
         v_color = i_color;
         v_texindex = i_texindex;
-        v_tilingfactor = i_tilingfactor;
+        v_tilingfactor = 1.0;//i_tilingfactor;
     }
 
 #type fragment

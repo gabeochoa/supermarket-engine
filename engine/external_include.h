@@ -37,6 +37,7 @@
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #include "../vendor/stb_image.h"
+#define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "../vendor/stb_truetype.h"
 #define FMT_HEADER_ONLY

@@ -8,6 +8,7 @@
 
 //
 #include "camera.h"
+#include "font.h"
 #include "input.h"
 #include "renderer.h"
 
@@ -212,6 +213,7 @@ inline bool isMouseInside(glm::vec4 rect) {
 struct WidgetConfig;
 
 struct WidgetConfig {
+    std::string font = "constan";
     std::string text = "";
     glm::vec2 position = glm::vec2{0.f};
     glm::vec2 size = glm::vec2{1.f};
@@ -242,31 +244,48 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
     // with a range so the user can highlight text
     // not needed for supermarket but could be in the future?
     (void)id;
+
+    std::shared_ptr<Font> font = fonts[config.font];
     int i = 0;
     for (auto c : config.text) {
         i++;
-        Renderer::drawQuad(
-            offset + config.position + glm::vec2{i * config.size.x, 0.f},
-            config.size, config.color, std::string(1, c));
+        int glyphIndex = c - ' ';
+        Glyph g = font->glyphs[glyphIndex];
+        auto position =
+            // where we should draw it
+            config.position +
+            // local offset to align it with its parent
+            offset +
+            // move it along the width of the letter
+            // glm::vec2{g.advance, 0.f};
+            glm::vec2{i * config.size.x, 0.f};
+
+        Renderer::drawQuad(position, config.size, config.color, g.textureName);
     }
+
+    // int i = 0;
+    // for (auto c : config.text) {
+    // i++;
+    // std::string tex_name = config.font + "_" + std::to_string(c);
+    // Renderer::drawQuad(
+    // offset + config.position + glm::vec2{i * config.size.x, 0.f},
+    // config.size, config.color, tex_name);
+    // }
     return false;
 }
 
 bool button(uuid id, WidgetConfig config) {
     bool inside = isMouseInside(glm::vec4{config.position, config.size});
-
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
     config.position.x += config.size.x / 2.f;
     config.position.y += config.size.y / 2.f;
-
     if (inside) {
         get()->hotID = id;
         if (get()->activeID == rootID && get()->lmouseDown) {
             get()->activeID = id;
         }
     }
-
     // if no one else has keyboard focus
     // dont mind if i do
     try_to_grab_kb(id);
@@ -306,7 +325,6 @@ bool button(uuid id, WidgetConfig config) {
                                teal, config.texture);
         });
     }  // end render
-
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::mapping["Widget Next"])) {
             get()->kbFocusID = rootID;
@@ -315,10 +333,8 @@ bool button(uuid id, WidgetConfig config) {
             }
         }
     }
-
     // before any returns
     get()->lastProcessed = id;
-
     // check click
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::mapping["Widget Press"])) {

@@ -3,6 +3,7 @@
 
 #include "../engine/app.h"
 #include "../engine/camera.h"
+#include "../engine/font.h"
 #include "../engine/layer.h"
 #include "../engine/pch.hpp"
 #include "../engine/ui.h"
@@ -20,6 +21,8 @@ struct UITestLayer : public Layer {
     bool checkbox_state = false;
     int dropdownIndex = 0;
     bool dropdownState = false;
+
+    std::shared_ptr<Billboard> billy;
 
     UITestLayer() : Layer("UI Test") {
         Menu::get().state = Menu::State::UITest;
@@ -68,6 +71,7 @@ struct UITestLayer : public Layer {
         if (Menu::get().state != Menu::State::UITest) {
             return;
         }
+
         uiTestCameraController->onUpdate(dt);
 
         gltInit();
@@ -120,6 +124,7 @@ struct UITestLayer : public Layer {
 
             auto upperCaseConfig =
                 WidgetConfig({.text = "THE FIVE BOXING WIZARDS JUMP QUICKLY",
+                              .font = "Roboto-Regular",
                               .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
                               .position = glm::vec2{0.f, -4.f},
                               .size = glm::vec2{1.f, 1.f}});
