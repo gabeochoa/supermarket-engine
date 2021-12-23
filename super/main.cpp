@@ -47,9 +47,16 @@ int main(int argc, char** argv) {
         .escClosesWindow = false,
     }));
 
-    // TODO has to be after create so that the texture library exists?
-    load_font_file("./resources/fonts/constan.ttf");
-    load_font_file("./resources/fonts/Roboto-Regular.ttf");
+    // uncomment to re-generate font textures
+    // texture will be font-name.png
+    // generate_font_texture("./resources/fonts/constan.ttf");
+    // return 0;
+
+    // Has to be after create so that textures exist
+    //
+    load_font_texture("./resources/constan.png");
+
+    // end load font
 
     Layer* super = new SuperLayer();
     App::get().pushLayer(super);

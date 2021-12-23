@@ -93,19 +93,7 @@ struct MenuLayer : public Layer {
         Renderer::addSubtexture("menu_bg", "menu_2_bg", 1, 0, 56.f, 32.f);
 
         Renderer::addTexture("./resources/transparent.png");
-        Renderer::addTexture("./resources/letters.png");
-        int a = 0;
-        int b = 0;
-        for (int i = TYPABLE_START; i < TYPABLE_END; i++) {
-            Renderer::addSubtexture("letters",                //
-                                    std::string(1, (char)i),  //
-                                    a, b, 16.f, 16.f);
-            a++;
-            if (a == 20) {
-                b++;
-                a = 0;
-            }
-        }
+
         IUI::init_context();
 
         b1Pos = camPosInterp.camPositions[0] + glm::vec2{7.f, 5.f};

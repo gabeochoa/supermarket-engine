@@ -3,6 +3,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wall"
 #pragma clang diagnostic ignored "-Wdeprecated-volatile"
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
 #else
 #pragma disable_warn
 #endif
@@ -40,6 +41,8 @@
 #define STBTT_STATIC
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "../vendor/stb_truetype.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../vendor/stb_image_write.h"
 #define FMT_HEADER_ONLY
 #include "../vendor/fmt/format.h"
 #define GLT_IMPLEMENTATION

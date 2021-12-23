@@ -102,9 +102,12 @@ struct Texture2D : public Texture {
         } else if (channels == 3) {
             internalFormat = GL_RGB8;
             dataFormat = GL_RGB;
+        } else if (channels == 1) {
+            internalFormat = GL_RED;
+            dataFormat = GL_RED;
         }
+        log_info("texture {} has {} channels", path, channels);
         M_ASSERT(internalFormat, "image format not supported: {}", channels);
-        log_trace("texture {} has {} channels", path, channels);
 
         this->width = w;
         this->height = h;
@@ -219,6 +222,13 @@ struct TextureLibrary {
         return textureStatus;
     }
 
+    void addSubtextureMinMax(const std::shared_ptr<Texture> &texture,
+                             const std::string &name, glm::vec2 min,
+                             glm::vec2 max) {
+        log_info("Adding subtexture \"{}\" to our library", name);
+        subtextures[name] = std::make_shared<Subtexture>(texture, min, max);
+    }
+
     void addSubtexture(const std::string &textureName, const std::string &name,
                        float x, float y, float spriteWidth,
                        float spriteHeight) {
@@ -264,8 +274,7 @@ struct TextureLibrary {
             ((y + 1) * spriteHeight) / texture->height,
         };
 
-        log_trace("Adding subtexture \"{}\" to our library", name);
-        subtextures[name] = std::make_shared<Subtexture>(texture, min, max);
+        addSubtextureMinMax(texture, name, min, max);
     }
 
     std::shared_ptr<Subtexture> &getSubtexture(const std::string &name) {

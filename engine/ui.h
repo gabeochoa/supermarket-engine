@@ -245,12 +245,9 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
     // not needed for supermarket but could be in the future?
     (void)id;
 
-    std::shared_ptr<Font> font = fonts[config.font];
     int i = 0;
     for (auto c : config.text) {
         i++;
-        int glyphIndex = c - ' ';
-        Glyph g = font->glyphs[glyphIndex];
         auto position =
             // where we should draw it
             config.position +
@@ -260,7 +257,8 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
             // glm::vec2{g.advance, 0.f};
             glm::vec2{i * config.size.x, 0.f};
 
-        Renderer::drawQuad(position, config.size, config.color, g.textureName);
+        auto textureName = fmt::format("{}_{}", config.font, (int)c);
+        Renderer::drawQuad(position, config.size, config.color, textureName);
     }
 
     // int i = 0;
