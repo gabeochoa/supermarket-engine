@@ -6,10 +6,11 @@
 
 #include "pch.hpp"
 
-const int START_CODEPOINT = ' ';
+const int START_CODEPOINT = 32;
 const int END_CODEPOINT = 200;
 const int FONT_SIZE = 64;
 const int ITEMS_PER_ROW = 50;
+const int NUM_LETTERS = END_CODEPOINT - START_CODEPOINT;
 
 struct BMPImage {
     std::shared_ptr<int[]> pixels;
@@ -36,6 +37,7 @@ struct Font {
     std::string name;
     std::vector<Glyph> glyphs;
     std::vector<float> kerning;
+    std::shared_ptr<Texture> texture;
 
     // how tall the tallest letter is
     float ascent;
@@ -50,21 +52,6 @@ struct Font {
 };
 static std::map<std::string, std::shared_ptr<Font> > fonts;
 
-// takes 2 codepoints and finds the kerning needed for it
-inline float getKerning(const std::shared_ptr<Font> font, int first_cp,
-                        int second_cp) {
-    int glyphIndex = first_cp - ' ';
-    int nextIndex = -1;
-    if (second_cp != 0) {
-        nextIndex = second_cp - ' ';
-    }
-    float kerning = 0.f;
-    if (nextIndex != -1) {
-        kerning = font->kerning[glyphIndex * font->glyphs.size() + nextIndex];
-    }
-    return kerning;
-}
-
 inline uint32_t packRGBA(glm::vec4 color) {
     return (uint32_t)((color.r * 255.0f + 0.5f)) |
            ((uint32_t)((color.g * 255.0f) + 0.5f) << 8) |
@@ -72,7 +59,7 @@ inline uint32_t packRGBA(glm::vec4 color) {
            ((uint32_t)((color.a * 255.0f) + 0.5f) << 24);
 }
 
-void generate_font_texture(const char* filename) {
+void load_font_textures(const char* filename) {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
@@ -101,8 +88,8 @@ void generate_font_texture(const char* filename) {
 
         /* create a bitmap */
         int bitmap_w = pixels * ITEMS_PER_ROW; /* Width of bitmap */
-        int bitmap_h = pixels * ((END_CODEPOINT - START_CODEPOINT) /
-                                 ITEMS_PER_ROW); /* Height of bitmap */
+        int bitmap_h =
+            pixels * (NUM_LETTERS / ITEMS_PER_ROW); /* Height of bitmap */
         unsigned char* bitmap =
             (unsigned char*)calloc(bitmap_w * bitmap_h, sizeof(unsigned char));
 
@@ -125,7 +112,6 @@ void generate_font_texture(const char* filename) {
         int x = 0; /*x of bitmap*/
         int ys = 0;
 
-        /* Cyclic loading of each character in word */
         for (int codepoint = START_CODEPOINT; codepoint <= END_CODEPOINT;
              codepoint++) {
             /**
@@ -164,36 +150,54 @@ void generate_font_texture(const char* filename) {
         }
 
         /* Save the bitmap data to the 1-channel png image */
-        std::string out_filename = fmt::format("./resources/{}.png", fontname);
-        stbi_write_png(out_filename.c_str(), bitmap_w, bitmap_h, 1, bitmap,
-                       bitmap_w);
+        // std::string out_filename = fmt::format("./resources/{}.png",
+        // fontname); stbi_write_png(out_filename.c_str(), bitmap_w, bitmap_h,
+        // 1, bitmap, bitmap_w);
+        //
+
+        for (int i = 0; i < bitmap_h / 2; i++) {
+            int k = bitmap_h - 1 - i;
+            for (int j = 0; j < bitmap_w; j++) {
+                unsigned char tmp = bitmap[i * bitmap_w + j];
+                bitmap[i * bitmap_w + j] = bitmap[k * bitmap_w + j];
+                bitmap[k * bitmap_w + j] = tmp;
+            }
+        }
+
+        std::shared_ptr<Font> font = std::make_shared<Font>();
+        font->name = fontname;
+        font->size = FONT_SIZE;
+        font->ascent = ascent;
+        font->descent = descent;
+        font->linegap = lineGap;
+
+        std::shared_ptr<Texture> fontTexture =
+            std::make_shared<Texture2D>(fontname, bitmap_w, bitmap_h);
+        fontTexture->setBitmapData(bitmap);
+        fontTexture->tilingFactor = 1.f;
+        textureLibrary.add(fontTexture);
+        font->texture = fontTexture;
+
+        int i = 0;
+        int j = 0;
+        int num_rows = bitmap_h / FONT_SIZE;
+
+        for (int codepoint = START_CODEPOINT; codepoint <= END_CODEPOINT;
+             codepoint++) {
+            auto texname = fmt::format("{}_{}", fontname, codepoint);
+            textureLibrary.addSubtexture(fontname, texname, i, num_rows - 1 - j,
+                                         FONT_SIZE, FONT_SIZE);
+            if (i >= ITEMS_PER_ROW) {
+                j++;
+                i = 0;
+            }
+            i++;
+        }
+
+        fonts[fontname] = font;
 
         free(fontBuffer);
         free(bitmap);
-    }
-}
-
-void load_font_texture(const char* filename) {
-    Renderer::addTexture(filename);
-
-    std::string fontname = nameFromFilePath(filename);
-    auto fonttex = textureLibrary.get(fontname);
-
-    int i = 0;
-    int j = 0;
-    int max_y = 1 + (END_CODEPOINT / ITEMS_PER_ROW);
-
-    log_info("font name {}", fontname);
-    for (int codepoint = START_CODEPOINT; codepoint <= END_CODEPOINT;
-         codepoint++) {
-        auto texname = fmt::format("{}_{}", fontname, codepoint);
-        textureLibrary.addSubtexture(fonttex->name, texname, i, max_y - j,
-                                     FONT_SIZE, FONT_SIZE);
-        if (i >= ITEMS_PER_ROW) {
-            j++;
-            i = 0;
-        }
-        i++;
     }
 }
 

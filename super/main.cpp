@@ -46,16 +46,10 @@ int main(int argc, char** argv) {
         .clearEnabled = true,
         .escClosesWindow = false,
     }));
-
-    // uncomment to re-generate font textures
-    // texture will be font-name.png
-    // generate_font_texture("./resources/fonts/constan.ttf");
-    // return 0;
-
     // Has to be after create so that textures exist
     //
-    load_font_texture("./resources/constan.png");
-
+    load_font_textures("./resources/fonts/constan.ttf");
+    load_font_textures("./resources/fonts/Roboto-Regular.ttf");
     // end load font
 
     Layer* super = new SuperLayer();

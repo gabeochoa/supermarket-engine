@@ -246,29 +246,26 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
     (void)id;
 
     int i = 0;
+    auto font = fonts[config.font];
+    if (!font) {
+        log_error("Font {} not found, using constan", config.font);
+    }
+
     for (auto c : config.text) {
         i++;
+
         auto position =
             // where we should draw it
             config.position +
             // local offset to align it with its parent
             offset +
             // move it along the width of the letter
-            // glm::vec2{g.advance, 0.f};
             glm::vec2{i * config.size.x, 0.f};
 
-        auto textureName = fmt::format("{}_{}", config.font, (int)c);
+        auto textureName = fmt::format("{}_{}", font->name, (int)c);
         Renderer::drawQuad(position, config.size, config.color, textureName);
     }
 
-    // int i = 0;
-    // for (auto c : config.text) {
-    // i++;
-    // std::string tex_name = config.font + "_" + std::to_string(c);
-    // Renderer::drawQuad(
-    // offset + config.position + glm::vec2{i * config.size.x, 0.f},
-    // config.size, config.color, tex_name);
-    // }
     return false;
 }
 
