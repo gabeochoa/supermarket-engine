@@ -213,7 +213,7 @@ inline bool isMouseInside(glm::vec4 rect) {
 struct WidgetConfig;
 
 struct WidgetConfig {
-    std::string font = "constan";
+    const char* font = "constan";
     std::string text = "";
     glm::vec2 position = glm::vec2{0.f};
     glm::vec2 size = glm::vec2{1.f};
@@ -245,26 +245,24 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
     // not needed for supermarket but could be in the future?
     (void)id;
 
-    int i = 0;
-    auto font = fonts[config.font];
-    if (!font) {
-        log_error("Font {} not found, using constan", config.font);
+    auto texture = fetch_texture_for_sentence(config.font, config.text.c_str());
+    if (!texture) {
+        log_error("failed to fetch texture for text {} with font {}",
+                  config.text, config.font);
     }
 
-    for (auto c : config.text) {
-        i++;
+    auto scaled_width = (1.f * texture->width / FONT_SIZE);
+    auto scaled_height = (1.f * texture->height / FONT_SIZE);
+    auto size =
+        glm::vec2{config.size.x * scaled_width, config.size.y * scaled_height};
 
-        auto position =
-            // where we should draw it
-            config.position +
-            // local offset to align it with its parent
-            offset +
-            // move it along the width of the letter
-            glm::vec2{i * config.size.x, 0.f};
+    auto position =
+        // where we should draw it
+        config.position +
+        // local offset to align it with its parent
+        offset + glm::vec2{size.x / 2.f, size.y / 2.f};
 
-        auto textureName = fmt::format("{}_{}", font->name, (int)c);
-        Renderer::drawQuad(position, config.size, config.color, textureName);
-    }
+    Renderer::drawQuad(position, size, config.color, texture->name);
 
     return false;
 }
