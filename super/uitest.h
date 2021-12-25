@@ -123,7 +123,7 @@ struct UITestLayer : public Layer {
                 // log_info("idk moved slider? ");
             }
 
-            upperCaseRotation += 10.f * dt.s();
+            upperCaseRotation += 90.f * dt.s();
             auto upperCaseConfig =
                 WidgetConfig({.text = "THE FIVE BOXING WIZARDS JUMP QUICKLY",
                               .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},

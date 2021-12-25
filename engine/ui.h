@@ -276,7 +276,9 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
         // where we should draw it
         config.position +
         // local offset to align it with its parent
-        offset + glm::vec2{size.x / 2.f, size.y / 2.f};
+        offset +
+        //
+        glm::vec2{size.x / 2.f, size.y / 2.f};
 
     draw_ui_widget(position, size, config.color, texture->name,
                    config.rotation);
@@ -373,12 +375,16 @@ bool dropdown(uuid id, WidgetConfig config,
               int* selectedIndex) {
     int item = 0;
 
+    // TODO rotation is not really working correctly and so we have to
+    // offset the V a little more than ^ in order to make it look nice
+    auto offset =
+        glm::vec2{config.size.x - ((*dropdownState) ? 1.f : 1.6f), -0.25f};
     text(uuid({id.item, item++, 0}),
          WidgetConfig({
-             .text = "^",
-             .rotation = (*dropdownState) ? 0.f : 180.f,
+             .text = ">",
+             .rotation = (*dropdownState) ? 90.f : 270.f,
          }),
-         config.position + glm::vec2{config.size.x - 1.f, -0.25f});
+         config.position + offset);
 
     config.text = configs[*selectedIndex].text;
 
