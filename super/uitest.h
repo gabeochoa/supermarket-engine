@@ -202,7 +202,7 @@ struct UITestLayer : public Layer {
 
                 WidgetConfig dropdownMain = IUI::WidgetConfig({
                     .position = glm::vec2{12.f, -1.f},          //
-                    .size = glm::vec2{12.f, 1.f},               //
+                    .size = glm::vec2{8.5f, 1.f},               //
                     .transparent = false,                       //
                     .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
                     .text = ""                                  //
