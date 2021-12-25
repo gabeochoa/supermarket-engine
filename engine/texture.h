@@ -16,6 +16,7 @@ struct Texture {
     int width;
     int height;
     float tilingFactor;
+    bool temporary = false;
 
     Texture()
         : name("TEXTURE_HAS_NO_NAME"), width(0), height(0), tilingFactor(1.f) {}
@@ -164,6 +165,18 @@ struct TextureLibrary {
     std::map<std::string, std::shared_ptr<Texture>> textures;
     std::map<std::string, std::shared_ptr<Subtexture>> subtextures;
 
+    // TODO think about reconsindering the number of max temporary; minimum we
+    // can support is 2 but we'd have lots of thrash constantly O(n) to find it
+    // in the map ( why not 1? because it would be better in that case to not
+    // even put it in the map since there would be no need to find someone to
+    // evict )
+    //
+    // I tried keeping a totally separate list of temps but had issues with
+    // rendering, it seemed liked the shader wasnt able to find them so we are
+    // colocating them with the normal textures
+    int numTemporaryTextures = 0;
+    const int maxTempTextures = 20;
+
     auto size() { return textures.size(); }
     auto begin() { return textures.begin(); }
     auto end() { return textures.end(); }
@@ -188,6 +201,26 @@ struct TextureLibrary {
             return "";
         }
         log_info("Adding Texture \"{}\" to our library", texture->name);
+        if (texture->temporary) {
+            numTemporaryTextures++;
+        }
+
+        if (numTemporaryTextures > maxTempTextures) {
+            std::string name = "";
+            for (auto i = textures.begin(), last = textures.end(); i != last;) {
+                if (i->second->temporary) {
+                    numTemporaryTextures--;
+                    name = i->second->name;
+                    log_info(
+                        "Evicting Temporary Texture \"{}\" from our library",
+                        name);
+                    i = textures.erase(i);
+                } else {
+                    ++i;
+                }
+            }
+        }
+
         textures[texture->name] = texture;
         return texture->name;
     }
@@ -197,12 +230,12 @@ struct TextureLibrary {
         return add(texture);
     }
 
-    std::shared_ptr<Texture> &get(const std::string &name) {
+    std::shared_ptr<Texture> get(const std::string &name) {
         return textures[name];
     }
 
     bool hasMatchingTexture(const std::string &name) {
-        return textures.find(name) != textures.end();
+        return (textures.find(name) != textures.end());
     }
 
     bool hasMatchingSubtexture(const std::string &name) {

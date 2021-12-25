@@ -61,7 +61,8 @@ inline uint32_t packRGBA(glm::vec4 color) {
 }
 
 std::shared_ptr<Texture> fetch_texture_for_sentence(const char* fontname,
-                                                    const char* phrase) {
+                                                    const char* phrase,
+                                                    bool temporary = false) {
     std::string filename = fmt::format("./resources/fonts/{}.ttf", fontname);
 
     // This "_" is okay since we are never splitting the string
@@ -69,9 +70,11 @@ std::shared_ptr<Texture> fetch_texture_for_sentence(const char* fontname,
     // if we ever decide to split then be careful
     auto textureName = fmt::format("{}_{}", fontname, phrase);
 
-    auto it = textureLibrary.textures.find(textureName);
-    if (it != textureLibrary.textures.end()) {
-        return it->second;
+    if (textureLibrary.hasMatchingTexture(textureName)) {
+        auto ptr = textureLibrary.get(textureName);
+        if (ptr) {
+            return ptr;
+        }
     }
 
     // otherwise we have to generate it
@@ -179,6 +182,7 @@ std::shared_ptr<Texture> fetch_texture_for_sentence(const char* fontname,
             std::make_shared<Texture2D>(textureName, bitmap_w, bitmap_h);
         fontTexture->setBitmapData(bitmap);
         fontTexture->tilingFactor = 1.f;
+        fontTexture->temporary = temporary;
         textureLibrary.add(fontTexture);
 
         free(fontBuffer);

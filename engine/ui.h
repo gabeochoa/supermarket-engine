@@ -254,14 +254,16 @@ void draw_ui_widget(glm::vec2 position, glm::vec2 size, glm::vec4 color,
     Renderer::drawQuad(position, size, color, texturename);
 }
 
-bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
+bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f},
+          bool temporary = false) {
     // NOTE: currently id is only used for focus and hot/active,
     // we could potentially also track "selections"
     // with a range so the user can highlight text
     // not needed for supermarket but could be in the future?
     (void)id;
 
-    auto texture = fetch_texture_for_sentence(config.font, config.text.c_str());
+    auto texture =
+        fetch_texture_for_sentence(config.font, config.text.c_str(), temporary);
     if (!texture) {
         log_error("failed to fetch texture for text {} with font {}",
                   config.text, config.font);
@@ -433,7 +435,7 @@ bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
 
     bool changed = false;
     auto textConf = WidgetConfig({
-        .text = state->checked ? "X" : " ",
+        .text = state->checked ? "X" : "",
         .color = glm::vec4{0.f, 0.f, 0.f, 1.f},
         .position = glm::vec2{0.1f, -0.25f},
     });
@@ -538,6 +540,9 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     return false;
 }
 
+// TODO add support for max-length textfield
+// this will also help with temporary texture size
+
 bool textfield(uuid id, WidgetConfig config, std::string& content) {
     auto state = widget_init<TextfieldState>(id);
     int item = 0;
@@ -566,7 +571,7 @@ bool textfield(uuid id, WidgetConfig config, std::string& content) {
         auto tStartLocation =
             config.position - glm::vec2{config.size.x / 2.f, 0.5f};
 
-        std::string focusStr = has_kb_focus(id) ? "_" : " ";
+        std::string focusStr = has_kb_focus(id) ? "_" : "";
         std::string content =
             fmt::format("{}{}", state->buffer.asT(), focusStr);
 
@@ -576,7 +581,8 @@ bool textfield(uuid id, WidgetConfig config, std::string& content) {
                            .position = tStartLocation,
                            .size = glm::vec2{tSize}
 
-             }));
+             }),
+             glm::vec2{0.f}, true /*temporary*/);
 
         draw_ui_widget(config.position, config.size, config.color,
                        config.texture, config.rotation);
