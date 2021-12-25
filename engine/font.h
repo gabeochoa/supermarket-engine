@@ -8,7 +8,7 @@
 
 const int START_CODEPOINT = 32;
 const int END_CODEPOINT = 200;
-const int FONT_SIZE = 64;
+const int FONT_SIZE = 64 * 2;
 const int ITEMS_PER_ROW = 50;
 const int NUM_LETTERS = END_CODEPOINT - START_CODEPOINT;
 
@@ -97,7 +97,7 @@ std::shared_ptr<Texture> fetch_texture_for_sentence(const char* fontname,
         }
 
         /* Calculate font scaling */
-        float pixels = 1.f * FONT_SIZE; /* Font size (font size) */
+        float pixels = 1.5f * FONT_SIZE; /* Font size (font size) */
         float scale = stbtt_ScaleForPixelHeight(
             &info, pixels); /* scale = pixels / (ascent - descent) */
 
@@ -174,8 +174,6 @@ std::shared_ptr<Texture> fetch_texture_for_sentence(const char* fontname,
                 bitmap[k * bitmap_w + j] = tmp;
             }
         }
-
-        log_info("{} with {} and {}", textureName, bitmap_w, bitmap_h);
 
         std::shared_ptr<Texture> fontTexture =
             std::make_shared<Texture2D>(textureName, bitmap_w, bitmap_h);

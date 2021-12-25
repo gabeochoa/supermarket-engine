@@ -46,14 +46,6 @@ int main(int argc, char** argv) {
         .clearEnabled = true,
         .escClosesWindow = false,
     }));
-    // Has to be after create so that textures exist
-    //
-    // load_font_textures("./resources/fonts/constan.ttf");
-    // load_font_textures("./resources/fonts/Roboto-Regular.ttf");
-    // end load font
-
-    // fetch_texture_for_sentence("constan", "I'm a test phrase");
-    // return 0;
 
     Layer* super = new SuperLayer();
     App::get().pushLayer(super);

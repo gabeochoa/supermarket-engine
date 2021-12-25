@@ -213,7 +213,9 @@ inline bool isMouseInside(glm::vec4 rect) {
 struct WidgetConfig;
 
 struct WidgetConfig {
-    const char* font = "constan";
+    // const char* font = "constan";
+    // const char* font = "Roboto-Regular";
+    const char* font = "Karmina-Regular";
     std::string text = "";
     glm::vec2 position = glm::vec2{0.f};
     glm::vec2 size = glm::vec2{1.f};
@@ -273,6 +275,7 @@ bool button(uuid id, WidgetConfig config) {
     // way the mouse collision works
     config.position.x += config.size.x / 2.f;
     config.position.y += config.size.y / 2.f;
+
     if (inside) {
         get()->hotID = id;
         if (get()->activeID == rootID && get()->lmouseDown) {
@@ -287,15 +290,16 @@ bool button(uuid id, WidgetConfig config) {
         if (config.text.size() != 0) {
             text(uuid({id.item, 0, 0}),
                  WidgetConfig({
-                     .position = config.position - glm::vec2{4.f, 0.f},
+                     .position = config.position,
                      .text = config.text,
                      // TODO detect if the button color is dark
                      // and change the color to white automatically
-                     .color =
-                         glm::vec4{1.f - config.color.r, 1.f - config.color.g,
-                                   1.f - config.color.b, 1.f},
-                     .size = glm::vec2{1.f, 1.f},
-                 }));
+                     .color = glm::vec4{1.f - config.color.r,  //
+                                        1.f - config.color.g,
+                                        1.f - config.color.b, 1.f},
+                     .size = glm::vec2{0.75f, 0.75f},
+                 }),
+                 glm::vec2{(-config.size.x / 2.f) + 0.10f, -0.5f});
         }
 
         Renderer::drawQuad(config.position, config.size, config.color,
@@ -359,10 +363,9 @@ bool dropdown(uuid id, WidgetConfig config,
          WidgetConfig({
              .text = (*dropdownState) ? "v" : "^",
          }),
-         config.position + glm::vec2{-0.4f, 0.5f});
+         config.position + glm::vec2{config.size.x - 1.f, -0.25f});
 
-    text(uuid({id.item, item++, 0}), configs[*selectedIndex],
-         config.position + glm::vec2{0.3f, 0.5f});
+    config.text = configs[*selectedIndex].text;
 
     if (*dropdownState) {
         float spacing = 1.0f;
@@ -377,7 +380,7 @@ bool dropdown(uuid id, WidgetConfig config,
                     button_id,
                     WidgetConfig({
                         .position = config.position +
-                                    glm::vec2{0.f, -1.f * spacing * (i + 1)},
+                                    glm::vec2{0.f, -1.0f * spacing * (i + 1)},
                         .size = config.size,
                         .color = config.color,
                         .text = configs[i].text,
@@ -411,7 +414,7 @@ bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
     auto textConf = WidgetConfig({
         .text = state->checked ? "X" : " ",
         .color = glm::vec4{0.f, 0.f, 0.f, 1.f},
-        .position = glm::vec2{-0.5f, 0.5f},
+        .position = glm::vec2{0.1f, -0.25f},
     });
     auto conf = WidgetConfig({
         .position = config.position,  //

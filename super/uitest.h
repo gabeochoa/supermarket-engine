@@ -125,25 +125,25 @@ struct UITestLayer : public Layer {
             auto upperCaseConfig =
                 WidgetConfig({.text = "THE FIVE BOXING WIZARDS JUMP QUICKLY",
                               .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
-                              .position = glm::vec2{0.f, -4.f},
+                              .position = glm::vec2{0.f, -6.f},
                               .size = glm::vec2{1.f, 1.f}});
 
             auto lowerCaseConfig =
                 WidgetConfig({.text = "the five boxing wizards jump quickly",
                               .color = glm::vec4{0.8, 0.3f, 0.7f, 1.0f},
-                              .position = glm::vec2{0.f, -6.f},
+                              .position = glm::vec2{0.f, -8.f},
                               .size = glm::vec2{1.f, 1.f}});
 
             auto numbersConfig =
                 WidgetConfig({.text = "0123456789",
                               .color = glm::vec4{0.7, 0.5f, 0.8f, 1.0f},
-                              .position = glm::vec2{0.f, -8.f},
+                              .position = glm::vec2{0.f, -10.f},
                               .size = glm::vec2{1.f, 1.f}});
 
             auto extrasConfig =
                 WidgetConfig({.text = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
                               .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-                              .position = glm::vec2{0.f, -10.f},
+                              .position = glm::vec2{0.f, -12.f},
                               .size = glm::vec2{1.f, 1.f}});
 
             text(uuid({0, item++, 0}), upperCaseConfig);
@@ -158,11 +158,10 @@ struct UITestLayer : public Layer {
                 log_info("{}", content);
             }
 
-            auto textConfig = IUI::WidgetConfig({
+            auto tapToContiueText = WidgetConfig({
                 .text = "Tap to continue",
-                .position = glm::vec2{0.f, 0.5f},          //
-                .size = glm::vec2{0.5f, 0.5f},             //
-                .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
+                .position = glm::vec2{0.5f, 0.f},
+                .size = glm::vec2{0.75f, 0.75f},
             });
 
             if (IUI::button_with_label(
@@ -172,8 +171,7 @@ struct UITestLayer : public Layer {
                         .size = glm::vec2{8.f, 1.f},                //
                         .transparent = false,                       //
                         .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
-                        .child = &textConfig,                       //
-                        .text = ""                                  //
+                        .child = &tapToContiueText,                 //
                     })                                              //
                     )) {
                 Menu::get().state = Menu::State::UITest;
@@ -194,16 +192,19 @@ struct UITestLayer : public Layer {
             {
                 std::vector<WidgetConfig> dropdownConfigs;
                 dropdownConfigs.push_back(
-                    IUI::WidgetConfig({.text = "option1"}));
+                    IUI::WidgetConfig({.text = "option A"}));
                 dropdownConfigs.push_back(
-                    IUI::WidgetConfig({.text = "option2"}));
+                    IUI::WidgetConfig({.text = "option B"}));
+                dropdownConfigs.push_back(
+                    IUI::WidgetConfig({.text = "long option"}));
+                dropdownConfigs.push_back(
+                    IUI::WidgetConfig({.text = "really really long option"}));
 
                 WidgetConfig dropdownMain = IUI::WidgetConfig({
                     .position = glm::vec2{12.f, -1.f},          //
-                    .size = glm::vec2{8.f, 1.f},                //
+                    .size = glm::vec2{12.f, 1.f},               //
                     .transparent = false,                       //
                     .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
-                    .child = &textConfig,                       //
                     .text = ""                                  //
                 });
 
