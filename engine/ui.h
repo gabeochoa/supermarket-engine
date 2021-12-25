@@ -219,6 +219,7 @@ struct WidgetConfig {
     std::string text = "";
     glm::vec2 position = glm::vec2{0.f};
     glm::vec2 size = glm::vec2{1.f};
+    float rotation = 0;
     glm::vec4 color = white;
     bool transparent = false;
     std::string texture = "white";
@@ -238,6 +239,19 @@ std::shared_ptr<T> widget_init(uuid id) {
             id, type_name<T>());
     }
     return state;
+}
+
+void draw_ui_widget(glm::vec2 position, glm::vec2 size, glm::vec4 color,
+                    std::string texturename, float rotation = 0.f) {
+    if (rotation > 5.f) {
+        Renderer::drawQuadRotated(position,                //
+                                  size,                    //
+                                  glm::radians(rotation),  //
+                                  color,                   //
+                                  texturename);
+        return;
+    }
+    Renderer::drawQuad(position, size, color, texturename);
 }
 
 bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
@@ -264,8 +278,8 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f}) {
         // local offset to align it with its parent
         offset + glm::vec2{size.x / 2.f, size.y / 2.f};
 
-    Renderer::drawQuad(position, size, config.color, texture->name);
-
+    draw_ui_widget(position, size, config.color, texture->name,
+                   config.rotation);
     return false;
 }
 
@@ -299,27 +313,27 @@ bool button(uuid id, WidgetConfig config) {
                                         1.f - config.color.b, 1.f},
                      .size = glm::vec2{0.75f, 0.75f},
                  }),
-                 glm::vec2{(-config.size.x / 2.f) + 0.10f, -0.5f});
+                 glm::vec2{(-config.size.x / 2.f) + 0.10f, -0.75f});
         }
 
-        Renderer::drawQuad(config.position, config.size, config.color,
-                           config.texture);
+        draw_ui_widget(config.position, config.size, config.color,
+                       config.texture, config.rotation);
 
         if (get()->hotID == id) {
             if (get()->activeID == id) {
-                Renderer::drawQuad(config.position, config.size, red,
-                                   config.texture);
+                draw_ui_widget(config.position, config.size, red,
+                               config.texture, config.rotation);
             } else {
-                Renderer::drawQuad(config.position, config.size, green,
-                                   config.texture);
+                draw_ui_widget(config.position, config.size, green,
+                               config.texture, config.rotation);
             }
         } else {
-            Renderer::drawQuad(config.position, config.size, blue,
-                               config.texture);
+            draw_ui_widget(config.position, config.size, blue, config.texture,
+                           config.rotation);
         }
         draw_if_kb_focus(id, [&]() {
-            Renderer::drawQuad(config.position, config.size + glm::vec2{0.1f},
-                               teal, config.texture);
+            draw_ui_widget(config.position, config.size + glm::vec2{0.1f}, teal,
+                           config.texture, config.rotation);
         });
     }  // end render
     if (has_kb_focus(id)) {
@@ -361,7 +375,8 @@ bool dropdown(uuid id, WidgetConfig config,
 
     text(uuid({id.item, item++, 0}),
          WidgetConfig({
-             .text = (*dropdownState) ? "v" : "^",
+             .text = "^",
+             .rotation = (*dropdownState) ? 0.f : 180.f,
          }),
          config.position + glm::vec2{config.size.x - 1.f, -0.25f});
 
@@ -462,13 +477,13 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     // that way the mouse collision works
     auto pos = glm::vec2{config.position.x + (config.size.x / 2.f),
                          config.position.y + (config.size.y / 2.f)};
-    Renderer::drawQuad(pos + glm::vec2{0.f, ypos}, glm::vec2{0.5f}, col,
-                       config.texture);
-    Renderer::drawQuad(pos, config.size, red, config.texture);
+    draw_ui_widget(pos + glm::vec2{0.f, ypos}, glm::vec2{0.5f}, col,
+                   config.texture, config.rotation);
+    draw_ui_widget(pos, config.size, red, config.texture, config.rotation);
 
     draw_if_kb_focus(id, [&]() {
-        Renderer::drawQuad(config.position, config.size + glm::vec2{0.1f}, teal,
-                           config.texture);
+        draw_ui_widget(config.position, config.size + glm::vec2{0.1f}, teal,
+                       config.texture, config.rotation);
     });
 
     // TODO can we have a single return statement here?
@@ -562,24 +577,24 @@ bool textfield(uuid id, WidgetConfig config, std::string& content) {
 
                  }));
         });
-        Renderer::drawQuad(config.position, config.size, config.color,
-                           config.texture);
+        draw_ui_widget(config.position, config.size, config.color,
+                       config.texture, config.rotation);
         if (get()->hotID == id) {
             if (get()->activeID == id) {
-                Renderer::drawQuad(config.position, config.size, red,
-                                   config.texture);
+                draw_ui_widget(config.position, config.size, red,
+                               config.texture, config.rotation);
             } else {
-                Renderer::drawQuad(config.position, config.size, green,
-                                   config.texture);
+                draw_ui_widget(config.position, config.size, green,
+                               config.texture, config.rotation);
             }
         } else {
-            Renderer::drawQuad(config.position, config.size, blue,
-                               config.texture);
+            draw_ui_widget(config.position, config.size, blue, config.texture,
+                           config.rotation);
         }
         // Draw focus ring
         draw_if_kb_focus(id, [&]() {
-            Renderer::drawQuad(config.position, config.size + glm::vec2{0.1f},
-                               teal, config.texture);
+            draw_ui_widget(config.position, config.size + glm::vec2{0.1f}, teal,
+                           config.texture, config.rotation);
         });
     }  // end render
 

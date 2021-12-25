@@ -21,6 +21,7 @@ struct UITestLayer : public Layer {
     bool checkbox_state = false;
     int dropdownIndex = 0;
     bool dropdownState = false;
+    float upperCaseRotation = 0.f;
 
     std::shared_ptr<Billboard> billy;
 
@@ -85,11 +86,11 @@ struct UITestLayer : public Layer {
         gltTerminate();
 
         Renderer::begin(uiTestCameraController->camera);
-        ui_test();
+        ui_test(dt);
         Renderer::end();
     }
 
-    void ui_test() {
+    void ui_test(Time dt) {
         using namespace IUI;
         int item = 0;
         {
@@ -122,11 +123,13 @@ struct UITestLayer : public Layer {
                 // log_info("idk moved slider? ");
             }
 
+            upperCaseRotation += 10.f * dt.s();
             auto upperCaseConfig =
                 WidgetConfig({.text = "THE FIVE BOXING WIZARDS JUMP QUICKLY",
                               .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
                               .position = glm::vec2{0.f, -6.f},
-                              .size = glm::vec2{1.f, 1.f}});
+                              .size = glm::vec2{1.f, 1.f},
+                              .rotation = upperCaseRotation});
 
             auto lowerCaseConfig =
                 WidgetConfig({.text = "the five boxing wizards jump quickly",

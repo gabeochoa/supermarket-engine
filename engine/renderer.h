@@ -377,7 +377,7 @@ struct Renderer {
                                 const glm::vec2& size, float angleInRad,
                                 const glm::vec4& color,
                                 const std::string& textureName = DEFAULT_TEX) {
-        prof(__PROFILE_FUNC__);
+        prof p(__PROFILE_FUNC__);
 
         auto transform =
             glm::translate(glm::mat4(1.f), position) *
