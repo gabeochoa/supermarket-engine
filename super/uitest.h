@@ -156,7 +156,7 @@ struct UITestLayer : public Layer {
 
             if (textfield(uuid({0, item++, 0}),
                           WidgetConfig({.position = glm::vec2{2.f, 2.f},
-                                        .size = glm::vec2{3.f, 1.f}}),
+                                        .size = glm::vec2{6.f, 1.f}}),
                           content)) {
                 log_info("{}", content);
             }

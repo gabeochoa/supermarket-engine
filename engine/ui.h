@@ -562,27 +562,22 @@ bool textfield(uuid id, WidgetConfig config, std::string& content) {
     try_to_grab_kb(id);
 
     {  // start render
-        float tSize = 0.3f;
+        float tSize = 0.5f;
         auto tStartLocation =
-            config.position - glm::vec2{config.size.x / 2.f, 0.f};
-        auto tCursorPosition =
-            tStartLocation + glm::vec2{state->buffer.asT().size() * tSize, 0.f};
+            config.position - glm::vec2{config.size.x / 2.f, 0.5f};
+
+        std::string focusStr = has_kb_focus(id) ? "_" : " ";
+        std::string content =
+            fmt::format("{}{}", state->buffer.asT(), focusStr);
+
         text(uuid({id.item, item++, 0}),
-             WidgetConfig({.text = state->buffer,
+             WidgetConfig({.text = content,
                            .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
                            .position = tStartLocation,
                            .size = glm::vec2{tSize}
 
              }));
-        draw_if_kb_focus(id, [&]() {
-            text(uuid({id.item, item++, 0}),
-                 WidgetConfig({.text = "_",
-                               .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
-                               .position = tCursorPosition,
-                               .size = glm::vec2{tSize}
 
-                 }));
-        });
         draw_ui_widget(config.position, config.size, config.color,
                        config.texture, config.rotation);
         if (get()->hotID == id) {
