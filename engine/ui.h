@@ -488,8 +488,8 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     draw_ui_widget(pos, config.size, red, config.texture, config.rotation);
 
     draw_if_kb_focus(id, [&]() {
-        draw_ui_widget(config.position, config.size + glm::vec2{0.1f}, teal,
-                       config.texture, config.rotation);
+        draw_ui_widget(pos, config.size + glm::vec2{0.1f}, teal, config.texture,
+                       config.rotation);
     });
 
     // TODO can we have a single return statement here?
