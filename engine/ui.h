@@ -213,18 +213,17 @@ inline bool isMouseInside(glm::vec4 rect) {
 struct WidgetConfig;
 
 struct WidgetConfig {
+    WidgetConfig* child;
+    glm::vec4 color = white;
     // const char* font = "constan";
     // const char* font = "Roboto-Regular";
     const char* font = "Karmina-Regular";
-    std::string text = "";
     glm::vec2 position = glm::vec2{0.f};
-    glm::vec2 size = glm::vec2{1.f};
     float rotation = 0;
-    glm::vec4 color = white;
-    bool transparent = false;
+    glm::vec2 size = glm::vec2{1.f};
+    std::string text = "";
     std::string texture = "white";
-
-    WidgetConfig* child;
+    bool transparent = false;
 };
 
 template <typename T>
@@ -308,14 +307,14 @@ bool button(uuid id, WidgetConfig config) {
         if (config.text.size() != 0) {
             text(uuid({id.item, 0, 0}),
                  WidgetConfig({
-                     .position = config.position,
-                     .text = config.text,
                      // TODO detect if the button color is dark
                      // and change the color to white automatically
                      .color = glm::vec4{1.f - config.color.r,  //
                                         1.f - config.color.g,
                                         1.f - config.color.b, 1.f},
+                     .position = config.position,
                      .size = glm::vec2{0.75f, 0.75f},
+                     .text = config.text,
                  }),
                  glm::vec2{(-config.size.x / 2.f) + 0.10f, -0.75f});
         }
@@ -383,8 +382,8 @@ bool dropdown(uuid id, WidgetConfig config,
         glm::vec2{config.size.x - ((*dropdownState) ? 1.f : 1.6f), -0.25f};
     text(uuid({id.item, item++, 0}),
          WidgetConfig({
-             .text = ">",
              .rotation = (*dropdownState) ? 90.f : 270.f,
+             .text = ">",
          }),
          config.position + offset);
 
@@ -402,10 +401,10 @@ bool dropdown(uuid id, WidgetConfig config,
             if (button_with_label(
                     button_id,
                     WidgetConfig({
+                        .color = config.color,
                         .position = config.position +
                                     glm::vec2{0.f, -1.0f * spacing * (i + 1)},
                         .size = config.size,
-                        .color = config.color,
                         .text = configs[i].text,
                     }))) {
                 *selectedIndex = i;
@@ -435,14 +434,14 @@ bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
 
     bool changed = false;
     auto textConf = WidgetConfig({
-        .text = state->checked ? "X" : "",
         .color = glm::vec4{0.f, 0.f, 0.f, 1.f},
         .position = glm::vec2{0.1f, -0.25f},
+        .text = state->checked ? "X" : "",
     });
     auto conf = WidgetConfig({
+        .child = &textConf,           //
         .position = config.position,  //
         .size = config.size,          //
-        .child = &textConf,           //
     });
     if (button_with_label(uuid({id.item, item++, 0}), conf)) {
         state->checked = !state->checked;
@@ -576,11 +575,11 @@ bool textfield(uuid id, WidgetConfig config, std::string& content) {
             fmt::format("{}{}", state->buffer.asT(), focusStr);
 
         text(uuid({id.item, item++, 0}),
-             WidgetConfig({.text = content,
-                           .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
-                           .position = tStartLocation,
-                           .size = glm::vec2{tSize}
-
+             WidgetConfig({
+                 .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+                 .position = tStartLocation,
+                 .size = glm::vec2{tSize},
+                 .text = content,
              }),
              glm::vec2{0.f}, true /*temporary*/);
 

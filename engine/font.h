@@ -13,10 +13,10 @@ const int ITEMS_PER_ROW = 50;
 const int NUM_LETTERS = END_CODEPOINT - START_CODEPOINT;
 
 struct BMPImage {
+    float aspect;
+    int height;
     std::shared_ptr<int[]> pixels;
     int width;
-    int height;
-    float aspect;
 };
 
 struct Glyph {
@@ -432,10 +432,10 @@ void load_font_file(const char* filename) {
             g.xoff = s_xoff - border;
             g.yoff = s_yoff - border;
             g.image = BMPImage({
-                .width = glyph_width,                         //
-                .height = glyph_height,                       //
-                .pixels = image,                              //
-                .aspect = (1.f * glyph_width) / glyph_height  //
+                .aspect = (1.f * glyph_width) / glyph_height,  //
+                .height = glyph_height,                        //
+                .pixels = image,                               //
+                .width = glyph_width,                          //
             });
             font->glyphs.push_back(g);
             stbtt_FreeBitmap(bitmap, 0);

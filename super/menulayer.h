@@ -232,17 +232,17 @@ struct MenuLayer : public Layer {
         int item = 0;
         auto startPos = glm::vec2{-17.f, -10.f};
         auto textConfig = IUI::WidgetConfig({
-            .text = "Tap to continue",
+            .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
             .position = glm::vec2{1.f, 3.f},           //
             .size = glm::vec2{2.f, 2.f},               //
-            .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
+            .text = "Tap to continue",                 //
         });
         auto buttonConfig = IUI::WidgetConfig({
+            .child = &textConfig,           //
             .position = startPos,           //
             .size = glm::vec2{40.f, 20.f},  //
-            .transparent = true,            //
-            .child = &textConfig,           //
             .texture = "transparent",       //
+            .transparent = true,            //
         });
 
         if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
@@ -259,18 +259,18 @@ struct MenuLayer : public Layer {
             auto startPos =
                 camPosInterp.camPositions[1] + glm::vec2{-15.f, -8.f};
             auto textConfig = IUI::WidgetConfig({
-                .text = "Play",
+                .color = glm::vec4{1.0f, 1.0f, 1.0f, 1.f},  //
                 .position = glm::vec2{-0.25f, 1.5f},        //
                 .size = glm::vec2{2.f, 2.f},                //
-                .color = glm::vec4{1.0f, 1.0f, 1.0f, 1.f},  //
+                .text = "Play",                             //
             });
             auto buttonConfig = IUI::WidgetConfig({
+                .child = &textConfig,                         //
+                .color = glm::vec4{0.75f, 0.4f, 0.34f, 1.f},  //
                 .position = startPos,                         //
                 .size = glm::vec2{9.f, 3.0f},                 //
-                .child = &textConfig,                         //
-                .transparent = false,                         //
                 .texture = "white",                           //
-                .color = glm::vec4{0.75f, 0.4f, 0.34f, 1.f},  //
+                .transparent = false,                         //
             });
 
             if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
@@ -282,17 +282,17 @@ struct MenuLayer : public Layer {
         {
             auto startPos = camPosInterp.camPositions[1] + glm::vec2{0.f, 0.f};
             auto textConfig = IUI::WidgetConfig({
-                .text = "Settings",                        //
+                .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
                 .position = glm::vec2{0.0f, 1.0f},         //
                 .size = glm::vec2{1.f, 1.f},               //
-                .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
+                .text = "Settings",                        //
             });
             auto buttonConfig = IUI::WidgetConfig({
+                .child = &textConfig,                         //
+                .color = glm::vec4{0.75f, 0.4f, 0.34f, 1.f},  //
                 .position = startPos,                         //
                 .size = glm::vec2{9.f, 3.f},                  //
                 .texture = "white",                           //
-                .color = glm::vec4{0.75f, 0.4f, 0.34f, 1.f},  //
-                .child = &textConfig,                         //
             });
 
             if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),

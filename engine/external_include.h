@@ -4,8 +4,11 @@
 #pragma clang diagnostic ignored "-Wall"
 #pragma clang diagnostic ignored "-Wdeprecated-volatile"
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
-#else
-#pragma disable_warn
+#endif
+
+#ifdef WIN32
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
 #ifdef __APPLE__
@@ -46,6 +49,7 @@
 #include "../vendor/stb_image_write.h"
 #define FMT_HEADER_ONLY
 #include "../vendor/fmt/format.h"
+#include "../vendor/fmt/ostream.h"
 #define GLT_IMPLEMENTATION
 #include "../vendor/glText.h"
 
@@ -53,5 +57,9 @@
 #pragma clang diagnostic pop
 #else
 #pragma enable_warn
+#endif
+
+#ifdef WIN32
+#pragma GCC diagnostic pop
 #endif
 
