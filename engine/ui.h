@@ -1,5 +1,166 @@
 #pragma once
 
+/////////////////////////////////// ///////////////////////////////////
+/*
+
+Before using any components, you should `IUI::init_context()` this only needs to
+happen once on startup, dont call it every frame.
+
+To create a UI widget:
+  1. Create a UIFrame to handle set/reset for the frame
+  2. create a unique uuid
+  3. setup a WidgetConfig
+  4. call the widget func you want to render ie `text(id, config)`
+
+Example :
+```
+{
+    UIFrame BeginandEnd(cameraController);
+    if (
+        button(uuid({0, 0, 0}),
+               WidgetConfig({
+                   .position = glm::vec2{0.f, 0.f},
+                   .size = glm::vec2{2.f, 1.f}
+               })
+        )
+    ) {
+        log_info("clicked button");
+    }
+}
+```
+
+
+1. UIFrame(cameraController)
+Handles setting up and tearing down any information needed on a frame by frame
+basis.
+
+Should be called once per frame before any of the widget functions.
+
+
+2. UUID
+
+When creating a UI widget, you must pass in a uuid, each widget needs a unique
+id so that state and focus works correctly. Format of uuid is { parent, item,
+index }
+
+
+
+3. WidgetConfig
+
+WidgetConfig controls all the settings for this particular widget:
+
+WidgetConfig* child
+    - if this config has a child config (only used for button_with_label)
+glm::vec4 color = white;
+    - for text, the font color,
+    - for others, the background color
+const char* font = "Karmina-Regular";
+    - the font you want to use for drawing text
+    - searches /resources/fonts/ for a ttf file matching this string
+glm::vec2 position = glm::vec2{0.f};
+    - location of the bottom left corner
+float rotation = 0;
+    - :)
+glm::vec2 size = glm::vec2{1.f};
+    - width and height of the widget
+std::string text = "";
+    - the text to be drawn on the ui widget
+    - for button_with_label if text is empty will use child* config
+std::string texture = "white";
+    - the texture to use for the UI widget
+    - ** not supported for text widgets
+bool transparent = false;
+    - whether we we should use a trasparent background texture or an opaque one
+
+
+3. Widget Functions
+
+bool text(uuid id,
+          WidgetConfig config,
+          // Drawn position will be config.position+offset
+          glm::vec2 offset = {0.f, 0.f},
+          // Temporary means the texture will be evicted when
+          // we generate more than MAX_TEMPORARY string textures
+          bool temporary = false);
+
+    returns false always
+
+bool button(uuid id, WidgetConfig config)
+    returns true if the button was clicked else false
+
+
+bool button_with_label(uuid id, WidgetConfig config)
+    returns true if the button was clicked else false
+
+    if config has .text will draw text directly through button() call
+    if not then will check config.child for a separate text config
+
+
+bool dropdown(uuid id,
+              WidgetConfig config,
+              // List of text configs that should show in the dropdown
+              const std::vector<WidgetConfig>& configs,
+              // whether or not the dropdown is open
+              bool* dropdownState,
+              // which item is selected
+              int* selectedIndex)
+    returns true if dropdown was opened or closed
+
+bool checkbox(uuid id,
+        WidgetConfig config,
+        // whether or not the checkbox is X'd
+        bool* cbState = nullptr);
+    returns true if the checkbox changed
+
+
+bool slider(uuid id,
+            WidgetConfig config,
+            // Current value of the slider
+            float* value,
+            // min value
+            float mnf,
+            // max value
+            float mxf);
+    returns true if slider moved
+
+// TODO add support for max-length textfield
+// this will also help with temporary texture size
+bool textfield(uuid id, WidgetConfig config, std::string& content)
+    returns true if content changed
+
+
+Global State is stored in the Statemanager and you can fetch the underlying
+state of a widget using IUI::get()->statemanager.get(uuid).
+//
+TODO Would we rather have the user specify an output
+or just let them search the UIContext?
+Something like get()->statemanager.get(uuid)
+//
+
+
+Util functions:
+
+has_kb_focus(id): Lets you know if during the current frame this id is holding
+keyboard focus. Must be called after the widget code has run.
+    Example:
+    ```
+            uuid textFieldID = uuid({0, item++, 0});
+            if (textfield(textFieldID, WidgetConfig({...}), content)) {
+                log_info("{}", content);
+            }
+            if (IUI::has_kb_focus(textFieldID)) {
+                editing_field = true;
+            }else {
+                editing_field = false;
+            }
+    ```
+
+
+
+
+/////////////////////////////////// ///////////////////////////////////
+*/
+
 #include <set>
 #include <string_view>
 
@@ -119,10 +280,6 @@ struct StateManager {
 
     std::shared_ptr<UIState> get(uuid id) { return states[id]; }
 };
-
-// TODO Would we rather have the user specify an output
-// or just let them search the UIContext?
-// Something like get()->statemanager.get(uuid)
 
 struct UIContext {
     StateManager statemanager;

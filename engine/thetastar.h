@@ -7,6 +7,19 @@
 
 #include "pch.hpp"
 
+///////// ///////// ///////// ///////// ///////// ///////// ///////// /////////
+//
+//
+// How to use:
+//
+// Theta t(start, end, isWalkable);
+// auto path = t.go();
+//
+// where isWalkable is a function that takes a glm::vec2 and returns wether
+// or not the path can include it
+//
+///////// ///////// ///////// ///////// ///////// ///////// ///////// /////////
+
 struct ThetaPQ {
     typedef std::pair<glm::vec2, double> Qi;
     std::vector<Qi> Q;
