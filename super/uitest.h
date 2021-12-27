@@ -3,6 +3,7 @@
 
 #include "../engine/app.h"
 #include "../engine/camera.h"
+#include "../engine/file.h"
 #include "../engine/font.h"
 #include "../engine/layer.h"
 #include "../engine/pch.hpp"
@@ -107,9 +108,12 @@ struct UITestLayer : public Layer {
                 Menu::get().state = Menu::State::Root;
             }
             if (button(uuid({0, item++, 0}),
-                       WidgetConfig({.position = glm::vec2{3.f, 0.f},
-                                     .size = glm::vec2{2.f, 1.f}}))) {
-                log_info("clicked button 2");
+                       WidgetConfig({.position = glm::vec2{3.f, -2.f},
+                                     .size = glm::vec2{6.f, 1.f},
+                                     .text = "open file dialog"}))) {
+                auto files = getFilesFromUser();
+                for (auto file : files)
+                    log_info("You chose the file: {}", file);
             }
             if (button(uuid({0, item++, 0}),
                        WidgetConfig({.position = glm::vec2{6.f, 0.f},
@@ -231,6 +235,7 @@ struct UITestLayer : public Layer {
                     dropdownState = !dropdownState;
                 }
             }
+
             // end with BandE
         }
     }

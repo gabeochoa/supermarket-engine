@@ -1,6 +1,7 @@
 
 
 #include "../engine/app.h"
+#include "../engine/file.h"
 #include "../engine/input.h"
 #include "../engine/pch.hpp"
 #include "custom_fmt.h"
@@ -37,6 +38,7 @@ int main(int argc, char** argv) {
                 c += 0.01;
             }
         }
+        // test_file_functionality();
     }
 
     app.reset(App::create({
