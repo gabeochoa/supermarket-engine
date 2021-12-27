@@ -138,8 +138,9 @@ bool textfield(uuid id,
                std::string& content);
     returns true if textfield changed
 
-// TODO add support for max-length textfield
-// this will also help with temporary texture size
+TODO add support for max-length textfield
+    this will also help with temporary texture size
+TODO support typing in unicode ...
 
 
 TODO Combobox
@@ -366,7 +367,7 @@ struct SliderState : public UIState {
 };
 
 struct TextfieldState : public UIState {
-    State<std::string> buffer;
+    State<std::wstring> buffer;
 };
 
 struct StateManager {
@@ -490,7 +491,6 @@ struct WidgetConfig {
     std::string text = "";
     std::string texture = "white";
     bool transparent = false;
-    bool wide = false;
 };
 
 template <typename T>
@@ -529,13 +529,8 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f},
     (void)id;
 
     std::shared_ptr<Texture> texture;
-    if (config.wide) {
-        texture = fetch_texture_for_intl_phrase(
-            config.font, to_wstring(config.text), temporary);
-    } else {
-        texture = fetch_texture_for_sentence(config.font, config.text.c_str(),
-                                             temporary);
-    }
+    texture = fetch_texture_for_phrase(config.font, to_wstring(config.text),
+                                       temporary);
     if (!texture) {
         log_error("failed to fetch texture for text {} with font {}",
                   config.text, config.font);
@@ -815,7 +810,7 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
 // TODO add support for max-length textfield
 // this will also help with temporary texture size
 
-bool textfield(uuid id, WidgetConfig config, std::string& content) {
+bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
     auto state = widget_init<TextfieldState>(id);
     int item = 0;
 
@@ -843,16 +838,16 @@ bool textfield(uuid id, WidgetConfig config, std::string& content) {
         auto tStartLocation =
             config.position - glm::vec2{config.size.x / 2.f, 0.5f};
 
-        std::string focusStr = has_kb_focus(id) ? "_" : "";
-        std::string content =
-            fmt::format("{}{}", state->buffer.asT(), focusStr);
+        std::wstring focusStr = has_kb_focus(id) ? L"_" : L"";
+        std::wstring content =
+            fmt::format(L"{}{}", state->buffer.asT(), focusStr);
 
         text(uuid({id.item, item++, 0}),
              WidgetConfig({
                  .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
                  .position = tStartLocation,
                  .size = glm::vec2{tSize},
-                 .text = content,
+                 .text = to_string(content),
              }),
              glm::vec2{0.f}, true /*temporary*/);
 
@@ -887,7 +882,7 @@ bool textfield(uuid id, WidgetConfig config, std::string& content) {
             }
         }
         if (get()->keychar != Key::KeyCode()) {
-            state->buffer.asT().append(std::string(1, get()->keychar));
+            state->buffer.asT().append(std::wstring(1, get()->keychar));
             changed = true;
         }
         if (get()->modchar == Key::mapping["Text Backspace"]) {

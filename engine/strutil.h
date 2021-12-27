@@ -11,11 +11,19 @@ using convert_t = std::codecvt_utf8<wchar_t>;
 static std::wstring_convert<convert_t, wchar_t> strconverter;
 
 inline std::string to_string(std::wstring wstr) {
-    return strconverter.to_bytes(wstr);
+    try {
+        return strconverter.to_bytes(wstr);
+    } catch (...) {
+        return std::string();
+    }
 }
 
 inline std::wstring to_wstring(std::string str) {
-    return strconverter.from_bytes(str);
+    try {
+        return strconverter.from_bytes(str);
+    } catch (...) {
+        return std::wstring();
+    }
 }
 
 // string split

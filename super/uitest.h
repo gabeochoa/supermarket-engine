@@ -16,7 +16,7 @@
 
 struct UITestLayer : public Layer {
     float value = 0.08f;
-    std::string content = "";
+    std::wstring content = L"";
     const int TYPABLE_START = 32;
     const int TYPABLE_END = 126;
     bool checkbox_state = false;
@@ -46,6 +46,7 @@ struct UITestLayer : public Layer {
     virtual void onDetach() override {}
 
     bool onCharPressed(CharPressedEvent& event) {
+        // log_info("you typed {}", (int)event.charcode);
         IUI::get()->keychar = static_cast<Key::KeyCode>(event.charcode);
         return false;
     }
@@ -168,17 +169,14 @@ struct UITestLayer : public Layer {
                 .size = glm::vec2{1.f, 1.f},
                 .text = "Hiragana: "
                         "\xe3\x81\x8b\xe3\x81\x8d\xe3\x81\x8f\xe3"
-                        "\x81\x91\xe3\x81\x93 (kakikukeko)",
-                .wide = true,
+                        "\x81\x91\xe3\x81\x93",
             });
             auto kanjiConfig = WidgetConfig({
                 .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
                 .font = "Sazanami-Hanazono-Mincho",
                 .position = glm::vec2{0.f, -16.f},
                 .size = glm::vec2{1.f, 1.f},
-                .text =
-                    "Kanjis: \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e (nihongo)",
-                .wide = true,
+                .text = "Kanji: \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e",
             });
 
             text(uuid({0, item++, 0}), upperCaseConfig);
@@ -193,7 +191,7 @@ struct UITestLayer : public Layer {
                           WidgetConfig({.position = glm::vec2{2.f, 2.f},
                                         .size = glm::vec2{6.f, 1.f}}),
                           content)) {
-                log_info("{}", content);
+                log_info("{}", to_string(content));
             }
 
             // In this case we want to lock the camera when typing in

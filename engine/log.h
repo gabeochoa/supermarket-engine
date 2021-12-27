@@ -6,6 +6,8 @@
 #include <iostream>
 #include <string>
 
+#include "external_include.h"
+
 enum LogLevel : int {
     ALL = 0,
     TRACE,
@@ -42,8 +44,23 @@ inline void vlog(int level, const char* file, int line, fmt::string_view format,
     fmt::print("\n");
 }
 
+inline void vlog(int level, const char* file, int line,
+                 fmt::wstring_view format, fmt::wformat_args args) {
+    if (level < LOG_LEVEL) return;
+    fmt::print("{}: {}: {}: ", file, line, level_to_string(level));
+    fmt::vprint(format, args);
+    fmt::print("\n");
+}
+
 template <typename... Args>
 inline void log_me(int level, const char* file, int line, const char* format,
+                   Args&&... args) {
+    vlog(level, file, line, format,
+         fmt::make_args_checked<Args...>(format, args...));
+}
+
+template <typename... Args>
+inline void log_me(int level, const char* file, int line, const wchar_t* format,
                    Args&&... args) {
     vlog(level, file, line, format,
          fmt::make_args_checked<Args...>(format, args...));
@@ -54,6 +71,13 @@ inline void log_me(int level, const char* file, int line, const char* format,
                    const char*&& args) {
     vlog(level, file, line, format,
          fmt::make_args_checked<const char*>(format, args));
+}
+
+template <>
+inline void log_me(int level, const char* file, int line, const wchar_t* format,
+                   const wchar_t*&& args) {
+    vlog(level, file, line, format,
+         fmt::make_args_checked<const wchar_t*>(format, args));
 }
 
 #define log_trace(...) log_me(LogLevel::TRACE, __FILE__, __LINE__, __VA_ARGS__)

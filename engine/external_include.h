@@ -50,6 +50,8 @@
 #define FMT_HEADER_ONLY
 #include "../vendor/fmt/format.h"
 #include "../vendor/fmt/ostream.h"
+// this is needed for wstring printing
+#include "../vendor/fmt/xchar.h"
 #define GLT_IMPLEMENTATION
 #include "../vendor/glText.h"
 #include "../vendor/portable-file-dialogs.h"
