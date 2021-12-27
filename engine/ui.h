@@ -208,6 +208,33 @@ TODO add support for drawing controls
 TODO dropzone (drag and drop files)
 
 
+TODO support different layout types
+enum UILayoutType {
+    Row,
+    Column,
+    Grid,
+};
+
+TODO support these stylings
+struct Style {
+    glm::vec4 margin;
+    glm::vec4 padding;
+    glm::vec4 bgColor;
+    glm::vec4 borderColor;
+    glm::vec4 borderWidth;
+    glm::vec4 cornerRadius;
+
+    Style(const Style& s) {
+        this->margin = s.margin;
+        this->padding = s.padding;
+        this->bgColor = s.bgColor;
+        this->borderColor = s.borderColor;
+        this->borderWidth = s.borderWidth;
+        this->cornerRadius = s.cornerRadius;
+    }
+};
+
+
 Global State is stored in the Statemanager and you can fetch the underlying
 state of a widget using IUI::get()->statemanager.get(uuid).
 //
@@ -445,6 +472,9 @@ inline bool isMouseInside(glm::vec4 rect) {
 // This couldnt have been done without the tutorial
 // from http://sol.gfxile.net/imgui/
 // Like actually, I tried 3 times :)
+
+// if you need a non english font, grab it from here
+// https://fonts.google.com/noto/fonts
 
 struct WidgetConfig;
 
@@ -898,31 +928,5 @@ struct UIFrame {
         get()->modchar = Key::KeyCode();
     }
 };
-
-/*
-enum UILayoutType {
-    Row,
-    Column,
-    Grid,
-};
-
-struct Style {
-    glm::vec4 margin;
-    glm::vec4 padding;
-    glm::vec4 bgColor;
-    glm::vec4 borderColor;
-    glm::vec4 borderWidth;
-    glm::vec4 cornerRadius;
-
-    Style(const Style& s) {
-        this->margin = s.margin;
-        this->padding = s.padding;
-        this->bgColor = s.bgColor;
-        this->borderColor = s.borderColor;
-        this->borderWidth = s.borderWidth;
-        this->cornerRadius = s.cornerRadius;
-    }
-};
-*/
 
 }  // namespace IUI

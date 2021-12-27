@@ -13,7 +13,7 @@ LIB_OBJ_DIR:= ./output/engine
 LIB_OBJ_FILES := $(patsubst $(LIB_SRC_DIR)/%.cpp, $(LIB_OBJ_DIR)/%.o, $(LIB_SRC_FILES))
 LIB_H_FILES := $(wildcard $(LIB_SRC_DIR)/*.h)
 LIB_D_FILES := $(patsubst $(LIB_SRC_DIR)/%.h,$(LIB_OBJ_DIR)/%.d,$(LIB_SRC_FILES))
-LIBRARY := ./output/libengine.a
+LIBRARY := ./output/libengine.a ./vendor/libschrift/libschrift.a
 
 SRC_DIR := ./super
 OBJ_DIR := ./output/super

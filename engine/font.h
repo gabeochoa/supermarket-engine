@@ -1,13 +1,14 @@
 
 #pragma once
 
+//
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "pch.hpp"
 
 const int START_CODEPOINT = 32;
-const int END_CODEPOINT = 200;
+const int END_CODEPOINT = 30922;
 const int FONT_SIZE = 64 * 2;
 const int ITEMS_PER_ROW = 50;
 const int NUM_LETTERS = END_CODEPOINT - START_CODEPOINT;
@@ -167,7 +168,7 @@ std::shared_ptr<Texture> fetch_texture_for_sentence(const char* fontname,
         }
 
         /* Save the bitmap data to the 1-channel png image */
-        // stbi_write_png("STB.png", bitmap_w, bitmap_h, 1, bitmap, bitmap_w);
+        stbi_write_png("STB.png", bitmap_w, bitmap_h, 1, bitmap, bitmap_w);
 
         for (int i = 0; i < bitmap_h / 2; i++) {
             int k = bitmap_h - 1 - i;
@@ -203,6 +204,17 @@ void load_font_textures(const char* filename) {
 
     std::string fontname = nameFromFilePath(filename);
 
+    // TODO is there a way we can just load these from the font
+    auto num_letters = NUM_LETTERS;
+    auto end_codepoint = END_CODEPOINT;
+    if (num_letters > 200) {
+        end_codepoint = START_CODEPOINT + 200;
+        num_letters = 200;
+        log_warn(
+            "due to issues with truetype segfaulting on giant bitmaps, "
+            "limiting your codepoints to just the first 200");
+    }
+
     // TODO are the font files bigger than this?
     char* buffer = (char*)calloc(size, sizeof(unsigned char));
     if (file.read(buffer, size)) {
@@ -222,7 +234,11 @@ void load_font_textures(const char* filename) {
         /* create a bitmap */
         int bitmap_w = pixels * ITEMS_PER_ROW; /* Width of bitmap */
         int bitmap_h =
-            pixels * (NUM_LETTERS / ITEMS_PER_ROW); /* Height of bitmap */
+            pixels * (num_letters / ITEMS_PER_ROW); /* Height of bitmap */
+
+        log_warn("w{} h{} size {}", bitmap_w, bitmap_h,
+                 bitmap_w * bitmap_h * sizeof(unsigned char));
+
         unsigned char* bitmap =
             (unsigned char*)calloc(bitmap_w * bitmap_h, sizeof(unsigned char));
 
@@ -245,7 +261,7 @@ void load_font_textures(const char* filename) {
         int x = 0; /*x of bitmap*/
         int ys = 0;
 
-        for (int codepoint = START_CODEPOINT; codepoint <= END_CODEPOINT;
+        for (int codepoint = START_CODEPOINT; codepoint <= end_codepoint;
              codepoint++) {
             /**
              * Get the measurement in the horizontal direction
@@ -283,9 +299,9 @@ void load_font_textures(const char* filename) {
         }
 
         /* Save the bitmap data to the 1-channel png image */
-        // std::string out_filename = fmt::format("./resources/{}.png",
-        // fontname); stbi_write_png(out_filename.c_str(), bitmap_w,
-        // bitmap_h, 1, bitmap, bitmap_w);
+        std::string out_filename = fmt::format("./resources/{}.png", fontname);
+        stbi_write_png(out_filename.c_str(), bitmap_w, bitmap_h, 1, bitmap,
+                       bitmap_w);
         //
 
         for (int i = 0; i < bitmap_h / 2; i++) {
@@ -315,7 +331,7 @@ void load_font_textures(const char* filename) {
         int j = 0;
         int num_rows = bitmap_h / FONT_SIZE;
 
-        for (int codepoint = START_CODEPOINT; codepoint <= END_CODEPOINT;
+        for (int codepoint = START_CODEPOINT; codepoint <= end_codepoint;
              codepoint++) {
             auto texname = fmt::format("{}_{}", fontname, codepoint);
             textureLibrary.addSubtexture(fontname, texname, i, num_rows - 1 - j,
@@ -445,3 +461,74 @@ void load_font_file(const char* filename) {
     }
 }
 
+static int utf8_to_utf32(const uint8_t* utf8, uint32_t* utf32, int max) {
+    unsigned int c;
+    int i = 0;
+    --max;
+    while (*utf8) {
+        if (i >= max) return 0;
+        if (!(*utf8 & 0x80U)) {
+            utf32[i++] = *utf8++;
+        } else if ((*utf8 & 0xe0U) == 0xc0U) {
+            c = (*utf8++ & 0x1fU) << 6;
+            if ((*utf8 & 0xc0U) != 0x80U) return 0;
+            utf32[i++] = c + (*utf8++ & 0x3fU);
+        } else if ((*utf8 & 0xf0U) == 0xe0U) {
+            c = (*utf8++ & 0x0fU) << 12;
+            if ((*utf8 & 0xc0U) != 0x80U) return 0;
+            c += (*utf8++ & 0x3fU) << 6;
+            if ((*utf8 & 0xc0U) != 0x80U) return 0;
+            utf32[i++] = c + (*utf8++ & 0x3fU);
+        } else if ((*utf8 & 0xf8U) == 0xf0U) {
+            c = (*utf8++ & 0x07U) << 18;
+            if ((*utf8 & 0xc0U) != 0x80U) return 0;
+            c += (*utf8++ & 0x3fU) << 12;
+            if ((*utf8 & 0xc0U) != 0x80U) return 0;
+            c += (*utf8++ & 0x3fU) << 6;
+            if ((*utf8 & 0xc0U) != 0x80U) return 0;
+            c += (*utf8++ & 0x3fU);
+            if ((c & 0xFFFFF800U) == 0xD800U) return 0;
+            if (c >= 0x10000U) {
+                c -= 0x10000U;
+                if (i + 2 > max) return 0;
+                utf32[i++] = 0xD800U | (0x3ffU & (c >> 10));
+                utf32[i++] = 0xDC00U | (0x3ffU & (c));
+            }
+        } else
+            return 0;
+    }
+    utf32[i] = 0;
+    return i;
+}
+
+void test_file_load() {
+    SFT sft = {
+        .xScale = 16 * FONT_SIZE,
+        .yScale = 16 * FONT_SIZE,
+    };
+    sft.font = sft_loadfile("./resources/fonts/Sazanami-Hanazono-Mincho.ttf");
+
+    if (sft.font == NULL) log_error("TTF load failed");
+
+    if (file == NULL) log_error("Cannot open input text");
+
+    SFT_LMetrics lmtx;
+    sft_lmetrics(&sft, &lmtx);
+    int y = 20 + lmtx.ascender + lmtx.lineGap;
+
+    const char* text = "Kanjis: 日本語\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e";
+    int n = strlen(text) - 1;
+
+    unsigned codepoints[sizeof(char) * n];
+    n = utf8_to_utf32((unsigned char*)text, codepoints,
+                      sizeof(char) * n);  // (const uint8_t *)
+
+    for (int i = 0; i < n; i++) {
+        add_glyph(dpy, glyphset, &sft, codepoints[i]);
+    }
+
+    y += 2 * (lmtx.ascender + lmtx.descender + lmtx.lineGap);
+
+    sft_freefont(sft.font);
+    return 0;
+}
