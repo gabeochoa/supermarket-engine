@@ -6,6 +6,8 @@
 #include <stdlib.h>
 
 #include "pch.hpp"
+//
+#include "../engine/strutil.h"
 
 const int START_CODEPOINT = 32;
 const int END_CODEPOINT = 30922;
@@ -61,9 +63,9 @@ inline uint32_t packRGBA(glm::vec4 color) {
            ((uint32_t)((color.a * 255.0f) + 0.5f) << 24);
 }
 
-std::shared_ptr<Texture> fetch_texture_for_sentence(const char* fontname,
-                                                    const char* phrase,
-                                                    bool temporary = false) {
+std::shared_ptr<Texture> fetch_texture_for_sentence(
+    const char* fontname, const std::basic_string<char> phrase,
+    bool temporary = false) {
     std::string filename = fmt::format("./resources/fonts/{}.ttf", fontname);
 
     // This "_" is okay since we are never splitting the string
@@ -106,8 +108,8 @@ std::shared_ptr<Texture> fetch_texture_for_sentence(const char* fontname,
             &info, pixels); /* scale = pixels / (ascent - descent) */
 
         /* create a bitmap */
-        int bitmap_w = pixels * strlen(phrase); /* Width of bitmap */
-        int bitmap_h = pixels;                  /* Height of bitmap */
+        int bitmap_w = pixels * phrase.size(); /* Width of bitmap */
+        int bitmap_h = pixels;                 /* Height of bitmap */
         unsigned char* bitmap =
             (unsigned char*)calloc(bitmap_w * bitmap_h, sizeof(unsigned char));
 
@@ -130,7 +132,7 @@ std::shared_ptr<Texture> fetch_texture_for_sentence(const char* fontname,
         int x = 0; /*x of bitmap*/
 
         /* Cyclic loading of each character in word */
-        for (size_t i = 0; i < strlen(phrase); ++i) {
+        for (size_t i = 0; i < phrase.size(); ++i) {
             /**
              * Get the measurement in the horizontal direction
              * advanceWidth: Word width;
@@ -168,7 +170,138 @@ std::shared_ptr<Texture> fetch_texture_for_sentence(const char* fontname,
         }
 
         /* Save the bitmap data to the 1-channel png image */
-        stbi_write_png("STB.png", bitmap_w, bitmap_h, 1, bitmap, bitmap_w);
+        // stbi_write_png("STB.png", bitmap_w, bitmap_h, 1, bitmap, bitmap_w);
+
+        for (int i = 0; i < bitmap_h / 2; i++) {
+            int k = bitmap_h - 1 - i;
+            for (int j = 0; j < bitmap_w; j++) {
+                unsigned char tmp = bitmap[i * bitmap_w + j];
+                bitmap[i * bitmap_w + j] = bitmap[k * bitmap_w + j];
+                bitmap[k * bitmap_w + j] = tmp;
+            }
+        }
+
+        std::shared_ptr<Texture> fontTexture =
+            std::make_shared<Texture2D>(textureName, bitmap_w, bitmap_h);
+        fontTexture->setBitmapData(bitmap);
+        fontTexture->tilingFactor = 1.f;
+        fontTexture->temporary = temporary;
+        textureLibrary.add(fontTexture);
+
+        free(fontBuffer);
+        free(bitmap);
+        return fontTexture;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<Texture> fetch_texture_for_intl_phrase(
+    const char* fontname, const std::wstring& phrase, bool temporary = false) {
+    std::string filename = fmt::format("./resources/fonts/{}.ttf", fontname);
+
+    // This "_" is okay since we are never splitting the string
+    // into pieces, so its okay if phrase has underscore
+    // if we ever decide to split then be careful
+    auto textureName = fmt::format("{}_{}", fontname, to_string(phrase));
+
+    if (textureLibrary.hasMatchingTexture(textureName)) {
+        auto ptr = textureLibrary.get(textureName);
+        if (ptr) {
+            return ptr;
+        }
+    }
+
+    // otherwise we have to generate it
+
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    if (size == -1) {
+        log_error("Failed to load font {}, file not found", filename);
+        return nullptr;
+    }
+
+    // TODO are the font files bigger than this?
+    char* buffer = (char*)calloc(size, sizeof(unsigned char));
+
+    if (file.read(buffer, size)) {
+        auto fontBuffer = (unsigned char*)buffer;
+
+        /* Initialize font */
+        stbtt_fontinfo info;
+        if (!stbtt_InitFont(&info, fontBuffer, 0)) {
+            log_error("Failed to load font {}", filename);
+        }
+
+        /* Calculate font scaling */
+        float pixels = 1.5f * FONT_SIZE; /* Font size (font size) */
+        float scale = stbtt_ScaleForPixelHeight(
+            &info, pixels); /* scale = pixels / (ascent - descent) */
+
+        /* create a bitmap */
+        int bitmap_w = pixels * phrase.size(); /* Width of bitmap */
+        int bitmap_h = pixels;                 /* Height of bitmap */
+        unsigned char* bitmap =
+            (unsigned char*)calloc(bitmap_w * bitmap_h, sizeof(unsigned char));
+
+        /**
+         * Get the measurement in the vertical direction
+         * ascent: The height of the font from the baseline to the top;
+         * descent: The height from baseline to bottom is usually negative;
+         * lineGap: The distance between two fonts;
+         * The line spacing is: ascent - descent + lineGap.
+         */
+        int ascent = 0;
+        int descent = 0;
+        int lineGap = 0;
+        stbtt_GetFontVMetrics(&info, &ascent, &descent, &lineGap);
+
+        /* Adjust word height according to zoom */
+        ascent = roundf(ascent * scale);
+        descent = roundf(descent * scale);
+
+        int x = 0; /*x of bitmap*/
+
+        /* Cyclic loading of each character in word */
+        for (size_t i = 0; i < phrase.size(); ++i) {
+            /**
+             * Get the measurement in the horizontal direction
+             * advanceWidth: Word width;
+             * leftSideBearing: Left side position;
+             */
+            int advanceWidth = 0;
+            int leftSideBearing = 0;
+            stbtt_GetCodepointHMetrics(&info, phrase[i], &advanceWidth,
+                                       &leftSideBearing);
+
+            /* Gets the border of a character */
+            int c_x1, c_y1, c_x2, c_y2;
+            stbtt_GetCodepointBitmapBox(&info, phrase[i], scale, scale, &c_x1,
+                                        &c_y1, &c_x2, &c_y2);
+
+            /* Calculate the y of the bitmap (different characters have
+             * different heights) */
+            int y = ascent + c_y1;
+
+            /* Render character */
+            int byteOffset =
+                x + roundf(leftSideBearing * scale) + (y * bitmap_w);
+            stbtt_MakeCodepointBitmap(&info, bitmap + byteOffset, c_x2 - c_x1,
+                                      c_y2 - c_y1, bitmap_w, scale, scale,
+                                      phrase[i]);
+
+            /* Adjust x */
+            x += roundf(advanceWidth * scale);
+
+            /* kerning */
+            int kern;
+            kern =
+                stbtt_GetCodepointKernAdvance(&info, phrase[i], phrase[i + 1]);
+            x += roundf(kern * scale);
+        }
+
+        /* Save the bitmap data to the 1-channel png image */
+        // stbi_write_png("STB.png", bitmap_w, bitmap_h, 1, bitmap, bitmap_w);
 
         for (int i = 0; i < bitmap_h / 2; i++) {
             int k = bitmap_h - 1 - i;
@@ -501,34 +634,3 @@ static int utf8_to_utf32(const uint8_t* utf8, uint32_t* utf32, int max) {
     return i;
 }
 
-void test_file_load() {
-    SFT sft = {
-        .xScale = 16 * FONT_SIZE,
-        .yScale = 16 * FONT_SIZE,
-    };
-    sft.font = sft_loadfile("./resources/fonts/Sazanami-Hanazono-Mincho.ttf");
-
-    if (sft.font == NULL) log_error("TTF load failed");
-
-    if (file == NULL) log_error("Cannot open input text");
-
-    SFT_LMetrics lmtx;
-    sft_lmetrics(&sft, &lmtx);
-    int y = 20 + lmtx.ascender + lmtx.lineGap;
-
-    const char* text = "Kanjis: 日本語\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e";
-    int n = strlen(text) - 1;
-
-    unsigned codepoints[sizeof(char) * n];
-    n = utf8_to_utf32((unsigned char*)text, codepoints,
-                      sizeof(char) * n);  // (const uint8_t *)
-
-    for (int i = 0; i < n; i++) {
-        add_glyph(dpy, glyphset, &sft, codepoints[i]);
-    }
-
-    y += 2 * (lmtx.ascender + lmtx.descender + lmtx.lineGap);
-
-    sft_freefont(sft.font);
-    return 0;
-}

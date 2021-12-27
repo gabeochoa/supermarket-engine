@@ -161,14 +161,16 @@ struct UITestLayer : public Layer {
                               .size = glm::vec2{1.f, 1.f},
                               .text = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"});
 
-            auto hiraganaConfig =
-                WidgetConfig({.color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-                              .font = "Sazanami-Hanazono-Mincho",
-                              .position = glm::vec2{0.f, -14.f},
-                              .size = glm::vec2{1.f, 1.f},
-                              .text = "Hiragana: "
-                                      "\xe3\x81\x8b\xe3\x81\x8d\xe3\x81\x8f\xe3"
-                                      "\x81\x91\xe3\x81\x93 (kakikukeko)"});
+            auto hiraganaConfig = WidgetConfig({
+                .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+                .font = "Sazanami-Hanazono-Mincho",
+                .position = glm::vec2{0.f, -14.f},
+                .size = glm::vec2{1.f, 1.f},
+                .text = "Hiragana: "
+                        "\xe3\x81\x8b\xe3\x81\x8d\xe3\x81\x8f\xe3"
+                        "\x81\x91\xe3\x81\x93 (kakikukeko)",
+                .wide = true,
+            });
             auto kanjiConfig = WidgetConfig({
                 .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
                 .font = "Sazanami-Hanazono-Mincho",
@@ -176,6 +178,7 @@ struct UITestLayer : public Layer {
                 .size = glm::vec2{1.f, 1.f},
                 .text =
                     "Kanjis: \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e (nihongo)",
+                .wide = true,
             });
 
             text(uuid({0, item++, 0}), upperCaseConfig);

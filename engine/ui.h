@@ -490,6 +490,7 @@ struct WidgetConfig {
     std::string text = "";
     std::string texture = "white";
     bool transparent = false;
+    bool wide = false;
 };
 
 template <typename T>
@@ -527,8 +528,14 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f},
     // not needed for supermarket but could be in the future?
     (void)id;
 
-    auto texture =
-        fetch_texture_for_sentence(config.font, config.text.c_str(), temporary);
+    std::shared_ptr<Texture> texture;
+    if (config.wide) {
+        texture = fetch_texture_for_intl_phrase(
+            config.font, to_wstring(config.text), temporary);
+    } else {
+        texture = fetch_texture_for_sentence(config.font, config.text.c_str(),
+                                             temporary);
+    }
     if (!texture) {
         log_error("failed to fetch texture for text {} with font {}",
                   config.text, config.font);

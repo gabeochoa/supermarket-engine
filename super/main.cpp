@@ -4,6 +4,7 @@
 #include "../engine/file.h"
 #include "../engine/input.h"
 #include "../engine/pch.hpp"
+#include "../engine/strutil.h"
 #include "custom_fmt.h"
 #include "entities.h"
 #include "job.h"
@@ -20,6 +21,7 @@
 #include "tests.h"
 #include "uitest.h"
 
+//
 /*
 
    Game Ideas
@@ -106,15 +108,6 @@ int main(int argc, char** argv) {
         .clearEnabled = true,
         .escClosesWindow = false,
     }));
-
-    // auto text = "Kanjis: 日本語\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e
-    // (nihongo)"; auto tex =
-    // fetch_texture_for_sentence("Sazanami-Hanazono-Mincho", text);
-    // load_font_textures("./resources/fonts/Sazanami-Hanazono-Mincho.ttf");
-    //
-    // test_file_load();
-
-    return 0;
 
     Layer* super = new SuperLayer();
     App::get().pushLayer(super);
