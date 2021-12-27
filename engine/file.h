@@ -15,27 +15,29 @@ static void openNotification() {
                 pfd::icon::info);
 }
 
-static void openMessage() {
+// -1 error, 0 cancel, 1 yes, 2 no
+static int openMessage(const char* title, const char* msg,
+                       pfd::choice choice_type = pfd::choice::yes_no_cancel,
+                       pfd::icon icon_type = pfd::icon::info) {
     // Message box with nice message
-    auto m = pfd::message(
-        "Personal Message",
-        "You are an amazing person, don’t let anyone make you think otherwise.",
-        pfd::choice::yes_no_cancel, pfd::icon::warning);
+    auto m = pfd::message(title, msg, choice_type, icon_type);
 
     // Do something according to the selected button
     switch (m.result()) {
         case pfd::button::yes:
-            std::cout << "User agreed.\n";
+            return 1;
             break;
         case pfd::button::no:
-            std::cout << "User disagreed.\n";
+            return 2;
             break;
         case pfd::button::cancel:
-            std::cout << "User freaked out.\n";
+            return 0;
             break;
         default:
+            return -1;
             break;  // Should not happen
     }
+    return -1;
 }
 
 static std::vector<std::string> getFilesFromUser(

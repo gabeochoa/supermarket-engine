@@ -116,9 +116,14 @@ struct UITestLayer : public Layer {
                     log_info("You chose the file: {}", file);
             }
             if (button(uuid({0, item++, 0}),
-                       WidgetConfig({.position = glm::vec2{6.f, 0.f},
-                                     .size = glm::vec2{2.f, 1.f}}))) {
-                log_info("clicked button 3");
+                       WidgetConfig({.position = glm::vec2{2.5f, 0.f},
+                                     .size = glm::vec2{6.f, 1.f},
+                                     .text = "open mesage box"}))) {
+                auto result =
+                    openMessage("Example", "This is an example message box");
+                auto str =
+                    (result == 0 ? "cancel" : (result == 1 ? "yes" : "no"));
+                log_info("they clicked: {}", str);
             }
 
             if (slider(uuid({0, item++, 0}),
