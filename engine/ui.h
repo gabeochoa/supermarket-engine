@@ -152,6 +152,8 @@ TODO Vertical button group?
 
 TODO Radio Buttons
 TODO Toggle Button Group
+- Microsoft calls this Spinbutton (for horizontal)
+
 
 TODO Checkbox w/ Label
 TODO Toggle Box
@@ -178,14 +180,32 @@ TODO Drawer
 - imagine something like fallout / skyrim console that pops down/in
 
 TODO datepicker
+TODO timezone picker?
+TODO tree view
+- can probably do this by indenting + accordion
+TODO file treeview
+
+TODO progress bar
+- also circle
+
+TODO color picker
+
+TODO image carousel
+TODO label carosel
+TODO clock
 
 
+TODO number only textfield
 TODO add support for max-length textfield
 this will also help with temporary texture size
 bool textfield(uuid id, WidgetConfig config, std::string& content)
     returns true if content changed
 
 TODO Auto centered text for button_with_label please
+TODO value labels for sliders
+
+TODO add support for drawing controls
+TODO dropzone (drag and drop files)
 
 
 Global State is stored in the Statemanager and you can fetch the underlying
