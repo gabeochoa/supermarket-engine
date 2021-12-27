@@ -20,6 +20,26 @@
 #include "tests.h"
 #include "uitest.h"
 
+/*
+
+
+Allow player to label aisles which make it easier for people to find the item
+the want
+
+Customers leaving items around
+
+Another stock job to put items back
+Weather and day night system
+Different desires based in
+Stealing items
+
+
+
+
+
+
+*/
+
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
