@@ -123,8 +123,47 @@ bool slider(uuid id,
             float mxf);
     returns true if slider moved
 
-// TODO add support for max-length textfield
-// this will also help with temporary texture size
+
+TODO Combobox
+a specific kind of dropdown that allows you to type
+and it filters down to matching items
+
+TODO ButtonGroup
+TODO Do we want to add a dropdown button group?
+TODO Vertical button group?
+
+TODO Radio Buttons
+TODO Toggle Button Group
+
+TODO Checkbox w/ Label
+TODO Toggle Box
+
+TODO Tabs
+TODO Accordions
+- this is basically a dropdown group
+TODO 5 Star Rating?
+
+TODO icons
+
+TODO List
+- usually is just a vlist of buttons
+- probably can just use dropdown but always open
+
+TODO table
+
+TODO Transfer list?
+- this is the thing with three columns that is usually used for team selection
+- idk if anyone would want this instead of just implementing them yourself
+
+TODO Drawer
+- this would be pretty useful for console commands
+- imagine something like fallout / skyrim console that pops down/in
+
+TODO datepicker
+
+
+TODO add support for max-length textfield
+this will also help with temporary texture size
 bool textfield(uuid id, WidgetConfig config, std::string& content)
     returns true if content changed
 
