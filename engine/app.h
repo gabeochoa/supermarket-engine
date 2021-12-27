@@ -5,6 +5,7 @@
 
 #include "buffer.h"
 #include "camera.h"
+#include "keycodes.h"
 #include "layer.h"
 #include "log.h"
 #include "pch.hpp"

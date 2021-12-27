@@ -75,6 +75,14 @@ bool transparent = false;
 
 3. Widget Functions
 
+text
+button (w/ label)
+dropdown
+checkbox
+slider
+textfield
+
+
 bool text(uuid id,
           WidgetConfig config,
           // Drawn position will be config.position+offset
@@ -124,6 +132,16 @@ bool slider(uuid id,
     returns true if slider moved
 
 
+bool textfield(uuid id,
+               WidgetConfig config,
+               // reference to the content string the person typed in
+               std::string& content);
+    returns true if textfield changed
+
+// TODO add support for max-length textfield
+// this will also help with temporary texture size
+
+
 TODO Combobox
 a specific kind of dropdown that allows you to type
 and it filters down to matching items
@@ -166,6 +184,8 @@ TODO add support for max-length textfield
 this will also help with temporary texture size
 bool textfield(uuid id, WidgetConfig config, std::string& content)
     returns true if content changed
+
+TODO Auto centered text for button_with_label please
 
 
 Global State is stored in the Statemanager and you can fetch the underlying

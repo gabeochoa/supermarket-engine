@@ -26,9 +26,7 @@ struct OrthoCamera : public Camera {
         updateViewMat();
     }
 
-    void setViewport(const glm::vec4& vp){
-        viewport = vp;
-    }
+    void setViewport(const glm::vec4& vp) { viewport = vp; }
 
     void setProjection(float left, float right, float bottom, float top) {
         prof(__PROFILE_FUNC__);
@@ -73,7 +71,7 @@ struct OrthoCameraController {
     }
 
     void onUpdate(Time dt) {
-        prof(__PROFILE_FUNC__);
+        prof give_me_a_name(__PROFILE_FUNC__);
         if (movementEnabled) {
             if (Input::isKeyPressed(Key::mapping["Left"])) {
                 camera.position.x -= camSpeed * dt;
@@ -109,7 +107,7 @@ struct OrthoCameraController {
     }
 
     bool onWindowResized(WindowResizeEvent& event) {
-        aspectRatio = event.width() / event.height();
+        aspectRatio = (1.f * event.width()) / event.height();
         camera.setProjection(-aspectRatio * zoomLevel, aspectRatio * zoomLevel,
                              -zoomLevel, zoomLevel);
         return false;

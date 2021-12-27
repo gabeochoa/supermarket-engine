@@ -34,10 +34,6 @@ Different desires based in
 Stealing items
 
 
-
-
-
-
 */
 
 int main(int argc, char** argv) {
@@ -87,8 +83,8 @@ int main(int argc, char** argv) {
     Layer* jobLayer = new JobLayer();
     App::get().pushLayer(jobLayer);
 
-    // Menu::get().state = Menu::State::Root;
-    Menu::get().state = Menu::State::UITest;
+    Menu::get().state = Menu::State::Root;
+    // Menu::get().state = Menu::State::UITest;
 
     App::get().run();
 

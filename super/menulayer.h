@@ -89,15 +89,15 @@ struct MenuLayer : public Layer {
         // exists as part of the engine
         // and not the game textures
         Renderer::addTexture("./resources/menu_bg.png");
-        Renderer::addSubtexture("menu_bg", "menu_1_bg", 0, 0, 53.f, 32.f);
-        Renderer::addSubtexture("menu_bg", "menu_2_bg", 1, 0, 56.f, 32.f);
+        Renderer::addSubtexture("menu_bg", "menu_1_bg", 0, 0, 80.f, 60.f);
+        Renderer::addSubtexture("menu_bg", "menu_2_bg", 1, 0, 80.f, 60.f);
 
         Renderer::addTexture("./resources/transparent.png");
 
         IUI::init_context();
 
-        b1Pos = camPosInterp.camPositions[0] + glm::vec2{7.f, 5.f};
-        b1Size = glm::vec2{48.f, 32.f};
+        b1Pos = camPosInterp.camPositions[0] + glm::vec2{7.f, 0.f};
+        b1Size = glm::vec2{40.f, 20.f};
         std::shared_ptr<Billboard> b1;
         b1.reset(new Billboard(b1Pos,           //
                                b1Size,          //
@@ -216,7 +216,7 @@ struct MenuLayer : public Layer {
         menuCameraController->onUpdate(dt);
 
         Renderer::begin(menuCameraController->camera);
-        ui_test();
+        ui();
 
         camerate(dt);
 
@@ -234,7 +234,7 @@ struct MenuLayer : public Layer {
         auto textConfig = IUI::WidgetConfig({
             .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
             .position = glm::vec2{1.f, 3.f},           //
-            .size = glm::vec2{2.f, 2.f},               //
+            .size = glm::vec2{1.f, 1.f},               //
             .text = "Tap to continue",                 //
         });
         auto buttonConfig = IUI::WidgetConfig({
@@ -260,7 +260,7 @@ struct MenuLayer : public Layer {
                 camPosInterp.camPositions[1] + glm::vec2{-15.f, -8.f};
             auto textConfig = IUI::WidgetConfig({
                 .color = glm::vec4{1.0f, 1.0f, 1.0f, 1.f},  //
-                .position = glm::vec2{-0.25f, 1.5f},        //
+                .position = glm::vec2{1.f, 0.0f},           //
                 .size = glm::vec2{2.f, 2.f},                //
                 .text = "Play",                             //
             });
@@ -283,7 +283,7 @@ struct MenuLayer : public Layer {
             auto startPos = camPosInterp.camPositions[1] + glm::vec2{0.f, 0.f};
             auto textConfig = IUI::WidgetConfig({
                 .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
-                .position = glm::vec2{0.0f, 1.0f},         //
+                .position = glm::vec2{1.0f, 0.75f},        //
                 .size = glm::vec2{1.f, 1.f},               //
                 .text = "Settings",                        //
             });
@@ -302,7 +302,35 @@ struct MenuLayer : public Layer {
         }
     }
 
-    void ui_test() {
+    void cam_pos_2(int parent) {
+        if (camPosInterp.camPosIndex != 2) return;
+
+        int item = 0;
+        {
+            auto startPos =
+                camPosInterp.camPositions[2] + glm::vec2{-15.f, -8.f};
+            auto textConfig = IUI::WidgetConfig({
+                .color = glm::vec4{1.0f, 1.0f, 1.0f, 1.f},  //
+                .position = glm::vec2{1.f, 0.0f},           //
+                .size = glm::vec2{2.f, 2.f},                //
+                .text = "cam_pos_2",                        //
+            });
+            auto buttonConfig = IUI::WidgetConfig({
+                .child = &textConfig,                         //
+                .color = glm::vec4{0.75f, 0.4f, 0.34f, 1.f},  //
+                .position = startPos,                         //
+                .size = glm::vec2{9.f, 3.0f},                 //
+                .texture = "white",                           //
+                .transparent = false,                         //
+            });
+
+            if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
+                                       buttonConfig)) {
+            }
+        }
+    }
+
+    void ui() {
         menuCameraController->camera.position =
             glm::vec3{camPosInterp.xinterp.next(), camPosInterp.yinterp.next(),
                       menuCameraController->camera.position.z};
@@ -311,6 +339,7 @@ struct MenuLayer : public Layer {
             int parent = 0;
             cam_pos_0(parent++);
             cam_pos_1(parent++);
+            cam_pos_2(parent++);
         }
     }
 

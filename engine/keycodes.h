@@ -181,7 +181,11 @@ static inline void default_keys() {
     mapping["Enter"] = KeyCode::Enter;
 }
 
-static void load_keys() {
+// This is actually being used in App.h
+// but Coc::Clang doesnt seem to care :)
+__attribute__((unused))  //
+static void
+load_keys() {
     // load default keys
     default_keys();
     // load keybindings from file
@@ -198,7 +202,11 @@ static void load_keys() {
     ifs.close();
 }
 
-static void export_keys() {
+// This is actually being used in App.h
+// but Coc::Clang doesnt seem to care :)
+__attribute__((unused))  //
+static void
+export_keys() {
     std::ofstream ofs("./resources/keybindings.ini");
     if (!ofs.is_open()) {
         log_warn("failed to write to keybindings file");
