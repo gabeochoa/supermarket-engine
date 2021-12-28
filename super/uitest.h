@@ -131,6 +131,17 @@ struct UITestLayer : public Layer {
                        WidgetConfig({
                            .position = glm::vec2{9.f, 0.f},
                            .size = glm::vec2{1.f, 3.f},
+                           .vertical = true,
+                       }),
+                       &value, 0.08f, 0.95f)) {
+                // log_info("idk moved slider? ");
+            }
+
+            if (slider(uuid({0, item++, 0}),
+                       WidgetConfig({
+                           .position = glm::vec2{11.f, 3.f},
+                           .size = glm::vec2{3.f, 1.f},
+                           .vertical = false,
                        }),
                        &value, 0.08f, 0.95f)) {
                 // log_info("idk moved slider? ");

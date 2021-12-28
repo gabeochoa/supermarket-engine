@@ -141,6 +141,7 @@ bool textfield(uuid id,
 TODO add support for max-length textfield
     this will also help with temporary texture size
 TODO support typing in unicode ...
+    - codepoints are sent correctly from opengl already
 
 
 TODO Combobox
@@ -370,6 +371,11 @@ struct TextfieldState : public UIState {
     State<std::wstring> buffer;
 };
 
+struct DropdownState : public UIState {
+    State<bool> dropdown;
+    State<int> selected;
+};
+
 struct StateManager {
     std::map<uuid, std::shared_ptr<UIState>> states;
 
@@ -426,11 +432,11 @@ uuid rootID = uuid({.owner = -1, .item = 0, .index = 0});
 uuid fakeID = uuid({.owner = -2, .item = 0, .index = 0});
 static std::shared_ptr<UIContext> globalContext;
 
-auto white = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
-auto red = glm::vec4{1.0f, 0.0f, 0.0f, 1.0f};
-auto green = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
-auto blue = glm::vec4{0.0f, 0.0f, 1.0f, 1.0f};
-auto teal = glm::vec4{0.0f, 1.0f, 1.0f, 1.0f};
+static const glm::vec4 white = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
+static const glm::vec4 red = glm::vec4{1.0f, 0.0f, 0.0f, 1.0f};
+static const glm::vec4 green = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
+static const glm::vec4 blue = glm::vec4{0.0f, 0.0f, 1.0f, 1.0f};
+static const glm::vec4 teal = glm::vec4{0.0f, 1.0f, 1.0f, 1.0f};
 
 inline std::shared_ptr<UIContext> get() {
     if (!globalContext) globalContext.reset(new UIContext());
@@ -491,6 +497,7 @@ struct WidgetConfig {
     std::string text = "";
     std::string texture = "white";
     bool transparent = false;
+    bool vertical = false;
 };
 
 template <typename T>
@@ -642,6 +649,9 @@ bool button_with_label(uuid id, WidgetConfig config) {
 bool dropdown(uuid id, WidgetConfig config,
               const std::vector<WidgetConfig>& configs, bool* dropdownState,
               int* selectedIndex) {
+    auto state = widget_init<DropdownState>(id);
+    if (dropdownState) state->dropdown.set(*dropdownState);
+    if (selectedIndex) state->selected.set(*selectedIndex);
     int item = 0;
 
     // TODO rotation is not really working correctly and so we have to
@@ -681,12 +691,12 @@ bool dropdown(uuid id, WidgetConfig config,
             }
         }
 
-        if (Input::isKeyPressed(Key::mapping["Value Up"])) {
+        if (get()->pressed(Key::mapping["Value Up"])) {
             (*selectedIndex) -= 1;
             if (*selectedIndex < 0) *selectedIndex = 0;
         }
 
-        if (Input::isKeyPressed(Key::mapping["Value Down"])) {
+        if (get()->pressed(Key::mapping["Value Down"])) {
             (*selectedIndex) += 1;
             if (*selectedIndex > (int)configs.size() - 1)
                 *selectedIndex = configs.size() - 1;
@@ -698,6 +708,8 @@ bool dropdown(uuid id, WidgetConfig config,
 
 bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
     auto state = widget_init<CheckboxState>(id);
+    if (cbState) state->checked.set(*cbState);
+
     int item = 0;
 
     bool changed = false;
@@ -723,13 +735,21 @@ bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
 
 bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     auto state = widget_init<SliderState>(id);
+    if (value) state->value.set(*value);
 
     bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
                                           config.size.x, config.size.y});
 
-    float min = config.position.y - config.size.y / 2.f;
-    float max = config.position.y + config.size.y / 2.f;
-    float ypos = min + ((max - min) * state->value);
+    float min;
+    float max;
+    if (config.vertical) {
+        min = config.position.y - (config.size.y / 2.f);
+        max = config.position.y + (config.size.y / 2.f);
+    } else {
+        min = config.position.x - (config.size.x / 2.f);
+        max = config.position.x + (config.size.x / 2.f);
+    }
+    float pos_offset = ((max - min) * state->value);
 
     if (inside) {
         get()->hotID = id;
@@ -752,8 +772,18 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     // that way the mouse collision works
     auto pos = glm::vec2{config.position.x + (config.size.x / 2.f),
                          config.position.y + (config.size.y / 2.f)};
-    draw_ui_widget(pos + glm::vec2{0.f, ypos}, glm::vec2{0.5f}, col,
-                   config.texture, config.rotation);
+
+    // slide
+    if (config.vertical) {
+        draw_ui_widget(
+            config.position + glm::vec2{config.size.x / 2.f, pos_offset},
+            glm::vec2{0.5f}, col, config.texture, config.rotation);
+    } else {
+        draw_ui_widget(
+            config.position + glm::vec2{pos_offset, config.size.y / 2.f},
+            glm::vec2{0.5f}, col, config.texture, config.rotation);
+    }
+    // slider rail
     draw_ui_widget(pos, config.size, red, config.texture, config.rotation);
 
     draw_if_kb_focus(id, [&]() {
@@ -795,7 +825,12 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
 
     if (get()->activeID == id) {
         get()->kbFocusID = id;
-        float v = (config.position.y - get()->mousePosition.y) / config.size.y;
+        float v;
+        if (config.vertical) {
+            v = (config.position.y - get()->mousePosition.y) / config.size.y;
+        } else {
+            v = (get()->mousePosition.x - config.position.x) / config.size.x;
+        }
         if (v < mnf) v = mnf;
         if (v > mxf) v = mxf;
         if (v != *value) {
