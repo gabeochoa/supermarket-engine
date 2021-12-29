@@ -30,11 +30,11 @@ Allow player to label aisles which make it easier for people to find the item
 the want
 
 Customers leaving items around
-
-Another stock job to put items back
-Weather and day night system
-Different desires based in
+ + Another stock job to put items back
 Stealing items
+
+Weather and day night system
+ + Different desires based in
 
 
   Engine Ideas
@@ -127,8 +127,9 @@ int main(int argc, char** argv) {
     Layer* jobLayer = new JobLayer();
     App::get().pushLayer(jobLayer);
 
+    Menu::get().state = Menu::State::Game;
     // Menu::get().state = Menu::State::Root;
-    Menu::get().state = Menu::State::UITest;
+    // Menu::get().state = Menu::State::UITest;
 
     App::get().run();
 

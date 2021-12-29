@@ -13,6 +13,13 @@
 #include "menu.h"
 
 struct SuperLayer : public Layer {
+    // TODO should we add some system for "named" entities
+    // allowing to store this globally and hide it from the layer
+    bool isMouseDragging = false;
+    glm::vec2 mouseDragStart;
+    glm::vec2 mouseDragEnd;
+    std::shared_ptr<DragArea> dragArea;
+
     SuperLayer() : Layer("Supermarket") {
         isMinimized = true;
 
@@ -27,13 +34,14 @@ struct SuperLayer : public Layer {
         // 918 × 203 pixels
         // 16 x 16
         // margin 1
+        float playerSprite = 16.f;
         Renderer::addTexture("./resources/character_tilesheet.png");
-        Renderer::addSubtexture("character_tilesheet", "player", 0, 0, 4.f,
-                                4.f);
-        Renderer::addSubtexture("character_tilesheet", "player2", 0, 1, 4.f,
-                                4.f);
-        Renderer::addSubtexture("character_tilesheet", "player3", 1, 1, 4.f,
-                                4.f);
+        Renderer::addSubtexture("character_tilesheet", "player", 0, 0,
+                                playerSprite, playerSprite);
+        Renderer::addSubtexture("character_tilesheet", "player2", 0, 1,
+                                playerSprite, playerSprite);
+        Renderer::addSubtexture("character_tilesheet", "player3", 1, 1,
+                                playerSprite, playerSprite);
 
         Renderer::addTexture("./resources/item_sheet.png");
         Renderer::addSubtexture("item_sheet", "egg", 0, 0, 16.f, 16.f);
@@ -76,6 +84,9 @@ struct SuperLayer : public Layer {
             emp.textureName = peopleSprites[i % num_people_sprites];
             entities.push_back(std::make_shared<Employee>(emp));
         }
+
+        dragArea.reset(new DragArea(glm::vec2{0.f}, glm::vec2{0.f}, 0.f,
+                                    glm::vec4{0.75f}));
     }
 
     virtual ~SuperLayer() {}
@@ -87,6 +98,12 @@ struct SuperLayer : public Layer {
         for (auto& entity : entities) {
             entity->onUpdate(dt);
         }
+
+        //
+        // drag
+        dragArea->position = mouseDragStart;
+        dragArea->size = (mouseDragEnd - mouseDragStart);
+        dragArea->onUpdate(dt);
     }
 
     void render() {
@@ -94,6 +111,7 @@ struct SuperLayer : public Layer {
         for (auto& entity : entities) {
             entity->render();
         }
+        dragArea->render();
         Renderer::end();
     }
 
@@ -129,20 +147,47 @@ struct SuperLayer : public Layer {
         }
     }
 
-    bool onMouseButtonPressed(Mouse::MouseButtonPressedEvent& e) {
+    glm::vec3 getMouseInWorld() {
         auto mouse = Input::getMousePosition();
         glm::vec4 viewport = {0, 0, WIN_W, WIN_H};
-        glm::vec3 mouseInWorld =
-            glm::unProject(glm::vec3{mouse.x, WIN_H - mouse.y, 0.f},
-                           cameraController->camera.view,
-                           cameraController->camera.projection, viewport);
+        return screenToWorld(glm::vec3{mouse.x, WIN_H - mouse.y, 0.f},
+                             cameraController->camera.view,
+                             cameraController->camera.projection, viewport);
+    }
+
+    bool onMouseButtonPressed(Mouse::MouseButtonPressedEvent& e) {
+        glm::vec3 mouseInWorld = getMouseInWorld();
 
         // TODO allow people to remap their mouse buttons?
         if (e.GetMouseButton() == Mouse::MouseCode::ButtonLeft) {
+            mouseDragStart = mouseInWorld;
+            mouseDragEnd = mouseInWorld;
+        }
+        if (e.GetMouseButton() == Mouse::MouseCode::ButtonRight) {
             JobQueue::addJob(
                 JobType::DirectedWalk,
                 std::make_shared<Job>(Job({.type = JobType::DirectedWalk,
                                            .endPosition = mouseInWorld})));
+        }
+        return false;
+    }
+    bool onMouseMoved(Mouse::MouseMovedEvent& e) {
+        glm::vec3 mouseInWorld = getMouseInWorld();
+
+        if (Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft)) {
+            isMouseDragging = true;
+            mouseDragEnd = mouseInWorld;
+        }
+        return false;
+    }
+
+    bool onMouseButtonReleased(Mouse::MouseButtonReleasedEvent& e) {
+        glm::vec3 mouseInWorld = getMouseInWorld();
+
+        if (e.GetMouseButton() == Mouse::MouseCode::ButtonLeft) {
+            mouseDragEnd = mouseInWorld;
+            // TODO should this live in mouseMoved?
+            isMouseDragging = false;
         }
         return false;
     }
@@ -177,6 +222,10 @@ struct SuperLayer : public Layer {
         EventDispatcher dispatcher(event);
         dispatcher.dispatch<Mouse::MouseButtonPressedEvent>(std::bind(
             &SuperLayer::onMouseButtonPressed, this, std::placeholders::_1));
+        dispatcher.dispatch<Mouse::MouseButtonReleasedEvent>(std::bind(
+            &SuperLayer::onMouseButtonReleased, this, std::placeholders::_1));
+        dispatcher.dispatch<Mouse::MouseMovedEvent>(
+            std::bind(&SuperLayer::onMouseMoved, this, std::placeholders::_1));
         dispatcher.dispatch<KeyPressedEvent>(
             std::bind(&SuperLayer::onKeyPressed, this, std::placeholders::_1));
     }
