@@ -69,6 +69,7 @@ struct OrthoCameraController {
           movementEnabled(cameraSpeed != 0.f),
           rotationEnabled(rotationSpeed != 0.f),
           camera(-ratio * zoomLevel, ratio * zoomLevel, -zoomLevel, zoomLevel) {
+        setZoomLevel(defaultZoom);
     }
 
     void onUpdate(Time dt) {
@@ -98,14 +99,18 @@ struct OrthoCameraController {
         camera.updateViewMat();
     }
 
-    bool onMouseScrolled(Mouse::MouseScrolledEvent& event) {
-        if (!zoomEnabled) return false;
-
-        zoomLevel =
-            fmin(fmax(zoomLevel - (event.GetYOffset() * 0.25), 0.5f), 20.f);
+    void setZoomLevel(float zm) {
+        if (!zoomEnabled) return;
+        zoomLevel = zm;
         camera.setProjection(-aspectRatio * zoomLevel, aspectRatio * zoomLevel,
                              -zoomLevel, zoomLevel);
         camSpeed = zoomLevel;
+    }
+
+    bool onMouseScrolled(Mouse::MouseScrolledEvent& event) {
+        float zl =
+            fmin(fmax(zoomLevel - (event.GetYOffset() * 0.25), 0.5f), 20.f);
+        setZoomLevel(zl);
         // TODO should this be true since we dont want to scroll and zoom at the
         // same time
         return false;

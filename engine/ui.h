@@ -943,7 +943,13 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
 }
 
 bool window(uuid id, WidgetConfig config,
-            const std::vector<WidgetConfig>& children) {
+            const std::vector<std::function<bool(uuid)>>& children) {
+    int item = 0;
+    int index = 0;
+    for (auto child : children) {
+        child(uuid({id.item, item, index++}));
+    }
+
     draw_ui_widget(config.position, config.size, config.color, config.texture,
                    config.rotation);
     return false;

@@ -13,17 +13,17 @@
 #include "job.h"
 #include "menu.h"
 
-static std::shared_ptr<OrthoCameraController> gameUICameraController;
 struct GameUILayer : public Layer {
-    glm::vec4 viewport = {0, 0, WIN_W, WIN_H};
+    const glm::vec2 camTopLeft = {35.f, 19.5f};
+    const glm::vec2 camBottomRight = {35.f, -18.f};
 
     GameUILayer() : Layer("Game UI") {
         isMinimized = true;
         gameUICameraController.reset(new OrthoCameraController(WIN_RATIO));
-        gameUICameraController->camera.setViewport(viewport);
+        gameUICameraController->camera.setViewport({0, 0, WIN_W, WIN_H});
+        gameUICameraController->setZoomLevel(20.f);
         // move the camera so 0,0 is top left
-        gameUICameraController->camera.setPosition(
-            glm::vec3{1.27f, -0.5f, 0.f});
+        gameUICameraController->camera.setPosition(glm::vec3{camTopLeft, 0.f});
         gameUICameraController->movementEnabled = false;
         gameUICameraController->rotationEnabled = false;
         gameUICameraController->zoomEnabled = false;
@@ -37,31 +37,44 @@ struct GameUILayer : public Layer {
         Renderer::begin(gameUICameraController->camera);
         using namespace IUI;
         UIFrame BandE(gameUICameraController);
+        int item = 0;
 
-        auto ui_pos_cvt = [&](glm::vec2 pos) {
-            return screenToWorld(
-                glm::vec3{pos, 0.f}, gameUICameraController->camera.view,
-                gameUICameraController->camera.projection, viewport);
+        const glm::vec2 window_top_right = {71.f, 40.f};
+
+        std::vector<std::function<bool(uuid)>> children;
+
+        std::function<bool(uuid)> textFunc = [](uuid id) {
+            auto textConfig = WidgetConfig({
+                .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+                .position = glm::vec2{0.f, 0.f},
+                .size = glm::vec2{1.f, 1.f},
+                .text = "With great power comes great responsibility",
+            });
+            return text(id, textConfig);
+        };
+        children.push_back(textFunc);
+
+        auto rect = glm::vec4{100.f, 100.f, 200.f, 200.f};
+
+        auto ui_cvt_pos = [&](glm::vec2 pos) {
+            return screenToWorld(glm::vec3{pos.x, pos.y, 0.f},
+                                 gameUICameraController->camera.view,
+                                 gameUICameraController->camera.projection,
+                                 gameUICameraController->camera.viewport);
         };
 
-        std::vector<WidgetConfig> children;
-        glm::vec2 window_position = {0.f, 0.f};
-        window(uuid({0, 0, 0}),
+        glm::vec2 window_position = ui_cvt_pos(glm::vec2{rect.x, rect.y});
+        glm::vec2 window_size =
+            ui_cvt_pos(glm::vec2{rect.z - rect.x, rect.w - rect.y});
+
+        window(uuid({0, item++, 0}),
                WidgetConfig({
                    .color = blue,
-                   .position = (window_position),
-                   .size = (glm::vec2{1.f, 1.f}),
+                   .position = window_position,
+                   .size = window_size,
                }),
                children);
 
-        window_position = {1.f, 1.f};
-        window(uuid({0, 1, 0}),
-               WidgetConfig({
-                   .color = red,
-                   .position = (window_position),
-                   .size = (glm::vec2{1.f, 1.f}),
-               }),
-               children);
         Renderer::end();
     }
 

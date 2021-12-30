@@ -15,7 +15,10 @@ struct DragArea : public Entity {
 
     DragArea(const glm::vec2& position, const glm::vec2& size, float angle,
              const glm::vec4& color, const std::string& textureName = "white")
-        : Entity(position, size, angle, color, textureName) {}
+        : Entity(position, size, angle, color, textureName) {
+        mouseDragStart = glm::vec2{0.f};
+        mouseDragEnd = glm::vec2{0.f};
+    }
 
     virtual ~DragArea() {}
     virtual const char* typeString() const override { return "DragArea"; }
