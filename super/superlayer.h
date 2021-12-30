@@ -107,6 +107,9 @@ struct SuperLayer : public Layer {
         for (auto& entity : entities) {
             entity->render();
         }
+        // should go underneath entities
+        dragArea->render_selected();
+
         Renderer::end();
     }
 
@@ -183,6 +186,7 @@ struct SuperLayer : public Layer {
             dragArea->mouseDragEnd = mouseInWorld;
             // TODO should this live in mouseMoved?
             dragArea->isMouseDragging = false;
+            dragArea->onDragEnd();
         }
         return false;
     }
