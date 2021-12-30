@@ -179,6 +179,27 @@ struct Storable : public Entity {
         }
         return matching;
     }
+
+    template <typename T>
+    static std::vector<std::shared_ptr<T>> getStorageInSelection(
+        glm::vec4 rect) {
+        std::vector<std::shared_ptr<T>> matching;
+        for (auto& e : entities) {
+            auto s = dynamic_pointer_cast<T>(e);
+            if (!s) continue;
+            if (s->position.x + s->size.x >=
+                    rect.x &&  // s->position. right edge past pos. left
+                s->position.x <=
+                    rect.z &&  // s->position. left edge past pos. right
+                s->position.y + s->size.y >=
+                    rect.y &&  // s->position. top edge past pos. bottom
+                s->position.y <=
+                    rect.w) {  // s->position. bottom edge past pos. top
+                matching.push_back(s);
+            }
+        }
+        return matching;
+    }
 };
 
 struct Storage : public Storable {

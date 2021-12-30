@@ -8,6 +8,7 @@
 //
 #include "global.h"
 //
+#include "drag_area.h"
 #include "entities.h"
 #include "job.h"
 #include "menu.h"
@@ -100,10 +101,12 @@ struct SuperLayer : public Layer {
 
     void render() {
         Renderer::begin(cameraController->camera);
+        // render above any other items
+        dragArea->render();
+
         for (auto& entity : entities) {
             entity->render();
         }
-        dragArea->render();
         Renderer::end();
     }
 
