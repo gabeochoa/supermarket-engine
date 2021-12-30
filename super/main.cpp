@@ -109,23 +109,28 @@ int main(int argc, char** argv) {
         .escClosesWindow = false,
     }));
 
+    // test code underneath game so it never shows
+    Layer* uitest = new UITestLayer();
+    App::get().pushLayer(uitest);
+
+    //
     Layer* super = new SuperLayer();
     App::get().pushLayer(super);
+    Layer* game_ui = new GameUILayer();
+    App::get().pushLayer(game_ui);
+
+    // TODO integrate into gameUI layer
+    Layer* jobLayer = new JobLayer();
+    App::get().pushLayer(jobLayer);
 
     Layer* menu = new MenuLayer();
     App::get().pushLayer(menu);
 
-    Layer* uitest = new UITestLayer();
-    App::get().pushLayer(uitest);
-
+    //
     Layer* profile = new ProfileLayer();
     App::get().pushLayer(profile);
-
     Layer* entityDebug = new EntityDebugLayer();
     App::get().pushLayer(entityDebug);
-
-    Layer* jobLayer = new JobLayer();
-    App::get().pushLayer(jobLayer);
 
     Menu::get().state = Menu::State::Game;
     // Menu::get().state = Menu::State::Root;

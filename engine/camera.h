@@ -29,7 +29,7 @@ struct OrthoCamera : public Camera {
     void setViewport(const glm::vec4& vp) { viewport = vp; }
 
     void setProjection(float left, float right, float bottom, float top) {
-        prof(__PROFILE_FUNC__);
+        prof give_me_a_name(__PROFILE_FUNC__);
         projection = glm::ortho(left, right, bottom, top, -1.f, 1.f);
         updateViewMat();
     }
@@ -57,6 +57,7 @@ struct OrthoCameraController {
     float rotSpeed;
     bool movementEnabled;
     bool rotationEnabled;
+    bool zoomEnabled = true;
     OrthoCamera camera;
 
     OrthoCameraController(float ratio, float defaultZoom = 1.f,
@@ -98,11 +99,15 @@ struct OrthoCameraController {
     }
 
     bool onMouseScrolled(Mouse::MouseScrolledEvent& event) {
+        if (!zoomEnabled) return false;
+
         zoomLevel =
             fmin(fmax(zoomLevel - (event.GetYOffset() * 0.25), 0.5f), 20.f);
         camera.setProjection(-aspectRatio * zoomLevel, aspectRatio * zoomLevel,
                              -zoomLevel, zoomLevel);
         camSpeed = zoomLevel;
+        // TODO should this be true since we dont want to scroll and zoom at the
+        // same time
         return false;
     }
 

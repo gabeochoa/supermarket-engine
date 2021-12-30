@@ -13,25 +13,99 @@
 #include "job.h"
 #include "menu.h"
 
+static std::shared_ptr<OrthoCameraController> gameUICameraController;
+struct GameUILayer : public Layer {
+    glm::vec4 viewport = {0, 0, WIN_W, WIN_H};
+
+    GameUILayer() : Layer("Game UI") {
+        isMinimized = true;
+        gameUICameraController.reset(new OrthoCameraController(WIN_RATIO));
+        gameUICameraController->camera.setViewport(viewport);
+        // move the camera so 0,0 is top left
+        gameUICameraController->camera.setPosition(
+            glm::vec3{1.27f, -0.5f, 0.f});
+        gameUICameraController->movementEnabled = false;
+        gameUICameraController->rotationEnabled = false;
+        gameUICameraController->zoomEnabled = false;
+    }
+
+    virtual ~GameUILayer() {}
+    virtual void onAttach() override {}
+    virtual void onDetach() override {}
+
+    void render() {
+        Renderer::begin(gameUICameraController->camera);
+        using namespace IUI;
+        UIFrame BandE(gameUICameraController);
+
+        auto ui_pos_cvt = [&](glm::vec2 pos) {
+            return screenToWorld(
+                glm::vec3{pos, 0.f}, gameUICameraController->camera.view,
+                gameUICameraController->camera.projection, viewport);
+        };
+
+        std::vector<WidgetConfig> children;
+        glm::vec2 window_position = {0.f, 0.f};
+        window(uuid({0, 0, 0}),
+               WidgetConfig({
+                   .color = blue,
+                   .position = (window_position),
+                   .size = (glm::vec2{1.f, 1.f}),
+               }),
+               children);
+
+        window_position = {1.f, 1.f};
+        window(uuid({0, 1, 0}),
+               WidgetConfig({
+                   .color = red,
+                   .position = (window_position),
+                   .size = (glm::vec2{1.f, 1.f}),
+               }),
+               children);
+        Renderer::end();
+    }
+
+    virtual void onUpdate(Time dt) override {
+        if (Menu::get().state != Menu::State::Game) return;
+
+        log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
+        prof give_me_a_name(__PROFILE_FUNC__);  //
+
+        Renderer::stats.reset();
+        Renderer::stats.begin();
+
+        gameUICameraController->onUpdate(dt);
+        render();  // draw everything
+
+        //
+        Renderer::stats.end();
+    }
+
+    virtual void onEvent(Event& event) override {
+        if (Menu::get().state != Menu::State::Game) return;
+        gameUICameraController->onEvent(event);
+    }
+};
+
 struct SuperLayer : public Layer {
     // TODO should we add some system for "named" entities
     // allowing to store this globally and hide it from the layer
     std::shared_ptr<DragArea> dragArea;
+    glm::vec4 viewport = {0, 0, WIN_W, WIN_H};
 
     SuperLayer() : Layer("Supermarket") {
         isMinimized = true;
 
-        cameraController.reset(new OrthoCameraController(WIN_RATIO, true));
-        cameraController->camera.setViewport(glm::vec4{0, 0, WIN_W, WIN_H});
+        cameraController.reset(new OrthoCameraController(WIN_RATIO));
+        cameraController->camera.setViewport(viewport);
+        cameraController->rotationEnabled = false;
 
         Renderer::addTexture("./resources/face.png");
         Renderer::addTexture("./resources/box.png");
         Renderer::addTexture("./resources/shelf.png");
         Renderer::addTexture("./resources/screen.png");
 
-        // 918 × 203 pixels
-        // 16 x 16
-        // margin 1
+        // 918 × 203 pixels at 16 x 16 with margin 1
         float playerSprite = 16.f;
         Renderer::addTexture("./resources/character_tilesheet.png");
         Renderer::addSubtexture("character_tilesheet", "player", 0, 0,
@@ -109,7 +183,6 @@ struct SuperLayer : public Layer {
         }
         // should go underneath entities
         dragArea->render_selected();
-
         Renderer::end();
     }
 
@@ -147,7 +220,6 @@ struct SuperLayer : public Layer {
 
     glm::vec3 getMouseInWorld() {
         auto mouse = Input::getMousePosition();
-        glm::vec4 viewport = {0, 0, WIN_W, WIN_H};
         return screenToWorld(glm::vec3{mouse.x, WIN_H - mouse.y, 0.f},
                              cameraController->camera.view,
                              cameraController->camera.projection, viewport);
@@ -229,3 +301,4 @@ struct SuperLayer : public Layer {
             std::bind(&SuperLayer::onKeyPressed, this, std::placeholders::_1));
     }
 };
+

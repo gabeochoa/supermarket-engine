@@ -81,7 +81,7 @@ dropdown
 checkbox
 slider
 textfield
-
+window
 
 bool text(uuid id,
           WidgetConfig config,
@@ -137,6 +137,11 @@ bool textfield(uuid id,
                // reference to the content string the person typed in
                std::string& content);
     returns true if textfield changed
+
+bool window(uuid id, WidgetConfig config, const std::vector<WidgetConfig>&
+children);
+    returns false always
+
 
 TODO add support for max-length textfield
     this will also help with temporary texture size
@@ -935,6 +940,13 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
 
     content = state->buffer;
     return changed;
+}
+
+bool window(uuid id, WidgetConfig config,
+            const std::vector<WidgetConfig>& children) {
+    draw_ui_widget(config.position, config.size, config.color, config.texture,
+                   config.rotation);
+    return false;
 }
 
 struct UIFrame {
