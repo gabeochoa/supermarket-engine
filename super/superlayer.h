@@ -15,9 +15,6 @@
 struct SuperLayer : public Layer {
     // TODO should we add some system for "named" entities
     // allowing to store this globally and hide it from the layer
-    bool isMouseDragging = false;
-    glm::vec2 mouseDragStart;
-    glm::vec2 mouseDragEnd;
     std::shared_ptr<DragArea> dragArea;
 
     SuperLayer() : Layer("Supermarket") {
@@ -98,11 +95,6 @@ struct SuperLayer : public Layer {
         for (auto& entity : entities) {
             entity->onUpdate(dt);
         }
-
-        //
-        // drag
-        dragArea->position = mouseDragStart;
-        dragArea->size = (mouseDragEnd - mouseDragStart);
         dragArea->onUpdate(dt);
     }
 
@@ -160,8 +152,8 @@ struct SuperLayer : public Layer {
 
         // TODO allow people to remap their mouse buttons?
         if (e.GetMouseButton() == Mouse::MouseCode::ButtonLeft) {
-            mouseDragStart = mouseInWorld;
-            mouseDragEnd = mouseInWorld;
+            dragArea->mouseDragStart = mouseInWorld;
+            dragArea->mouseDragEnd = mouseInWorld;
         }
         if (e.GetMouseButton() == Mouse::MouseCode::ButtonRight) {
             JobQueue::addJob(
@@ -175,8 +167,8 @@ struct SuperLayer : public Layer {
         glm::vec3 mouseInWorld = getMouseInWorld();
 
         if (Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft)) {
-            isMouseDragging = true;
-            mouseDragEnd = mouseInWorld;
+            dragArea->isMouseDragging = true;
+            dragArea->mouseDragEnd = mouseInWorld;
         }
         return false;
     }
@@ -185,9 +177,9 @@ struct SuperLayer : public Layer {
         glm::vec3 mouseInWorld = getMouseInWorld();
 
         if (e.GetMouseButton() == Mouse::MouseCode::ButtonLeft) {
-            mouseDragEnd = mouseInWorld;
+            dragArea->mouseDragEnd = mouseInWorld;
             // TODO should this live in mouseMoved?
-            isMouseDragging = false;
+            dragArea->isMouseDragging = false;
         }
         return false;
     }
