@@ -16,62 +16,106 @@
 struct GameUILayer : public Layer {
     const glm::vec2 camTopLeft = {35.f, 19.5f};
     const glm::vec2 camBottomRight = {35.f, -18.f};
+    glm::vec4 rect = glm::vec4{200.f, 1000.f, 1500.f, 200.f};
 
     GameUILayer() : Layer("Game UI") {
         isMinimized = true;
         gameUICameraController.reset(new OrthoCameraController(WIN_RATIO));
-        gameUICameraController->camera.setViewport({0, 0, WIN_W, WIN_H});
         gameUICameraController->setZoomLevel(20.f);
-        // move the camera so 0,0 is top left
-        gameUICameraController->camera.setPosition(glm::vec3{camTopLeft, 0.f});
+        gameUICameraController->camera.setViewport({0, 0, WIN_W, WIN_H});
         gameUICameraController->movementEnabled = false;
         gameUICameraController->rotationEnabled = false;
         gameUICameraController->zoomEnabled = false;
+        gameUICameraController->resizeEnabled = false;
     }
 
     virtual ~GameUILayer() {}
     virtual void onAttach() override {}
     virtual void onDetach() override {}
 
+    glm::vec2 convertUIPos(glm::vec2 pos, bool flipy = true) {
+        auto y = flipy ? WIN_H - pos.y : pos.y;
+        return screenToWorld(glm::vec3{pos.x, y, 0.f},
+                             gameUICameraController->camera.view,
+                             gameUICameraController->camera.projection,
+                             gameUICameraController->camera.viewport);
+    }
+
+    std::array<glm::vec2, 2> getPositionSizeForUIRect(glm::vec4 rect) {
+        glm::vec2 position = convertUIPos(glm::vec2{rect.x, rect.y});
+        glm::vec2 size = convertUIPos(glm::vec2{rect.z, rect.w});
+        return std::array{
+            position + (size * 0.5f),
+            size,
+        };
+    }
+
+    ItemGroup getTotalInventory() {
+        ItemGroup ig;
+        for (auto& e : entities) {
+            auto s = dynamic_pointer_cast<Storable>(e);
+            if (s) {
+                for (auto kv : s->contents) {
+                    ig.addItem(kv.first, kv.second);
+                }
+                continue;
+            }
+            auto emp = dynamic_pointer_cast<Employee>(e);
+            if (emp) {
+                for (auto kv : emp->inventory) {
+                    ig.addItem(kv.first, kv.second);
+                }
+                continue;
+            }
+        }
+        return ig;
+    }
+
     void render() {
+        gameUICameraController->camera.setProjection(0.f, WIN_W, WIN_H, 0.f);
         Renderer::begin(gameUICameraController->camera);
         using namespace IUI;
         UIFrame BandE(gameUICameraController);
         int item = 0;
 
-        const glm::vec2 window_top_right = {71.f, 40.f};
-
         std::vector<std::function<bool(uuid)>> children;
 
-        std::function<bool(uuid)> textFunc = [](uuid id) {
+        float h1_fs = 64.f;
+        float p_fs = 32.f;
+
+        children.push_back([&](uuid id) {
             auto textConfig = WidgetConfig({
                 .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-                .position = glm::vec2{0.f, 0.f},
-                .size = glm::vec2{1.f, 1.f},
-                .text = "With great power comes great responsibility",
+                .position = convertUIPos({0, 100.f + h1_fs + 1.f}),
+                .size = glm::vec2{h1_fs, -h1_fs},
+                .text = "Inventory",
             });
             return text(id, textConfig);
-        };
-        children.push_back(textFunc);
+        });
 
-        auto rect = glm::vec4{100.f, 100.f, 200.f, 200.f};
+        // TODO replace with list view when exists
+        int i = 0;
+        for (auto kv : getTotalInventory()) {
+            children.push_back([=](uuid id) {
+                auto str = fmt::format(
+                    "{} : {}", ItemManager::getItem(kv.first).name, kv.second);
+                auto textConfig = WidgetConfig({
+                    .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+                    .position = convertUIPos({p_fs, 200.f + (p_fs * i)}),
+                    .size = glm::vec2{p_fs, -p_fs},
+                    .text = str,
+                });
+                return text(id, textConfig);
+            });
+            i++;
+        }
 
-        auto ui_cvt_pos = [&](glm::vec2 pos) {
-            return screenToWorld(glm::vec3{pos.x, pos.y, 0.f},
-                                 gameUICameraController->camera.view,
-                                 gameUICameraController->camera.projection,
-                                 gameUICameraController->camera.viewport);
-        };
-
-        glm::vec2 window_position = ui_cvt_pos(glm::vec2{rect.x, rect.y});
-        glm::vec2 window_size =
-            ui_cvt_pos(glm::vec2{rect.z - rect.x, rect.w - rect.y});
-
+        auto window_location = getPositionSizeForUIRect({0, 100, 300, 1000});
         window(uuid({0, item++, 0}),
                WidgetConfig({
                    .color = blue,
-                   .position = window_position,
-                   .size = window_size,
+                   .position = window_location[0],
+                   .size = window_location[1],
                }),
                children);
 

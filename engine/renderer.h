@@ -215,7 +215,7 @@ struct Renderer {
 
     static void draw(const std::shared_ptr<VertexArray>& vertexArray,
                      int indexCount = 0) {
-        prof(__PROFILE_FUNC__);
+        prof give_me_a_name(__PROFILE_FUNC__);
         int count =
             indexCount ? indexCount : vertexArray->indexBuffer->getCount();
         vertexArray->bind();
@@ -225,7 +225,7 @@ struct Renderer {
     }
 
     static void begin(OrthoCamera& cam) {
-        prof(__PROFILE_FUNC__);
+        prof give_me_a_name(__PROFILE_FUNC__);
         sceneData->viewProjection = cam.viewProjection;
 
         auto textureShader = sceneData->shaderLibrary.get("texture");
@@ -237,7 +237,7 @@ struct Renderer {
     }
 
     static void end() {
-        prof(__PROFILE_FUNC__);
+        prof give_me_a_name(__PROFILE_FUNC__);
         flush();
     }
 

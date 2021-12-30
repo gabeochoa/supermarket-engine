@@ -58,6 +58,7 @@ struct OrthoCameraController {
     bool movementEnabled;
     bool rotationEnabled;
     bool zoomEnabled = true;
+    bool resizeEnabled = true;
     OrthoCamera camera;
 
     OrthoCameraController(float ratio, float defaultZoom = 1.f,
@@ -117,6 +118,12 @@ struct OrthoCameraController {
     }
 
     bool onWindowResized(WindowResizeEvent& event) {
+        if (!resizeEnabled) {
+            float newWidth = aspectRatio * event.height();
+            camera.setProjection(0.f, newWidth, event.height(), 0.f);
+            return false;
+        }
+
         aspectRatio = (1.f * event.width()) / event.height();
         camera.setProjection(-aspectRatio * zoomLevel, aspectRatio * zoomLevel,
                              -zoomLevel, zoomLevel);
