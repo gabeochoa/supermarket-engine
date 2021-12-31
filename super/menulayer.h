@@ -57,10 +57,6 @@ struct CameraPositionInterpolation {
     }
 };
 
-// TODO add a default texture that isnt just white
-// make it obvious that the texture you are trying
-// to draw doesnt exist
-
 struct MenuLayer : public Layer {
     float value = 0.08f;
     std::string content = "";

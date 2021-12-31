@@ -74,6 +74,10 @@ Weather and day night system
     socket.io?
 - support for OTF font formats
     https://github.com/caryll/otfcc
+- add a default texture that isnt just white
+    make it obvious that the texture you are trying
+    to draw doesnt exist
+
 
 
 
