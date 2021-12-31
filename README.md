@@ -18,7 +18,7 @@ https://github.com/samhocevar/portable-file-dialogs
 - file dialoges
 
 
-
+```
 TODOs
 
 Game Ideas
@@ -73,8 +73,7 @@ Engine Ideas
      https://github.com/caryll/otfcc
 - add a default texture that isnt just white
      make it obvious that the texture you are trying to draw doesnt exist
-
-
+```
 
 
 
