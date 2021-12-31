@@ -132,9 +132,9 @@ int main(int argc, char** argv) {
     Layer* entityDebug = new EntityDebugLayer();
     App::get().pushLayer(entityDebug);
 
-    Menu::get().state = Menu::State::Game;
+    // Menu::get().state = Menu::State::Game;
     // Menu::get().state = Menu::State::Root;
-    // Menu::get().state = Menu::State::UITest;
+    Menu::get().state = Menu::State::UITest;
 
     App::get().run();
 

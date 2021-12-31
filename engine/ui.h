@@ -268,9 +268,6 @@ keyboard focus. Must be called after the widget code has run.
             }
     ```
 
-
-
-
 /////////////////////////////////// ///////////////////////////////////
 */
 
@@ -376,8 +373,11 @@ struct TextfieldState : public UIState {
     State<std::wstring> buffer;
 };
 
-struct DropdownState : public UIState {
-    State<bool> dropdown;
+struct ToggleState : public UIState {
+    State<bool> on;
+};
+
+struct DropdownState : public ToggleState {
     State<int> selected;
 };
 
@@ -655,24 +655,24 @@ bool dropdown(uuid id, WidgetConfig config,
               const std::vector<WidgetConfig>& configs, bool* dropdownState,
               int* selectedIndex) {
     auto state = widget_init<DropdownState>(id);
-    if (dropdownState) state->dropdown.set(*dropdownState);
+    if (dropdownState) state->on.set(*dropdownState);
     if (selectedIndex) state->selected.set(*selectedIndex);
+
     int item = 0;
 
     // TODO rotation is not really working correctly and so we have to
     // offset the V a little more than ^ in order to make it look nice
-    auto offset =
-        glm::vec2{config.size.x - ((*dropdownState) ? 1.f : 1.6f), -0.25f};
+    auto offset = glm::vec2{config.size.x - (state->on ? 1.f : 1.6f), -0.25f};
     text(uuid({id.item, item++, 0}),
          WidgetConfig({
-             .rotation = (*dropdownState) ? 90.f : 270.f,
+             .rotation = state->on ? 90.f : 270.f,
              .text = ">",
          }),
          config.position + offset);
 
-    config.text = configs[*selectedIndex].text;
+    config.text = configs[state->selected].text;
 
-    if (*dropdownState) {
+    if (state->on) {
         float spacing = 1.0f;
         int button_item_id = item++;
 
@@ -690,24 +690,27 @@ bool dropdown(uuid id, WidgetConfig config,
                         .size = config.size,
                         .text = configs[i].text,
                     }))) {
-                *selectedIndex = i;
-                *dropdownState = false;
+                state->selected = i;
+                state->on = false;
                 get()->kbFocusID = id;
             }
         }
 
         if (get()->pressed(Key::mapping["Value Up"])) {
-            (*selectedIndex) -= 1;
-            if (*selectedIndex < 0) *selectedIndex = 0;
+            state->selected = state->selected - 1;
+            if (state->selected < 0) state->selected = 0;
         }
 
         if (get()->pressed(Key::mapping["Value Down"])) {
-            (*selectedIndex) += 1;
-            if (*selectedIndex > (int)configs.size() - 1)
-                *selectedIndex = configs.size() - 1;
+            state->selected = state->selected + 1;
+            if (state->selected > (int)configs.size() - 1)
+                state->selected = configs.size() - 1;
         }
     }
     auto pressed = button(id, config);
+
+    if (dropdownState) *dropdownState = state->on;
+    if (selectedIndex) *selectedIndex = state->selected;
     return pressed;
 }
 
