@@ -36,6 +36,10 @@ Weather and day night system
 
 Engine Ideas
 
+- theres tons of Ideas in engine/ui.h
+    not moving them here, so go look there :) 
+- Setup visual tracing so we can use chrome::tracing to analyze
+    https://www.youtube.com/watch?v=qiD39bB7DvA
 - support for defer/runlater
     for example:
          {
@@ -43,7 +47,6 @@ Engine Ideas
          defer(free x)
          ... rest of function
          } // free happens here
-
 - LRU cache for temporary textures
 - base64 encode, is this already built in c++ ?
 - add support for editing values on the fly

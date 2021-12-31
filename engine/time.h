@@ -64,9 +64,6 @@ struct Samples {
     }
 };
 
-// TODO - Setup visual tracing so we can use chrome::tracing to analyze
-// https://www.youtube.com/watch?v=qiD39bB7DvA
-
 static std::map<std::string, Samples> _acc;
 typedef std::pair<std::string, Samples> SamplePair;
 struct prof {

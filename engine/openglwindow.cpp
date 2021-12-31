@@ -12,7 +12,6 @@ void OpenGLWindow::init(const WindowConfig& config) {
     log_trace("Creating a new window {} ({}, {})", info.title, info.width,
               info.height);
 
-    // TODO Have some way of only doing this once
     int success = glfwInit();
     M_ASSERT(success, "Failed to init glfw");
 

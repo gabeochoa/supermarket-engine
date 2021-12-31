@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <limits>
 #include <queue>
 #include <set>
 
@@ -64,8 +65,7 @@ struct ThetaPQ {
 
 struct Theta {
     const float EQUAL_RANGE = 0.5f;
-    // TODO replace with float max?
-    const float maxnum = 99999.f;
+    const float maxnum = std::numeric_limits<float>::max();
     const float x[8] = {0, 0, 1, -1, -1, 1, -1, 1};
     const float y[8] = {1, -1, 0, 0, -1, -1, 1, 1};
     const float dst = 0.25f;
@@ -117,7 +117,7 @@ struct Theta {
 
     std::vector<glm::vec2> go() {
         if (!isWalkable(end)) {
-            // TODO for now just clear it,
+            // for now just clear it,
             // otherwise itll inf loop
             openSet.Q.clear();
         }
@@ -147,7 +147,6 @@ struct Theta {
                         // gScore(neighbor) := infinity;
                         // parent(neighbor) := Null;
                         gScore[neighbor] = maxnum;
-                        // TODO do we need to set parent to null
                     }
                     update_vertex(s, neighbor);
                 }

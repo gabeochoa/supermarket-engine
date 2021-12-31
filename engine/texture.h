@@ -165,11 +165,11 @@ struct TextureLibrary {
     std::map<std::string, std::shared_ptr<Texture>> textures;
     std::map<std::string, std::shared_ptr<Subtexture>> subtextures;
 
-    // TODO think about reconsindering the number of max temporary; minimum we
-    // can support is 2 but we'd have lots of thrash constantly O(n) to find it
-    // in the map ( why not 1? because it would be better in that case to not
-    // even put it in the map since there would be no need to find someone to
-    // evict )
+    // TODO think about reconsindering the number of max temporary;
+    // minimum we can support is 2 but we'd have lots of thrash constantly O(n)
+    // to find it in the map ( why not 1? because it would be better in that
+    // case to not even put it in the map since there would be no need to find
+    // someone to evict )
     //
     // I tried keeping a totally separate list of temps but had issues with
     // rendering, it seemed liked the shader wasnt able to find them so we are
