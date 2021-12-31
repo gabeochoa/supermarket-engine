@@ -1,6 +1,7 @@
 
 
 #include "../engine/app.h"
+#include "../engine/edit.h"
 #include "../engine/file.h"
 #include "../engine/input.h"
 #include "../engine/pch.hpp"
@@ -40,6 +41,23 @@ int main(int argc, char** argv) {
             }
         }
         // test_file_functionality();
+
+        // test global values and editor commands
+        {
+            float value = 12.f;
+            GLOBALS.set<float>("test_float", &value);
+            M_ASSERT(GLOBALS.get<float>("test_float") == 12.f,
+                     "Globals should have the same value we just put it");
+            value += 1.f;
+            M_ASSERT(value == 13.f,
+                     "Globals should have 13 since it should be keeping track "
+                     "of the ptr and not the value");
+            EDITOR_COMMANDS.registerCommand("edit_float",
+                                            SetValueCommand<float>());
+            EDITOR_COMMANDS.triggerCommand(
+                "edit_float", GLOBALS.get_ptr<float>("test_float"), 15.f);
+            M_ASSERT(value == 15.f, "Value should be 15 at this point");
+        }
     }
 
     app.reset(App::create({
