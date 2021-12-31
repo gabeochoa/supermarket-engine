@@ -275,6 +275,7 @@ keyboard focus. Must be called after the widget code has run.
 #include <string_view>
 
 //
+#include "event.h"
 #include "pch.hpp"
 
 //
@@ -430,6 +431,24 @@ struct UIContext {
         bool a = key == code || mod == code;
         if (a) key = Key::KeyCode();
         return a;
+    }
+
+    bool processCharPressEvent(CharPressedEvent& event) {
+        keychar = static_cast<Key::KeyCode>(event.charcode);
+        return false;
+    }
+
+    bool processKeyPressEvent(KeyPressedEvent& event) {
+        if (widgetKeys.count(static_cast<Key::KeyCode>(event.keycode)) == 1) {
+            key = static_cast<Key::KeyCode>(event.keycode);
+        }
+        if (event.keycode == Key::mapping["Widget Mod"]) {
+            mod = static_cast<Key::KeyCode>(event.keycode);
+        }
+        if (textfieldMod.count(static_cast<Key::KeyCode>(event.keycode)) == 1) {
+            modchar = static_cast<Key::KeyCode>(event.keycode);
+        }
+        return false;
     }
 };
 
