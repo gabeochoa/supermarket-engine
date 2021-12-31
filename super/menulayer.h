@@ -22,21 +22,18 @@ struct CameraPositionInterpolation {
     }};
     glm::vec2 lastCamPos;
     glm::vec2 targetCamPos;
-    LinearInterp xinterp;
-    LinearInterp yinterp;
+    Vec2Interpolator interp;
     int steps = 100;
 
     CameraPositionInterpolation() {
         lastCamPos = camPositions[0];
         targetCamPos = camPositions[0];
-        xinterp = LinearInterp(lastCamPos.x, targetCamPos.x, steps);
-        yinterp = LinearInterp(lastCamPos.y, targetCamPos.y, steps);
+        interp = Vec2Interpolator(lastCamPos, targetCamPos, steps);
     }
 
     void update_target_camera_position() {
         targetCamPos = camPositions[camPosIndex];
-        xinterp = LinearInterp(lastCamPos.x, targetCamPos.x, steps);
-        yinterp = LinearInterp(lastCamPos.y, targetCamPos.y, steps);
+        interp = Vec2Interpolator(lastCamPos, targetCamPos, steps);
     }
 
     void set(int index) {
@@ -332,7 +329,7 @@ struct MenuLayer : public Layer {
 
     void ui() {
         menuCameraController->camera.position =
-            glm::vec3{camPosInterp.xinterp.next(), camPosInterp.yinterp.next(),
+            glm::vec3{camPosInterp.interp.next(),
                       menuCameraController->camera.position.z};
         {
             IUI::UIFrame frame(menuCameraController);
