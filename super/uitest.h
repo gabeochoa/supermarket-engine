@@ -45,27 +45,13 @@ struct UITestLayer : public Layer {
     virtual void onAttach() override {}
     virtual void onDetach() override {}
 
-    bool onCharPressed(CharPressedEvent& event) {
-        // log_info("you typed {}", (int)event.charcode);
-        IUI::get()->keychar = static_cast<Key::KeyCode>(event.charcode);
-        return false;
-    }
-
     bool onKeyPressed(KeyPressedEvent& event) {
         if (event.keycode == Key::mapping["Esc"]) {
             App::get().running = false;
             return true;
         }
-        if (IUI::get()->widgetKeys.count(
-                static_cast<Key::KeyCode>(event.keycode)) == 1) {
-            IUI::get()->key = static_cast<Key::KeyCode>(event.keycode);
-        }
-        if (event.keycode == Key::mapping["Widget Mod"]) {
-            IUI::get()->mod = static_cast<Key::KeyCode>(event.keycode);
-        }
-        if (IUI::get()->textfieldMod.count(
-                static_cast<Key::KeyCode>(event.keycode)) == 1) {
-            IUI::get()->modchar = static_cast<Key::KeyCode>(event.keycode);
+        if (IUI::get()->processKeyPressEvent(event)) {
+            return true;
         }
         return false;
     }
@@ -294,7 +280,7 @@ struct UITestLayer : public Layer {
             &UITestLayer::onMouseButtonPressed, this, std::placeholders::_1));
         dispatcher.dispatch<KeyPressedEvent>(
             std::bind(&UITestLayer::onKeyPressed, this, std::placeholders::_1));
-        dispatcher.dispatch<CharPressedEvent>(std::bind(
-            &UITestLayer::onCharPressed, this, std::placeholders::_1));
+        dispatcher.dispatch<CharPressedEvent>(
+            IUI::get()->getCharPressHandler());
     }
 };
