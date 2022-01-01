@@ -168,18 +168,21 @@ static inline void default_keys() {
     mapping["Widget Press"] = KeyCode::Enter;
     mapping["Value Up"] = KeyCode::Up;
     mapping["Value Down"] = KeyCode::Down;
+
     mapping["Command Enter"] = KeyCode::Enter;
+    mapping["Toggle Debugger"] = KeyCode::GraveAccent;  // tilde
 
     mapping["Text Backspace"] = KeyCode::Backspace;
     mapping["Text Space"] = KeyCode::Space;
 
-    mapping["Open Profiler"] = KeyCode::GraveAccent;  // tilde
+    mapping["Open Profiler"] = KeyCode::P;
     mapping["Show Entity Overlay"] = KeyCode::Insert;
     mapping["Profiler Hide Filenames"] = KeyCode::Delete;
     mapping["Profiler Clear Stats"] = KeyCode::LeftControl;
 
     mapping["Esc"] = KeyCode::Escape;
     mapping["Enter"] = KeyCode::Enter;
+    // TODO support keybindings that are multiple keys pressed at once?
 }
 
 // This is actually being used in App.h
