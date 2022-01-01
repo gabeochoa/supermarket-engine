@@ -1,17 +1,21 @@
 
 #pragma once
 
+#include <atomic>
 #include <vector>
 
 #include "pch.hpp"
 #include "time.h"
 #include "window.h"
 
+static std::atomic_int s_layer_id;
 struct Layer {
+    int id;
     std::string name;
     bool isMinimized;
 
-    Layer(const std::string& n = "layer") : name(n), isMinimized(false) {}
+    Layer(const std::string& n = "layer")
+        : id(s_layer_id++), name(n), isMinimized(false) {}
     virtual ~Layer() {}
     virtual void onAttach() {}
     virtual void onDetach() {}
