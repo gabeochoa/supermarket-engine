@@ -140,6 +140,14 @@ struct EditorCommands {
     std::deque<std::string> command_history;
     std::map<std::string, ActionFuncType> commands;
 
+    EditorCommands() {
+        // Register a bunch of commands that arent custom
+        registerCommand("toggle_bool", ToggleBoolCommand<bool>());
+        registerCommand("edit_float", SetValueCommand<float>());
+        registerCommand("inc_float", IncrementValueCommand<float>());
+        // TODO write / read from history files to keep commands from last run
+    }
+
     void registerCommand(std::string name, ActionFuncType cmd) {
         if (commands.find(name) != commands.end()) {
             log_warn(
