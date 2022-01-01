@@ -60,13 +60,13 @@ struct UITestLayer : public Layer {
 
     virtual void onUpdate(Time dt) override {
         log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
-        prof(__PROFILE_FUNC__);
+        prof give_me_a_name(__PROFILE_FUNC__);
 
-        if (Menu::get().state != Menu::State::UITest) {
-            return;
+        if (Menu::get().state != Menu::State::UITest) return;
+
+        if (GLOBALS.get<bool>("terminal_closed")) {
+            uiTestCameraController->onUpdate(dt);
         }
-
-        uiTestCameraController->onUpdate(dt);
 
         gltInit();
         gltBeginDraw();
