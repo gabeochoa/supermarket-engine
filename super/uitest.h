@@ -40,12 +40,7 @@ struct UITestLayer : public Layer {
             glm::vec4{0, 0, WIN_W, WIN_H});
 
         IUI::init_context();
-
         GLOBALS.set<float>("slider_val", &value);
-        // TODO should we registerEdit commands on startup? or when setting a
-        // global?
-        EDITOR_COMMANDS.registerCommand("inc_float",
-                                        IncrementValueCommand<float>());
     }
 
     virtual ~UITestLayer() {}
