@@ -79,9 +79,9 @@ int main(int argc, char** argv) {
     Layer* fps = new FPSLayer();
     App::get().pushLayer(fps);
 
-    Menu::get().state = Menu::State::Game;
+    // Menu::get().state = Menu::State::Game;
     // Menu::get().state = Menu::State::Root;
-    // Menu::get().state = Menu::State::UITest;
+    Menu::get().state = Menu::State::UITest;
 
     App::get().run();
 

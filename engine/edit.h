@@ -101,6 +101,36 @@ struct IncrementValueCommand : public EditValueCommand<T> {
     }
 };
 
+template <typename T>
+struct ToggleBoolCommand : public Command<T> {
+    std::vector<std::any> convert(const std::vector<std::string>& tokens) {
+        // Need to convert to T* and T
+        std::vector<std::any> out;
+        if (tokens.size() != 1) {
+            this->msg = fmt::format("Invalid number of parameters {} wanted {}",
+                                    tokens.size(), 1);
+            return out;
+        }
+        if (!GLOBALS.contains(tokens[0])) {
+            this->msg = fmt::format(
+                "Globals didnt have a matching variable, wanted {}", tokens[0]);
+            return out;
+        }
+        T* value = GLOBALS.get_ptr<T>(tokens[0]);
+        out.push_back(value);
+        return out;
+    }
+    std::string operator()(const std::vector<std::string>& params) {
+        auto values = this->convert(params);
+        if (!values.empty()) {
+            T val = !(*(std::any_cast<T*>(values[0])));
+            this->set(std::any_cast<T*>(values[0]), val);
+            this->msg = fmt::format("{} is now {}", params[0], val);
+        }
+        return this->msg;
+    }
+};
+
 typedef std::function<std::string(std::vector<std::string>)> ActionFuncType;
 
 constexpr int MAX_OUTPUT_HISTORY = 100;

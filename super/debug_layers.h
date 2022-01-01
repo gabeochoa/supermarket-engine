@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "../engine/edit.h"
 #include "../engine/layer.h"
 #include "../engine/pch.hpp"
 #include "../engine/renderer.h"
@@ -75,7 +76,12 @@ struct JobLayer : public Layer {
 };
 
 struct FPSLayer : public Layer {
-    FPSLayer() : Layer("FPS") { isMinimized = false; }
+    FPSLayer() : Layer("FPS") {
+        isMinimized = false;
+        GLOBALS.set<bool>("hide_fps", &isMinimized);
+        EDITOR_COMMANDS.registerCommand("toggle_bool",
+                                        ToggleBoolCommand<bool>());
+    }
     virtual ~FPSLayer() {}
     virtual void onAttach() override {}
     virtual void onDetach() override {}
