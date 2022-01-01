@@ -5,6 +5,7 @@
 
 #include "buffer.h"
 #include "camera.h"
+#include "edit.h"
 #include "keycodes.h"
 #include "layer.h"
 #include "log.h"
@@ -47,6 +48,7 @@ struct App {
     App(AppSettings settings) {
         this->settings = settings;
         running = true;
+        GLOBALS.set<bool>("__engine__app_running", &running);
 
         WindowConfig config;
         config.width = settings.width;

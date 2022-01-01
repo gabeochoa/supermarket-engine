@@ -52,6 +52,14 @@ struct Command {
     void set(T* value, T nv) { *value = nv; }
 };
 
+struct ExitCommand {
+    std::string operator()(const std::vector<std::string>&) {
+        auto r_ptr = GLOBALS.get_ptr<bool>("__engine__app_running");
+        *r_ptr = false;
+        return "see ya :)";
+    }
+};
+
 template <typename T>
 struct EditValueCommand : Command<T> {
     std::vector<std::any> convert(const std::vector<std::string>& tokens) {
@@ -145,6 +153,7 @@ struct EditorCommands {
         registerCommand("toggle_bool", ToggleBoolCommand<bool>());
         registerCommand("edit_float", SetValueCommand<float>());
         registerCommand("inc_float", IncrementValueCommand<float>());
+        registerCommand("exit", ExitCommand());
         // TODO write / read from history files to keep commands from last run
     }
 
