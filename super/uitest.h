@@ -3,6 +3,7 @@
 
 #include "../engine/app.h"
 #include "../engine/camera.h"
+#include "../engine/edit.h"
 #include "../engine/file.h"
 #include "../engine/font.h"
 #include "../engine/layer.h"
@@ -39,6 +40,12 @@ struct UITestLayer : public Layer {
             glm::vec4{0, 0, WIN_W, WIN_H});
 
         IUI::init_context();
+
+        GLOBALS.set<float>("slider_val", &value);
+        // TODO should we registerEdit commands on startup? or when setting a
+        // global?
+        EDITOR_COMMANDS.registerCommand("inc_float",
+                                        IncrementValueCommand<float>());
     }
 
     virtual ~UITestLayer() {}
@@ -52,6 +59,10 @@ struct UITestLayer : public Layer {
         }
         if (IUI::get()->processKeyPressEvent(event)) {
             return true;
+        }
+        if (event.keycode == Key::KeyCode::Equal &&
+            Input::isKeyPressed(Key::KeyCode::LeftShift)) {
+            EDITOR_COMMANDS.triggerCommand("inc_float slider_val 0.1");
         }
         return false;
     }
@@ -119,7 +130,7 @@ struct UITestLayer : public Layer {
                            .size = glm::vec2{1.f, 3.f},
                            .vertical = true,
                        }),
-                       &value, 0.08f, 0.95f)) {
+                       GLOBALS.get_ptr<float>("slider_val"), 0.08f, 0.95f)) {
                 // log_info("idk moved slider? ");
             }
 
@@ -129,7 +140,7 @@ struct UITestLayer : public Layer {
                            .size = glm::vec2{3.f, 1.f},
                            .vertical = false,
                        }),
-                       &value, 0.08f, 0.95f)) {
+                       GLOBALS.get_ptr<float>("slider_val"), 0.08f, 0.95f)) {
                 // log_info("idk moved slider? ");
             }
 
