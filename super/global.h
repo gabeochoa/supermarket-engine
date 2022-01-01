@@ -15,4 +15,5 @@ static std::shared_ptr<OrthoCameraController> cameraController;
 static std::shared_ptr<OrthoCameraController> menuCameraController;
 static std::shared_ptr<OrthoCameraController> uiTestCameraController;
 static std::shared_ptr<OrthoCameraController> gameUICameraController;
+static std::shared_ptr<OrthoCameraController> terminalCameraController;
 

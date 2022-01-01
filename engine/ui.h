@@ -366,7 +366,6 @@ struct UIState {
 
 struct CheckboxState : public UIState {
     State<bool> checked = false;
-    virtual ~CheckboxState() {}
 };
 
 struct SliderState : public UIState {
@@ -385,6 +384,10 @@ struct DropdownState : public ToggleState {
     State<int> selected;
 };
 
+struct DrawerState : public ToggleState {
+    State<float> heightPct;
+};
+
 struct StateManager {
     std::map<uuid, std::shared_ptr<UIState>> states;
 
@@ -392,15 +395,24 @@ struct StateManager {
         states[id] = state;
     }
 
-    std::shared_ptr<UIState> getAndCreateIfNone(
-        uuid id, const std::shared_ptr<UIState>& state) {
+    template <typename T>
+    std::shared_ptr<T> getAndCreateIfNone(uuid id) {
         if (states.find(id) == states.end()) {
-            addState(id, state);
+            addState(id, std::make_shared<T>());
         }
-        return get(id);
+        return get_as<T>(id);
     }
 
     std::shared_ptr<UIState> get(uuid id) { return states[id]; }
+
+    template <typename T>
+    std::shared_ptr<T> get_as(uuid id) {
+        try {
+            return dynamic_pointer_cast<T>(states.at(id));
+        } catch (std::exception) {
+            return nullptr;
+        }
+    }
 };
 
 struct UIContext {
@@ -438,7 +450,7 @@ struct UIContext {
 
     bool processCharPressEvent(CharPressedEvent& event) {
         keychar = static_cast<Key::KeyCode>(event.charcode);
-        return false;
+        return true;
     }
 
     bool processKeyPressEvent(KeyPressedEvent& event) {
@@ -534,12 +546,10 @@ struct WidgetConfig {
 
 template <typename T>
 std::shared_ptr<T> widget_init(uuid id) {
-    std::shared_ptr<UIState> gen_state =  //
-        get()->statemanager.getAndCreateIfNone(id, std::make_shared<T>());
-    std::shared_ptr<T> state = dynamic_pointer_cast<T>(gen_state);
+    std::shared_ptr<T> state = get()->statemanager.getAndCreateIfNone<T>(id);
     if (state == nullptr) {
         log_error(
-            "State for id{} of wrong type or nullptr, expected {}. Check to "
+            "State for id ({}) of wrong type, expected {}. Check to "
             "make sure your id's are globally unique",
             id, type_name<T>());
     }
@@ -1008,9 +1018,29 @@ bool window(uuid id, WidgetConfig config,
     for (auto child : children) {
         child(uuid({id.item, item, index++}));
     }
-
     draw_ui_widget(config.position, config.size, config.color, config.texture,
                    config.rotation);
+    return false;
+}
+
+bool drawer(uuid id, WidgetConfig config,
+            const std::vector<std::function<bool(uuid)>>& children) {
+    auto state = widget_init<DrawerState>(id);
+    if (state->heightPct < 1.f) {
+        state->heightPct.asT() += 0.1;
+    }
+
+    int item = 0;
+    int index = 0;
+    if (state->heightPct > 0.9) {
+        for (auto child : children) {
+            child(uuid({id.item, item, index++}));
+        }
+    }
+
+    draw_ui_widget(
+        glm::vec2{config.position.x, state->heightPct * config.position.y},
+        config.size, config.color, config.texture, config.rotation);
     return false;
 }
 
