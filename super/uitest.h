@@ -60,10 +60,6 @@ struct UITestLayer : public Layer {
         if (IUI::get()->processKeyPressEvent(event)) {
             return true;
         }
-        if (event.keycode == Key::KeyCode::Equal &&
-            Input::isKeyPressed(Key::KeyCode::LeftShift)) {
-            EDITOR_COMMANDS.triggerCommand("inc_float slider_val 0.1");
-        }
         return false;
     }
 
@@ -194,22 +190,42 @@ struct UITestLayer : public Layer {
             text(uuid({0, item++, 0}), hiraganaConfig);
             text(uuid({0, item++, 0}), kanjiConfig);
 
-            uuid textFieldID = uuid({0, item++, 0});
-            if (textfield(textFieldID,
-                          WidgetConfig({.position = glm::vec2{2.f, 2.f},
-                                        .size = glm::vec2{6.f, 1.f}}),
-                          content)) {
-                log_info("{}", to_string(content));
+            {
+                uuid textFieldID = uuid({0, item++, 0});
+                if (textfield(textFieldID,
+                              WidgetConfig({.position = glm::vec2{2.f, 2.f},
+                                            .size = glm::vec2{6.f, 1.f}}),
+                              content)) {
+                    log_info("{}", to_string(content));
+                }
+
+                // In this case we want to lock the camera when typing in
+                // this specific textfield
+                // TODO should this be the default?
+                // TODO should this live in the textFieldConfig?
+                uiTestCameraController->movementEnabled = camHasMovement;
+                if (uiTestCameraController->movementEnabled &&
+                    IUI::has_kb_focus(textFieldID)) {
+                    uiTestCameraController->movementEnabled = false;
+                }
             }
 
-            // In this case we want to lock the camera when typing in
-            // this specific textfield
-            // TODO should this be the default?
-            // TODO should this live in the textFieldConfig?
-            uiTestCameraController->movementEnabled = camHasMovement;
-            if (uiTestCameraController->movementEnabled &&
-                IUI::has_kb_focus(textFieldID)) {
-                uiTestCameraController->movementEnabled = false;
+            {
+                uuid textFieldID = uuid({0, item++, 0});
+                if (commandfield(textFieldID,
+                                 WidgetConfig({.position = glm::vec2{2.f, 4.f},
+                                               .size = glm::vec2{6.f, 1.f}}))) {
+                    log_info("{}", EDITOR_COMMANDS.command_history.back());
+                }
+
+                // See now im doing this again, so yea probably I should solve
+                // this separately from here, we have the camera in Frame so
+                // maybe we should just take the controller and take control
+                uiTestCameraController->movementEnabled = camHasMovement;
+                if (uiTestCameraController->movementEnabled &&
+                    IUI::has_kb_focus(textFieldID)) {
+                    uiTestCameraController->movementEnabled = false;
+                }
             }
 
             auto tapToContiueText = WidgetConfig({
@@ -235,7 +251,7 @@ struct UITestLayer : public Layer {
                     IUI::uuid({0, item++, 0}),  //
                     IUI::WidgetConfig({
                         .color = glm::vec4{0.6f, 0.3f, 0.3f, 1.f},  //
-                        .position = glm::vec2{4.f, 4.f},            //
+                        .position = glm::vec2{16.f, 3.f},           //
                         .size = glm::vec2{1.f, 1.f},                //
                         .transparent = false,                       //
                     }),                                             //

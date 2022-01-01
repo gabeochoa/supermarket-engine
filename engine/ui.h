@@ -138,6 +138,9 @@ bool textfield(uuid id,
                std::string& content);
     returns true if textfield changed
 
+bool commandfield(uuid id, WidgetConfig config);
+    returns true if command ran
+
 bool window(uuid id, WidgetConfig config, const std::vector<WidgetConfig>&
 children);
     returns false always
@@ -205,8 +208,6 @@ TODO clock
 TODO number only textfield
 TODO add support for max-length textfield
 this will also help with temporary texture size
-bool textfield(uuid id, WidgetConfig config, std::string& content)
-    returns true if content changed
 
 TODO Auto centered text for button_with_label please
 TODO value labels for sliders
@@ -275,6 +276,7 @@ keyboard focus. Must be called after the widget code has run.
 #include <string_view>
 
 //
+#include "edit.h"
 #include "event.h"
 #include "pch.hpp"
 
@@ -967,6 +969,35 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
 
     content = state->buffer;
     return changed;
+}
+
+bool commandfield(uuid id, WidgetConfig config) {
+    // We dont need a separate ID since we want
+    // global state to match and for them to have the
+    // same keyboard focus
+    auto state = widget_init<TextfieldState>(id);
+
+    std::wstring content;
+    textfield(id, config, content);
+
+    if (has_kb_focus(id)) {
+        if (get()->pressed(Key::mapping["Command Enter"])) {
+            // Any concerned about non english characters?
+            EDITOR_COMMANDS.triggerCommand(to_string(state->buffer.asT()));
+            state->buffer.asT().clear();
+            return true;
+        }
+        // TODO how to do tab completion without tab access ?
+        // TODO probably make a separate mapping for this
+        if (get()->pressed(Key::mapping["Value Up"])) {
+            state->buffer.asT() =
+                to_wstring(EDITOR_COMMANDS.command_history.back());
+        }
+        if (get()->pressed(Key::mapping["Value Down"])) {
+            state->buffer.asT().clear();
+        }
+    }
+    return false;
 }
 
 bool window(uuid id, WidgetConfig config,

@@ -168,6 +168,7 @@ static inline void default_keys() {
     mapping["Widget Press"] = KeyCode::Enter;
     mapping["Value Up"] = KeyCode::Up;
     mapping["Value Down"] = KeyCode::Down;
+    mapping["Command Enter"] = KeyCode::Enter;
 
     mapping["Text Backspace"] = KeyCode::Backspace;
     mapping["Text Space"] = KeyCode::Space;
