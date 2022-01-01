@@ -171,6 +171,7 @@ static inline void default_keys() {
 
     mapping["Command Enter"] = KeyCode::Enter;
     mapping["Toggle Debugger"] = KeyCode::GraveAccent;  // tilde
+    mapping["Exit Debugger"] = KeyCode::Escape;
 
     mapping["Text Backspace"] = KeyCode::Backspace;
     mapping["Text Space"] = KeyCode::Space;
