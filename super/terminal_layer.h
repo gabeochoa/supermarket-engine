@@ -18,6 +18,7 @@ struct TerminalLayer : public Layer {
 
     TerminalLayer() : Layer("Debug Terminal") {
         isMinimized = true;
+        GLOBALS.set<bool>("terminal_closed", &isMinimized);
 
         terminalCameraController.reset(new OrthoCameraController(WIN_RATIO));
         terminalCameraController->setZoomLevel(20.f);
