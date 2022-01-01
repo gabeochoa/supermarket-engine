@@ -1,9 +1,17 @@
 
 #pragma once
 
+#include "../engine/layer.h"
 #include "../engine/pch.hpp"
+#include "../engine/renderer.h"
+#include "../engine/time.h"
+#include "entities.h"
+#include "global.h"
+#include "job.h"
+#include "menu.h"
 
-GLTtext* drawText(const std::string& content, int x, int y, float scale) {
+inline GLTtext* drawText(const std::string& content, int x, int y,
+                         float scale) {
     GLTtext* text = gltCreateText();
     gltSetText(text, content.c_str());
     gltDrawText2D(text, x, y, scale);
@@ -18,7 +26,7 @@ struct JobLayer : public Layer {
     virtual void onDetach() override {}
 
     virtual void onUpdate(Time dt) override {
-        prof(__PROFILE_FUNC__);
+        prof give_me_a_name(__PROFILE_FUNC__);
         (void)dt;
 
         if (isMinimized) {
@@ -66,6 +74,46 @@ struct JobLayer : public Layer {
     }
 };
 
+struct FPSLayer : public Layer {
+    FPSLayer() : Layer("FPS") { isMinimized = false; }
+    virtual ~FPSLayer() {}
+    virtual void onAttach() override {}
+    virtual void onDetach() override {}
+    virtual void onUpdate(Time dt) override {
+        prof give_me_a_name(__PROFILE_FUNC__);
+        (void)dt;
+
+        if (isMinimized) {
+            return;
+        }
+
+        int y = 10;
+        float scale = 1.f;
+        gltInit();
+        gltBeginDraw();
+        gltColor(1.0f, 1.0f, 1.0f, 1.0f);
+        std::vector<GLTtext*> texts;
+
+        auto avgRenderTime =
+            Renderer::stats.totalFrameTime / Renderer::stats.renderTimes.size();
+        texts.push_back(
+            drawText(fmt::format("Avg render time {:.4f} ms ({:.2f} fps)",
+                                 avgRenderTime, 1.f / avgRenderTime),
+                     WIN_W - 320, y, scale));
+        y += 30;
+
+        gltEndDraw();
+        for (auto text : texts) gltDeleteText(text);
+        gltTerminate();
+    }
+
+    virtual void onEvent(Event& event) override {
+        EventDispatcher dispatcher(event);
+        (void)event;
+        (void)dispatcher;
+    }
+};
+
 struct ProfileLayer : public Layer {
     bool showFilenames;
     float seconds;
@@ -82,12 +130,13 @@ struct ProfileLayer : public Layer {
     virtual void onDetach() override {}
 
     virtual void onUpdate(Time dt) override {
-        prof(__PROFILE_FUNC__);
+        prof give_me_a_name(__PROFILE_FUNC__);
         (void)dt;
 
         if (isMinimized) {
             return;
         }
+
         if (Menu::get().state != Menu::State::Game) {
             return;
         }
@@ -127,7 +176,7 @@ struct ProfileLayer : public Layer {
         texts.push_back(
             drawText(fmt::format("Avg render time {:.4f} ms ({:.2f} fps)",
                                  avgRenderTime, 1.f / avgRenderTime),
-                     0, y, scale));
+                     WIN_W - 100, y, scale));
         y += 30;
 
         gltEndDraw();
@@ -156,6 +205,7 @@ struct ProfileLayer : public Layer {
             &ProfileLayer::onKeyPressed, this, std::placeholders::_1));
     }
 };
+
 struct EntityDebugLayer : public Layer {
     std::shared_ptr<Entity> node;
 

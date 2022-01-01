@@ -81,6 +81,7 @@ dropdown
 checkbox
 slider
 textfield
+commandfield
 window
 
 bool text(uuid id,
