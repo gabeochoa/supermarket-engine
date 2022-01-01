@@ -72,16 +72,16 @@ int main(int argc, char** argv) {
     App::get().pushLayer(menu);
 
     //
-    Layer* profile = new ProfileLayer();
-    App::get().pushLayer(profile);
-    Layer* entityDebug = new EntityDebugLayer();
-    App::get().pushLayer(entityDebug);
-
-    Layer* fps = new FPSLayer();
-    App::get().pushLayer(fps);
-
-    Layer* terminal = new TerminalLayer();
-    App::get().pushLayer(terminal);
+    // Layer* profile = new ProfileLayer();
+    // App::get().pushLayer(profile);
+    // Layer* entityDebug = new EntityDebugLayer();
+    // App::get().pushLayer(entityDebug);
+    //
+    // Layer* fps = new FPSLayer();
+    // App::get().pushLayer(fps);
+    //
+    // Layer* terminal = new TerminalLayer();
+    // App::get().pushLayer(terminal);
 
     // Menu::get().state = Menu::State::Game;
     // Menu::get().state = Menu::State::Root;

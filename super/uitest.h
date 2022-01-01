@@ -185,42 +185,30 @@ struct UITestLayer : public Layer {
             text(uuid({id, item++, 0}), hiraganaConfig);
             text(uuid({id, item++, 0}), kanjiConfig);
 
-            {
-                uuid textFieldID = uuid({id, item++, 0});
-                if (textfield(textFieldID,
-                              WidgetConfig({.position = glm::vec2{2.f, 2.f},
-                                            .size = glm::vec2{6.f, 1.f}}),
-                              content)) {
-                    log_info("{}", to_string(content));
-                }
-
-                // In this case we want to lock the camera when typing in
-                // this specific textfield
-                // TODO should this be the default?
-                // TODO should this live in the textFieldConfig?
-                uiTestCameraController->movementEnabled = camHasMovement;
-                if (uiTestCameraController->movementEnabled &&
-                    IUI::has_kb_focus(textFieldID)) {
-                    uiTestCameraController->movementEnabled = false;
-                }
+            uuid textFieldID = uuid({id, item++, 0});
+            if (textfield(textFieldID,
+                          WidgetConfig({.position = glm::vec2{2.f, 2.f},
+                                        .size = glm::vec2{6.f, 1.f}}),
+                          content)) {
+                log_info("{}", to_string(content));
             }
 
-            {
-                uuid textFieldID = uuid({id, item++, 0});
-                if (commandfield(textFieldID,
-                                 WidgetConfig({.position = glm::vec2{2.f, 4.f},
-                                               .size = glm::vec2{6.f, 1.f}}))) {
-                    log_info("{}", EDITOR_COMMANDS.command_history.back());
-                }
+            uuid commandFieldID = uuid({id, item++, 0});
+            if (commandfield(commandFieldID,
+                             WidgetConfig({.position = glm::vec2{2.f, 4.f},
+                                           .size = glm::vec2{6.f, 1.f}}))) {
+                log_info("{}", EDITOR_COMMANDS.command_history.back());
+            }
 
-                // See now im doing this again, so yea probably I should solve
-                // this separately from here, we have the camera in Frame so
-                // maybe we should just take the controller and take control
-                uiTestCameraController->movementEnabled = camHasMovement;
-                if (uiTestCameraController->movementEnabled &&
-                    IUI::has_kb_focus(textFieldID)) {
-                    uiTestCameraController->movementEnabled = false;
-                }
+            // In this case we want to lock the camera when typing in
+            // this specific textfield
+            // TODO should this be the default?
+            // TODO should this live in the textFieldConfig?
+            uiTestCameraController->movementEnabled = camHasMovement;
+            if (uiTestCameraController->movementEnabled &&
+                (IUI::has_kb_focus(textFieldID) ||
+                 IUI::has_kb_focus(commandFieldID))) {
+                uiTestCameraController->movementEnabled = false;
             }
 
             auto tapToContiueText = WidgetConfig({
