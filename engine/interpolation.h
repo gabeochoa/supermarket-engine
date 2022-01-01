@@ -18,12 +18,13 @@ struct Interpolator {
         step = 0;
     }
 
-    Interpolator(T mn, T mx, int s) : min(mn), max(mx), steps(s) {
+    Interpolator(T mn, T mx, int s) : min(mn), max(mx), steps(s) { reset(); }
+
+    virtual T next() = 0;
+    virtual void reset() {
         x = min;
         step = 0;
     }
-
-    virtual T next() = 0;
 };
 
 struct LinearInterp : public Interpolator<float> {
