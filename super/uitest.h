@@ -25,6 +25,7 @@ struct UITestLayer : public Layer {
     bool dropdownState = false;
     float upperCaseRotation = 0.f;
     bool camHasMovement = false;
+    std::wstring commandContent;
 
     std::shared_ptr<Billboard> billy;
 
@@ -196,7 +197,8 @@ struct UITestLayer : public Layer {
             uuid commandFieldID = uuid({id, item++, 0});
             if (commandfield(commandFieldID,
                              WidgetConfig({.position = glm::vec2{2.f, 4.f},
-                                           .size = glm::vec2{6.f, 1.f}}))) {
+                                           .size = glm::vec2{6.f, 1.f}}),
+                             commandContent)) {
                 log_info("{}", EDITOR_COMMANDS.command_history.back());
             }
 

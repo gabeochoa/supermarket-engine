@@ -14,7 +14,9 @@ struct TerminalLayer : public Layer {
     glm::vec4 rect = glm::vec4{200.f, 1000.f, 1500.f, 200.f};
     // TODO ive just realized that UUID 000 is basically every layer
     // probably instead of using parent we should use layer as the first id...
-    IUI::uuid drawer_uuid = IUI::uuid({id, 0, 0});
+    IUI::uuid drawer_uuid = IUI::uuid({id, -1, 0});
+    IUI::uuid command_field_id = IUI::uuid({id, -2, 0});
+    std::wstring commandContent;
 
     TerminalLayer() : Layer("Debug Terminal") {
         isMinimized = true;
@@ -64,6 +66,8 @@ struct TerminalLayer : public Layer {
 
         using namespace IUI;
         UIFrame BandE(terminalCameraController);
+        IUI::get()->kbFocusID = command_field_id;
+
         int item = 0;
 
         std::vector<std::function<bool(uuid)>> children;
@@ -75,23 +79,26 @@ struct TerminalLayer : public Layer {
             auto textConfig = WidgetConfig({
                 .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
                 .position = convertUIPos({0, h1_fs + 1.f}),
-                .size = glm::vec2{h1_fs, -h1_fs},
+                .size = glm::vec2{h1_fs, h1_fs},
                 .text = "Terminal",
+                .flipTextY = true,
             });
             return text(id, textConfig);
         });
 
         auto drawer_location = getPositionSizeForUIRect({0, 0, WIN_W, 400});
 
-        children.push_back([&](uuid id) {
-            auto cfsize = glm::vec2{drawer_location[1].x, 120.f};
+        children.push_back([&](uuid) {
+            auto cfsize = glm::vec2{drawer_location[1].x, h1_fs};
             auto commandFieldConfig = WidgetConfig({
-                .position = glm::vec2{drawer_location[0].x,
-                                      drawer_location[0].y +
-                                          drawer_location[1].y - cfsize.y},
+                .color = glm::vec4{0.4f},
+                .flipTextY = true,
+                .position = glm::vec2{0.f, drawer_location[0].y +
+                                               (drawer_location[1].y / 2.f)},
                 .size = cfsize,
             });
-            return commandfield(id, commandFieldConfig);
+            return commandfield(command_field_id, commandFieldConfig,
+                                commandContent);
         });
 
         drawer(drawer_uuid,
@@ -106,6 +113,9 @@ struct TerminalLayer : public Layer {
     }
 
     bool onKeyPressed(KeyPressedEvent event) {
+        if (event.keycode == Key::mapping["Exit Debugger"]) {
+            isMinimized = false;
+        }
         if (event.keycode == Key::mapping["Toggle Debugger"]) {
             isMinimized = !isMinimized;
             // TODO this requires us to know the internal setup of state

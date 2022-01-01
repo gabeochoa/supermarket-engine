@@ -542,6 +542,7 @@ struct WidgetConfig {
     std::string texture = "white";
     bool transparent = false;
     bool vertical = false;
+    bool flipTextY = false;
 };
 
 template <typename T>
@@ -588,7 +589,8 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f},
     auto scaled_width = (1.f * texture->width / FONT_SIZE);
     auto scaled_height = (1.f * texture->height / FONT_SIZE);
     auto size =
-        glm::vec2{config.size.x * scaled_width, config.size.y * scaled_height};
+        glm::vec2{config.size.x * scaled_width,
+                  (config.flipTextY ? -1 : 1) * config.size.y * scaled_height};
 
     auto position =
         // where we should draw it
@@ -632,6 +634,7 @@ bool button(uuid id, WidgetConfig config) {
                      .position = config.position,
                      .size = glm::vec2{0.75f, 0.75f},
                      .text = config.text,
+                     .flipTextY = config.flipTextY,
                  }),
                  glm::vec2{(-config.size.x / 2.f) + 0.10f, -0.75f});
         }
@@ -704,6 +707,7 @@ bool dropdown(uuid id, WidgetConfig config,
          WidgetConfig({
              .rotation = state->on ? 90.f : 270.f,
              .text = ">",
+             .flipTextY = config.flipTextY,
          }),
          config.position + offset);
 
@@ -914,7 +918,7 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
     try_to_grab_kb(id);
 
     {  // start render
-        float tSize = 0.5f;
+        float tSize = config.size.y * 0.5f;
         auto tStartLocation =
             config.position - glm::vec2{config.size.x / 2.f, 0.5f};
 
@@ -928,6 +932,7 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
                  .position = tStartLocation,
                  .size = glm::vec2{tSize},
                  .text = to_string(content),
+                 .flipTextY = config.flipTextY,
              }),
              glm::vec2{0.f}, true /*temporary*/);
 
@@ -966,7 +971,9 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
             changed = true;
         }
         if (get()->modchar == Key::mapping["Text Backspace"]) {
-            state->buffer.asT().pop_back();
+            if (state->buffer.asT().size() > 0) {
+                state->buffer.asT().pop_back();
+            }
             changed = true;
         }
     }
@@ -982,13 +989,11 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
     return changed;
 }
 
-bool commandfield(uuid id, WidgetConfig config) {
+bool commandfield(uuid id, WidgetConfig config, std::wstring& content) {
     // We dont need a separate ID since we want
     // global state to match and for them to have the
     // same keyboard focus
     auto state = widget_init<TextfieldState>(id);
-
-    std::wstring content;
     textfield(id, config, content);
 
     if (has_kb_focus(id)) {
@@ -1034,7 +1039,7 @@ bool drawer(uuid id, WidgetConfig config,
     int index = 0;
     if (state->heightPct > 0.9) {
         for (auto child : children) {
-            child(uuid({id.item, item, index++}));
+            child(uuid({id.owner, id.item, index++}));
         }
     }
 
