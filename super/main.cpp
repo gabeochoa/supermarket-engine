@@ -19,6 +19,7 @@
 #include "debug_layers.h"
 #include "menulayer.h"
 #include "superlayer.h"
+#include "terminal_layer.h"
 #include "tests.h"
 #include "uitest.h"
 
@@ -78,6 +79,9 @@ int main(int argc, char** argv) {
 
     Layer* fps = new FPSLayer();
     App::get().pushLayer(fps);
+
+    Layer* terminal = new TerminalLayer();
+    App::get().pushLayer(terminal);
 
     // Menu::get().state = Menu::State::Game;
     // Menu::get().state = Menu::State::Root;
