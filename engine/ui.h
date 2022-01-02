@@ -71,6 +71,12 @@ std::string texture = "white";
     - ** not supported for text widgets
 bool transparent = false;
     - whether we we should use a trasparent background texture or an opaque one
+bool flipTextY = false;
+    - whether we should flip the text's yscale
+bool temporary = false;
+    - the texture will be evicted when we generate more than MAX_TEMPORARY
+string textures
+    - only used for text()
 
 
 3. Widget Functions
@@ -85,15 +91,8 @@ commandfield
 window
 drawer
 
-bool text(uuid id,
-          WidgetConfig config,
-          // Drawn position will be config.position+offset
-          glm::vec2 offset = {0.f, 0.f},
-          // Temporary means the texture will be evicted when
-          // we generate more than MAX_TEMPORARY string textures
-          bool temporary = false);
-
-    returns false always
+bool text(uuid id, WidgetConfig config);
+    returns true always
 
 bool button(uuid id, WidgetConfig config)
     returns true if the button was clicked else false
@@ -547,6 +546,7 @@ struct WidgetConfig {
     bool transparent = false;
     bool vertical = false;
     bool flipTextY = false;
+    bool temporary = false;
 };
 
 template <typename T>
@@ -561,8 +561,8 @@ std::shared_ptr<T> widget_init(uuid id) {
     return state;
 }
 
-void draw_ui_widget(glm::vec2 position, glm::vec2 size, glm::vec4 color,
-                    std::string texturename, float rotation = 0.f) {
+inline void draw_ui_widget(glm::vec2 position, glm::vec2 size, glm::vec4 color,
+                           std::string texturename, float rotation = 0.f) {
     if (rotation > 5.f) {
         Renderer::drawQuadRotated(position,                //
                                   size,                    //
@@ -574,8 +574,7 @@ void draw_ui_widget(glm::vec2 position, glm::vec2 size, glm::vec4 color,
     Renderer::drawQuad(position, size, color, texturename);
 }
 
-bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f},
-          bool temporary = false) {
+bool text(uuid id, WidgetConfig config) {
     // NOTE: currently id is only used for focus and hot/active,
     // we could potentially also track "selections"
     // with a range so the user can highlight text
@@ -584,7 +583,7 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f},
 
     std::shared_ptr<Texture> texture;
     texture = fetch_texture_for_phrase(config.font, to_wstring(config.text),
-                                       temporary);
+                                       config.temporary);
     if (!texture) {
         log_error("failed to fetch texture for text {} with font {}",
                   config.text, config.font);
@@ -599,14 +598,12 @@ bool text(uuid id, WidgetConfig config, glm::vec2 offset = {0.f, 0.f},
     auto position =
         // where we should draw it
         config.position +
-        // local offset to align it with its parent
-        offset +
         //
         glm::vec2{size.x / 2.f, size.y / 2.f};
 
     draw_ui_widget(position, size, config.color, texture->name,
                    config.rotation);
-    return false;
+    return true;
 }
 
 bool button(uuid id, WidgetConfig config) {
@@ -635,12 +632,13 @@ bool button(uuid id, WidgetConfig config) {
                      .color = glm::vec4{1.f - config.color.r,  //
                                         1.f - config.color.g,
                                         1.f - config.color.b, 1.f},
-                     .position = config.position,
+                     .position =
+                         config.position +
+                         glm::vec2{(-config.size.x / 2.f) + 0.10f, -0.75f},
                      .size = glm::vec2{0.75f, 0.75f},
                      .text = config.text,
                      .flipTextY = config.flipTextY,
-                 }),
-                 glm::vec2{(-config.size.x / 2.f) + 0.10f, -0.75f});
+                 }));
         }
 
         draw_ui_widget(config.position, config.size, config.color,
@@ -689,7 +687,9 @@ bool button(uuid id, WidgetConfig config) {
 bool button_with_label(uuid id, WidgetConfig config) {
     int item = 0;
     if (config.text == "") {
-        text(uuid({id.item, item++, 0}), *config.child, config.position);
+        // apply offset so text is relative to button position
+        config.child->position += config.position;
+        text(uuid({id.item, item++, 0}), *config.child);
     }
     auto pressed = button(id, config);
     return pressed;
@@ -708,12 +708,10 @@ bool dropdown(uuid id, WidgetConfig config,
     // offset the V a little more than ^ in order to make it look nice
     auto offset = glm::vec2{config.size.x - (state->on ? 1.f : 1.6f), -0.25f};
     text(uuid({id.item, item++, 0}),
-         WidgetConfig({
-             .rotation = state->on ? 90.f : 270.f,
-             .text = ">",
-             .flipTextY = config.flipTextY,
-         }),
-         config.position + offset);
+         WidgetConfig({.rotation = state->on ? 90.f : 270.f,
+                       .text = ">",
+                       .flipTextY = config.flipTextY,
+                       .position = config.position + offset}));
 
     config.text = configs[state->selected].text;
 
@@ -941,8 +939,8 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
                  .size = glm::vec2{tSize},
                  .text = to_string(content),
                  .flipTextY = config.flipTextY,
-             }),
-             glm::vec2{0.f}, true /*temporary*/);
+                 .temporary = true,
+             }));
 
         draw_ui_widget(config.position, config.size, config.color,
                        config.texture, config.rotation);
