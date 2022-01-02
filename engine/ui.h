@@ -83,6 +83,7 @@ slider
 textfield
 commandfield
 window
+drawer
 
 bool text(uuid id,
           WidgetConfig config,
@@ -145,6 +146,9 @@ bool commandfield(uuid id, WidgetConfig config);
 bool window(uuid id, WidgetConfig config, const std::vector<WidgetConfig>&
 children);
     returns false always
+
+bool drawer(uuid id, WidgetConfig config, float* pct_open);
+    returns true if fully open;
 
 
 TODO add support for max-length textfield
@@ -920,7 +924,11 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
     {  // start render
         float tSize = config.size.y * 0.5f;
         auto tStartLocation =
-            config.position - glm::vec2{config.size.x / 2.f, 0.5f};
+            config.position -
+            glm::vec2{config.size.x / 2.f,
+                      // only move text if not flipped otherwise
+                      // text will be too high in the box
+                      config.flipTextY ? -tSize : 0.5f};
 
         std::wstring focusStr = has_kb_focus(id) ? L"_" : L"";
         std::wstring content =
@@ -994,6 +1002,8 @@ bool commandfield(uuid id, WidgetConfig config, std::wstring& content) {
     // global state to match and for them to have the
     // same keyboard focus
     auto state = widget_init<TextfieldState>(id);
+    // TODO what should we return here,
+    // changed? or user ran command
     textfield(id, config, content);
 
     if (has_kb_focus(id)) {
@@ -1028,27 +1038,20 @@ bool window(uuid id, WidgetConfig config,
     return false;
 }
 
-bool drawer(uuid id, WidgetConfig config,
-            const std::vector<std::function<bool(uuid)>>& children,
-            float* pct_open) {
+bool drawer(uuid id, WidgetConfig config, float* pct_open) {
     auto state = widget_init<DrawerState>(id);
     if (pct_open) state->heightPct = *pct_open;
+
     if (state->heightPct < 1.f) {
         state->heightPct.asT() += 0.1;
     }
-
-    int item = 0;
-    int index = 0;
-    if (state->heightPct > 0.9) {
-        for (auto child : children) {
-            child(uuid({id.owner, id.item, index++}));
-        }
-    }
-
     draw_ui_widget(
         glm::vec2{config.position.x, state->heightPct * config.position.y},
         config.size, config.color, config.texture, config.rotation);
+    // output pct if user wants
     if (pct_open) *pct_open = state->heightPct;
+    // return if drawer should render children
+    if (state->heightPct > 0.9) return true;
     return false;
 }
 

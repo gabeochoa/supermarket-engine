@@ -71,12 +71,20 @@ struct TerminalLayer : public Layer {
 
         int item = 0;
 
-        std::vector<std::function<bool(uuid)>> children;
-
         float h1_fs = 64.f;
         float p_fs = 32.f;
 
-        children.push_back([&](uuid id) {
+        auto drawer_location = getPositionSizeForUIRect({0, 0, WIN_W, 400});
+
+        if (drawer(drawer_uuid,
+                   WidgetConfig({
+                       .color = blue,
+                       .position = drawer_location[0],
+                       .size = drawer_location[1],
+                   }),
+                   &drawerPctOpen)) {
+            int index = 0;
+
             auto textConfig = WidgetConfig({
                 .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
                 .position = convertUIPos({0, h1_fs + 1.f}),
@@ -84,12 +92,8 @@ struct TerminalLayer : public Layer {
                 .text = "Terminal",
                 .flipTextY = true,
             });
-            return text(id, textConfig);
-        });
+            text(uuid({id, drawer_uuid.item, index++}), textConfig);
 
-        auto drawer_location = getPositionSizeForUIRect({0, 0, WIN_W, 400});
-
-        children.push_back([&](uuid) {
             auto cfsize = glm::vec2{drawer_location[1].x, h1_fs};
             auto commandFieldConfig = WidgetConfig({
                 .color = glm::vec4{0.4f},
@@ -98,18 +102,9 @@ struct TerminalLayer : public Layer {
                                                (drawer_location[1].y / 2.f)},
                 .size = cfsize,
             });
-            return commandfield(command_field_id, commandFieldConfig,
-                                commandContent);
-        });
+            commandfield(command_field_id, commandFieldConfig, commandContent);
 
-        drawer(drawer_uuid,
-               WidgetConfig({
-                   .color = blue,
-                   .position = drawer_location[0],
-                   .size = drawer_location[1],
-               }),
-               children, &drawerPctOpen);
-
+        }  // end drawer
         Renderer::end();
     }
 
