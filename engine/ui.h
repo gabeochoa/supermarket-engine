@@ -1029,8 +1029,10 @@ bool window(uuid id, WidgetConfig config,
 }
 
 bool drawer(uuid id, WidgetConfig config,
-            const std::vector<std::function<bool(uuid)>>& children) {
+            const std::vector<std::function<bool(uuid)>>& children,
+            float* pct_open) {
     auto state = widget_init<DrawerState>(id);
+    if (pct_open) state->heightPct = *pct_open;
     if (state->heightPct < 1.f) {
         state->heightPct.asT() += 0.1;
     }
@@ -1046,6 +1048,7 @@ bool drawer(uuid id, WidgetConfig config,
     draw_ui_widget(
         glm::vec2{config.position.x, state->heightPct * config.position.y},
         config.size, config.color, config.texture, config.rotation);
+    if (pct_open) *pct_open = state->heightPct;
     return false;
 }
 

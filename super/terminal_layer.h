@@ -17,6 +17,7 @@ struct TerminalLayer : public Layer {
     IUI::uuid drawer_uuid = IUI::uuid({id, -1, 0});
     IUI::uuid command_field_id = IUI::uuid({id, -2, 0});
     std::wstring commandContent;
+    float drawerPctOpen = 0.f;
 
     TerminalLayer() : Layer("Debug Terminal") {
         isMinimized = true;
@@ -107,7 +108,7 @@ struct TerminalLayer : public Layer {
                    .position = drawer_location[0],
                    .size = drawer_location[1],
                }),
-               children);
+               children, &drawerPctOpen);
 
         Renderer::end();
     }
@@ -115,16 +116,11 @@ struct TerminalLayer : public Layer {
     bool onKeyPressed(KeyPressedEvent event) {
         if (event.keycode == Key::mapping["Exit Debugger"]) {
             isMinimized = false;
+            return false;
         }
         if (event.keycode == Key::mapping["Toggle Debugger"]) {
             isMinimized = !isMinimized;
-            // TODO this requires us to know the internal setup of state
-            // probably just have drawer take the pct open
-            auto state =
-                IUI::get()->statemanager.get_as<IUI::DrawerState>(drawer_uuid);
-            if (state) {
-                state->heightPct = 0.f;
-            }
+            drawerPctOpen = 0.f;
         }
         // TODO is there a way for us to not have to do this?
         // or make it required so you cant even start without it accidentally
