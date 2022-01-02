@@ -147,17 +147,26 @@ struct EditorCommands {
     std::deque<std::string> output_history;
     std::deque<std::string> command_history;
     std::map<std::string, ActionFuncType> commands;
+    std::map<std::string, std::string> help;
 
-    EditorCommands() {
+    EditorCommands() { init_default_commands(); }
+
+    void init_default_commands() {
         // Register a bunch of commands that arent custom
-        registerCommand("toggle_bool", ToggleBoolCommand<bool>());
-        registerCommand("edit_float", SetValueCommand<float>());
-        registerCommand("inc_float", IncrementValueCommand<float>());
-        registerCommand("exit", ExitCommand());
+        registerCommand("toggle_bool", ToggleBoolCommand<bool>(),
+                        "Flip a bool's value; toggle_bool <varname>");
+        registerCommand(
+            "edit_float", SetValueCommand<float>(),
+            "Set a float to value passed in; edit_float <varname> <value>");
+        registerCommand(
+            "inc_float", IncrementValueCommand<float>(),
+            "Increment float by value; inc_float <varname> <value>");
+        registerCommand("exit", ExitCommand(), "force quit the app");
         // TODO write / read from history files to keep commands from last run
     }
 
-    void registerCommand(std::string name, ActionFuncType cmd) {
+    void registerCommand(std::string name, ActionFuncType cmd,
+                         std::string help_str) {
         if (commands.find(name) != commands.end()) {
             log_warn(
                 "Failed to add command, action with name {} "
@@ -168,6 +177,15 @@ struct EditorCommands {
 
         // log_info("Adding command \"{}\" to our library", name);
         commands[name] = cmd;
+        help[name] = help_str;
+    }
+
+    void helpCommand() {
+        addToOutputHistory("Help:");
+        for (auto kv : help) {
+            addToOutputHistory(fmt::format("{}", kv.first));
+            addToOutputHistory(fmt::format("\t{}", kv.second));
+        }
     }
 
     void triggerCommand(std::string line) {
@@ -179,6 +197,10 @@ struct EditorCommands {
         std::string command = tokens[0];
         auto it = commands.find(command);
         if (it == commands.end()) {
+            if (command == "help") {
+                helpCommand();
+                return;
+            }
             // TODO output to terminal
             addToOutputHistory(fmt::format(
                 "command run was not valid: {} (came from input {})", command,
@@ -208,6 +230,14 @@ struct EditorCommands {
             output_history.pop_front();
         }
     }
+
+    void reset() {
+        commands.clear();
+        help.clear();
+        output_history.clear();
+        command_history.clear();
+        init_default_commands();
+    }
 };
 static EditorCommands EDITOR_COMMANDS;
 
@@ -227,8 +257,8 @@ inline void test_global_commands() {
              "of the ptr and not the value");
 
     // register a new command to edit our float
-    EDITOR_COMMANDS.registerCommand("test_edit_float",
-                                    SetValueCommand<float>());
+    EDITOR_COMMANDS.registerCommand("test_edit_float", SetValueCommand<float>(),
+                                    "TEST");
     M_ASSERT(EDITOR_COMMANDS.output_history.size() == 0,
              "Output should be empty");
     M_ASSERT(EDITOR_COMMANDS.command_history.size() == 0,
@@ -255,4 +285,6 @@ inline void test_global_commands() {
              "Output should have the result of our last command");
     M_ASSERT(EDITOR_COMMANDS.command_history.size() == 3,
              "We have only run one command");
+
+    EDITOR_COMMANDS.reset();
 }
