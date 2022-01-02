@@ -85,21 +85,18 @@ struct GameUILayer : public Layer {
         float h1_fs = 64.f;
         float p_fs = 32.f;
 
-        float _100pct = 1.f;
         auto window_location = getPositionSizeForUIRect({0, 100, 300, 1000});
         uuid window_id = uuid({id, item++, 0});
-        if (drawer(window_id,
-                   WidgetConfig({
-                       .color = blue,
-                       .position = window_location[0],
-                       .size = window_location[1],
-                   })  //
-                   ,
-                   &_100pct)) {
+        if (window(window_id, WidgetConfig({
+                                  .color = blue,
+                                  .position = window_location[0],
+                                  .size = window_location[1],
+                              })  //
+                   )) {
             auto textConfig = WidgetConfig({
                 .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
                 .position = convertUIPos({0, 100.f + h1_fs + 1.f}),
-                .size = glm::vec2{h1_fs, -h1_fs},
+                .size = glm::vec2{h1_fs, h1_fs},
                 .text = "Inventory",
                 .flipTextY = true,
             });
@@ -236,14 +233,15 @@ struct SuperLayer : public Layer {
 
     void render() {
         Renderer::begin(cameraController->camera);
-        // render above any other items
+        // render under items
         dragArea->render();
+        // should go underneath entities also
+        dragArea->render_selected();
 
         for (auto& entity : entities) {
             entity->render();
         }
-        // should go underneath entities
-        dragArea->render_selected();
+
         Renderer::end();
     }
 
