@@ -87,14 +87,14 @@ struct Theta {
     Theta(const glm::vec2& s, const glm::vec2& e,
           std::function<bool(const glm::vec2& pos)> valid, bool isLazy = false)
         : start(s), end(e), isWalkable(valid), lazy(isLazy) {
-        log_info("trying to find path from {} to {}", start, end);
+        log_trace("trying to find path from {} to {}", start, end);
 
         // if the goal isnt reachable, then we have to change the goal for now
         if (!isWalkable(end)) {
             // uses the closedSet
             end = expandUntilWalkable(end);
             closedSet.Q.clear();
-            log_info("couldnt get to end so end is now {}", end);
+            log_trace("couldnt get to end so end is now {}", end);
         }
 
         // init vars
@@ -152,7 +152,7 @@ struct Theta {
                 }
             }
         }
-        log_warn("no path found to thing");
+        log_trace("no path found to thing");
         return std::vector<glm::vec2>();
     }
 

@@ -114,7 +114,7 @@ struct fmt::formatter<Entity> {
 };
 
 void Entity::announce(const std::string& tosay) const {
-    log_info("{}: {}", *asEntity(), tosay);
+    log_trace("{}: {}", *asEntity(), tosay);
 }
 
 static std::vector<std::shared_ptr<Entity>> entities;

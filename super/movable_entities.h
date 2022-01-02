@@ -327,7 +327,7 @@ struct Customer : public Person {
     bool workFindItem(const std::shared_ptr<Job>& j, WorkInput input) {
         (void)j;
         (void)input;
-        log_info("workFindItem, ");
+        log_trace("workFindItem, ");
         return false;
     }
 
