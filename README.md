@@ -19,19 +19,36 @@ https://github.com/samhocevar/portable-file-dialogs
 
 
 ```
+
 TODOs
 
-Game Ideas
+Game 
 
-Allow player to label aisles which make it easier for people to find the item
-the want
+player should be able to control price of items
++ player gets feedback from customers on price and quantity 
++ feedback should be centralized on item so if you miss popups its findable
+player should have to buy items 
++ which take time to get shipped to store
++ can hire an inventory manager to do this automatically
+
+Allow player to label aisles 
++ makes it easier for customers to find the item they want
++ gives stockers faster stocking times since they only need to stock when aisle is empty
 
 Customers leaving items around
 + Another stock job to put items back
+
+Customers will leave if lines are too long 
+
 Stealing items
++ Hire security manager
++ Hire security employees 
++ Video Cameras
+
 
 Weather and day night system
-+ Different desires based in
++ Different desires based on these (less ice cream in winter) 
+
 
 
 Engine Ideas
@@ -49,8 +66,8 @@ Engine Ideas
          } // free happens here
 - LRU cache for temporary textures
 - base64 encode, is this already built in c++ ?
-- add support for editing values on the fly
-     some way to register values with global storage
+- add support for editing values on the fly (DONE) 
+     some way to register values with global storage (DONE)
      hook up a UI dropdown to edit it
      support new debug layer for holding the ui dropdown
  add support for adding a struct (is there some kind of Reflection in cpp?)
