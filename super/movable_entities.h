@@ -13,7 +13,7 @@ const float TRAVEL_DIST = 0.2f;
 inline bool isWalkable(const glm::vec2& size, const glm::vec2& pos) {
     // is valid location
     for (auto& e : entities) {
-        auto s = dynamic_pointer_cast<Shelf>(e);
+        auto s = dynamic_pointer_cast<Storable>(e);
         if (!s) continue;
         // if (e->pointCollides(pos)) return false;
         {

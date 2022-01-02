@@ -126,6 +126,8 @@ struct Storable : public Entity {
         : Entity(position, size, angle, color, textureName) {}
 
     virtual void render() override {
+        Entity::render();
+
         if (contents.size() > 4) {
             log_warn("Contents is too large and so not all items will display");
         }
@@ -149,8 +151,6 @@ struct Storable : public Entity {
             }
             index++;
         }
-
-        Entity::render();
     }
 
     template <typename T>

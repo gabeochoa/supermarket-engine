@@ -180,6 +180,20 @@ struct SuperLayer : public Layer {
         Renderer::addSubtexture("item_sheet", "pizza", 3, 0, 16.f, 16.f);
 
         ////////////////////////////////////////////////////////
+
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 10; j += 2) {
+                if (i == 0 && j == 4) {
+                    continue;
+                }
+                auto shelf2 = std::make_shared<Shelf>(
+                    glm::vec2{1.f + i, -3.f + j},  //
+                    glm::vec2{1.f, 1.f}, 0.f,      //
+                    glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "shelf");
+                entities.push_back(shelf2);
+            }
+        }
+
         auto storage = std::make_shared<Storage>(
             glm::vec2{1.f, 1.f}, glm::vec2{1.f, 1.f}, 0.f,
             glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
@@ -188,16 +202,6 @@ struct SuperLayer : public Layer {
         storage->contents.addItem(2, 7);
         storage->contents.addItem(3, 9);
         entities.push_back(storage);
-
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 10; j += 2) {
-                auto shelf2 = std::make_shared<Shelf>(
-                    glm::vec2{1.f + i, -3.f + j},  //
-                    glm::vec2{1.f, 1.f}, 0.f,      //
-                    glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "shelf");
-                entities.push_back(shelf2);
-            }
-        }
 
         const int num_people_sprites = 3;
         std::array<std::string, num_people_sprites> peopleSprites = {
