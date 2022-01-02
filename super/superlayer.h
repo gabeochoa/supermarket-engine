@@ -13,6 +13,8 @@
 #include "job.h"
 #include "menu.h"
 
+//
+
 struct GameUILayer : public Layer {
     const glm::vec2 camTopLeft = {35.f, 19.5f};
     const glm::vec2 camBottomRight = {35.f, -18.f};
@@ -83,41 +85,43 @@ struct GameUILayer : public Layer {
         float h1_fs = 64.f;
         float p_fs = 32.f;
 
-        children.push_back([&](uuid id) {
+        float _100pct = 1.f;
+        auto window_location = getPositionSizeForUIRect({0, 100, 300, 1000});
+        uuid window_id = uuid({id, item++, 0});
+        if (drawer(window_id,
+                   WidgetConfig({
+                       .color = blue,
+                       .position = window_location[0],
+                       .size = window_location[1],
+                   })  //
+                   ,
+                   &_100pct)) {
             auto textConfig = WidgetConfig({
                 .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
                 .position = convertUIPos({0, 100.f + h1_fs + 1.f}),
                 .size = glm::vec2{h1_fs, -h1_fs},
                 .text = "Inventory",
+                .flipTextY = true,
             });
-            return text(id, textConfig);
-        });
+            text(uuid({id, item++, 0}), textConfig);
 
-        // TODO replace with list view when exists
-        int i = 0;
-        for (auto kv : getTotalInventory()) {
-            children.push_back([=](uuid id) {
+            // TODO replace with list view when exists
+            int items_id = item++;
+            int i = 0;
+            for (auto kv : getTotalInventory()) {
                 auto str = fmt::format(
                     "{} : {}", ItemManager::getItem(kv.first).name, kv.second);
                 auto textConfig = WidgetConfig({
                     .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
                     .position = convertUIPos({p_fs, 200.f + (p_fs * i)}),
-                    .size = glm::vec2{p_fs, -p_fs},
+                    .size = glm::vec2{p_fs, p_fs},
                     .text = str,
+                    .flipTextY = true,
                 });
-                return text(id, textConfig);
-            });
-            i++;
+                text(uuid({id, items_id, i}), textConfig);
+                i++;
+            }
         }
-
-        auto window_location = getPositionSizeForUIRect({0, 100, 300, 1000});
-        window(uuid({0, item++, 0}),
-               WidgetConfig({
-                   .color = blue,
-                   .position = window_location[0],
-                   .size = window_location[1],
-               }),
-               children);
 
         Renderer::end();
     }
@@ -332,7 +336,7 @@ struct SuperLayer : public Layer {
         if (Menu::get().state != Menu::State::Game) return;
 
         log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
-        prof(__PROFILE_FUNC__);  //
+        prof give_me_a_name(__PROFILE_FUNC__);
 
         Renderer::stats.reset();
         Renderer::stats.begin();

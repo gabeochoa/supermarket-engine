@@ -209,13 +209,15 @@ struct MenuLayer : public Layer {
         menuCameraController->onUpdate(dt);
 
         Renderer::begin(menuCameraController->camera);
-        ui();
-
-        camerate(dt);
 
         for (auto& billy : billys) {
             billy->render();
         }
+
+        camerate(dt);
+
+        ui();
+
         Renderer::end();
     }
 

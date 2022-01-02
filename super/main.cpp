@@ -54,33 +54,33 @@ int main(int argc, char** argv) {
         .escClosesWindow = false,
     }));
 
-    // test code underneath game so it never shows
-    Layer* uitest = new UITestLayer();
-    App::get().pushLayer(uitest);
+    Layer* terminal = new TerminalLayer();
+    App::get().pushLayer(terminal);
 
-    //
-    Layer* super = new SuperLayer();
-    App::get().pushLayer(super);
-    Layer* game_ui = new GameUILayer();
-    App::get().pushLayer(game_ui);
-
-    // TODO integrate into gameUI layer
-    Layer* jobLayer = new JobLayer();
-    App::get().pushLayer(jobLayer);
-
-    Layer* menu = new MenuLayer();
-    App::get().pushLayer(menu);
+    Layer* fps = new FPSLayer();
+    App::get().pushLayer(fps);
 
     Layer* profile = new ProfileLayer();
     App::get().pushLayer(profile);
     Layer* entityDebug = new EntityDebugLayer();
     App::get().pushLayer(entityDebug);
 
-    Layer* fps = new FPSLayer();
-    App::get().pushLayer(fps);
+    Layer* menu = new MenuLayer();
+    App::get().pushLayer(menu);
 
-    Layer* terminal = new TerminalLayer();
-    App::get().pushLayer(terminal);
+    Layer* game_ui = new GameUILayer();
+    App::get().pushLayer(game_ui);
+
+    // TODO integrate into gameUI layer
+    // Layer* jobLayer = new JobLayer();
+    // App::get().pushLayer(jobLayer);
+    //
+    Layer* super = new SuperLayer();
+    App::get().pushLayer(super);
+
+    // test code underneath game so it never shows
+    Layer* uitest = new UITestLayer();
+    App::get().pushLayer(uitest);
 
     // Menu::get().state = Menu::State::Game;
     // Menu::get().state = Menu::State::Root;

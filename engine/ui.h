@@ -144,7 +144,7 @@ bool commandfield(uuid id, WidgetConfig config);
 
 bool window(uuid id, WidgetConfig config, const std::vector<WidgetConfig>&
 children);
-    returns false always
+    returns true always
 
 bool drawer(uuid id, WidgetConfig config, float* pct_open);
     returns true if fully open;
@@ -624,25 +624,11 @@ bool button(uuid id, WidgetConfig config) {
     try_to_grab_kb(id);
 
     {  // start render
-        if (config.text.size() != 0) {
-            text(uuid({id.item, 0, 0}),
-                 WidgetConfig({
-                     // TODO detect if the button color is dark
-                     // and change the color to white automatically
-                     .color = glm::vec4{1.f - config.color.r,  //
-                                        1.f - config.color.g,
-                                        1.f - config.color.b, 1.f},
-                     .position =
-                         config.position +
-                         glm::vec2{(-config.size.x / 2.f) + 0.10f, -0.75f},
-                     .size = glm::vec2{0.75f, 0.75f},
-                     .text = config.text,
-                     .flipTextY = config.flipTextY,
-                 }));
-        }
 
-        draw_ui_widget(config.position, config.size, config.color,
-                       config.texture, config.rotation);
+        draw_if_kb_focus(id, [&]() {
+            draw_ui_widget(config.position, config.size + glm::vec2{0.1f}, teal,
+                           config.texture, config.rotation);
+        });
 
         if (get()->hotID == id) {
             if (get()->activeID == id) {
@@ -656,10 +642,26 @@ bool button(uuid id, WidgetConfig config) {
             draw_ui_widget(config.position, config.size, blue, config.texture,
                            config.rotation);
         }
-        draw_if_kb_focus(id, [&]() {
-            draw_ui_widget(config.position, config.size + glm::vec2{0.1f}, teal,
-                           config.texture, config.rotation);
-        });
+        draw_ui_widget(config.position, config.size, config.color,
+                       config.texture, config.rotation);
+
+        if (config.text.size() != 0) {
+            text(uuid({id.item, 0, 0}),
+                 WidgetConfig({
+                     // TODO detect if the button color is dark
+                     // and change the color to white automatically
+                     .color = glm::vec4{1.f - config.color.r,  //
+                                        1.f - config.color.g,
+                                        1.f - config.color.b, 1.f},
+                     .position =
+                         config.position +
+                         glm::vec2{(-config.size.x / 2.f) + 0.10f, -0.5f},
+                     .size = glm::vec2{0.75f, 0.75f},
+                     .text = config.text,
+                     .flipTextY = config.flipTextY,
+                 }));
+        }
+
     }  // end render
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::mapping["Widget Next"])) {
@@ -686,12 +688,12 @@ bool button(uuid id, WidgetConfig config) {
 
 bool button_with_label(uuid id, WidgetConfig config) {
     int item = 0;
+    auto pressed = button(id, config);
     if (config.text == "") {
         // apply offset so text is relative to button position
         config.child->position += config.position;
         text(uuid({id.item, item++, 0}), *config.child);
     }
-    auto pressed = button(id, config);
     return pressed;
 }
 
@@ -703,15 +705,6 @@ bool dropdown(uuid id, WidgetConfig config,
     if (selectedIndex) state->selected.set(*selectedIndex);
 
     int item = 0;
-
-    // TODO rotation is not really working correctly and so we have to
-    // offset the V a little more than ^ in order to make it look nice
-    auto offset = glm::vec2{config.size.x - (state->on ? 1.f : 1.6f), -0.25f};
-    text(uuid({id.item, item++, 0}),
-         WidgetConfig({.rotation = state->on ? 90.f : 270.f,
-                       .text = ">",
-                       .flipTextY = config.flipTextY,
-                       .position = config.position + offset}));
 
     config.text = configs[state->selected].text;
 
@@ -751,6 +744,15 @@ bool dropdown(uuid id, WidgetConfig config,
         }
     }
     auto pressed = button(id, config);
+
+    // TODO rotation is not really working correctly and so we have to
+    // offset the V a little more than ^ in order to make it look nice
+    auto offset = glm::vec2{config.size.x - (state->on ? 1.f : 1.6f), -0.25f};
+    text(uuid({id.item, item++, 0}),
+         WidgetConfig({.rotation = state->on ? 90.f : 270.f,
+                       .text = ">",
+                       .flipTextY = config.flipTextY,
+                       .position = config.position + offset}));
 
     if (dropdownState) *dropdownState = state->on;
     if (selectedIndex) *selectedIndex = state->selected;
@@ -824,6 +826,14 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
     auto pos = glm::vec2{config.position.x + (config.size.x / 2.f),
                          config.position.y + (config.size.y / 2.f)};
 
+    draw_if_kb_focus(id, [&]() {
+        draw_ui_widget(pos, config.size + glm::vec2{0.1f}, teal, config.texture,
+                       config.rotation);
+    });
+
+    // slider rail
+    draw_ui_widget(pos, config.size, red, config.texture, config.rotation);
+
     // slide
     if (config.vertical) {
         draw_ui_widget(
@@ -834,13 +844,6 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
             config.position + glm::vec2{pos_offset, config.size.y / 2.f},
             glm::vec2{0.5f}, col, config.texture, config.rotation);
     }
-    // slider rail
-    draw_ui_widget(pos, config.size, red, config.texture, config.rotation);
-
-    draw_if_kb_focus(id, [&]() {
-        draw_ui_widget(pos, config.size + glm::vec2{0.1f}, teal, config.texture,
-                       config.rotation);
-    });
 
     // TODO can we have a single return statement here?
     // does it matter that the rest of the code
@@ -920,6 +923,28 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
     try_to_grab_kb(id);
 
     {  // start render
+
+        // Draw focus ring
+        draw_if_kb_focus(id, [&]() {
+            draw_ui_widget(config.position, config.size + glm::vec2{0.1f}, teal,
+                           config.texture, config.rotation);
+        });
+
+        if (get()->hotID == id) {
+            if (get()->activeID == id) {
+                draw_ui_widget(config.position, config.size, red,
+                               config.texture, config.rotation);
+            } else {
+                draw_ui_widget(config.position, config.size, green,
+                               config.texture, config.rotation);
+            }
+        } else {
+            draw_ui_widget(config.position, config.size, blue, config.texture,
+                           config.rotation);
+        }
+        draw_ui_widget(config.position, config.size, config.color,
+                       config.texture, config.rotation);
+
         float tSize = config.size.y * 0.5f;
         auto tStartLocation =
             config.position -
@@ -942,25 +967,6 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
                  .temporary = true,
              }));
 
-        draw_ui_widget(config.position, config.size, config.color,
-                       config.texture, config.rotation);
-        if (get()->hotID == id) {
-            if (get()->activeID == id) {
-                draw_ui_widget(config.position, config.size, red,
-                               config.texture, config.rotation);
-            } else {
-                draw_ui_widget(config.position, config.size, green,
-                               config.texture, config.rotation);
-            }
-        } else {
-            draw_ui_widget(config.position, config.size, blue, config.texture,
-                           config.rotation);
-        }
-        // Draw focus ring
-        draw_if_kb_focus(id, [&]() {
-            draw_ui_widget(config.position, config.size + glm::vec2{0.1f}, teal,
-                           config.texture, config.rotation);
-        });
     }  // end render
 
     bool changed = false;
@@ -1024,16 +1030,10 @@ bool commandfield(uuid id, WidgetConfig config, std::wstring& content) {
     return false;
 }
 
-bool window(uuid id, WidgetConfig config,
-            const std::vector<std::function<bool(uuid)>>& children) {
-    int item = 0;
-    int index = 0;
-    for (auto child : children) {
-        child(uuid({id.item, item, index++}));
-    }
+bool window(uuid, WidgetConfig config) {
     draw_ui_widget(config.position, config.size, config.color, config.texture,
                    config.rotation);
-    return false;
+    return true;
 }
 
 bool drawer(uuid id, WidgetConfig config, float* pct_open) {

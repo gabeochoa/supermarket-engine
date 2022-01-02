@@ -100,30 +100,16 @@ struct App {
         if (e.handled) {
             return;
         }
-        // TODO - this was true but i think i had it backwards
-        // we want the top layer to get the vent first
-        // but in this case since its a stack
-        // we push on top so top is top
-        //
+
         // Have the top most layers get the event first,
         // if they handle it then no need for the lower ones to get the rest
         // eg imagine UI pause menu blocking game UI elements
         //    we wouldnt want the player to click pass the pause menu
-        // for (auto it = layerstack.end(); it != layerstack.begin();) {
-        // (*--it)->onEvent(e);
-        // log_info("running event handler {} ", (*it)->id);
-        // if (e.handled) {
-        // log_info("event handled");
-        // break;
-        // }
-        // }
-
-        for (auto it = layerstack.begin(); it != layerstack.end();) {
-            (*it)->onEvent(e);
+        for (auto it = layerstack.end(); it != layerstack.begin();) {
+            (*--it)->onEvent(e);
             if (e.handled) {
                 break;
             }
-            it++;
         }
     }
 
@@ -135,7 +121,7 @@ struct App {
     int run() {
         time.start();
         while (running) {
-            prof(__PROFILE_FUNC__);
+            prof give_me_a_name(__PROFILE_FUNC__);
             time.end();
             if (isMinimized) continue;
             if (settings.clearEnabled)

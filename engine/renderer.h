@@ -145,7 +145,7 @@ struct Renderer {
     static void init() {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_DEPTH_TEST);
+        // glEnable(GL_DEPTH_TEST);
 
         init_default_shaders();
         init_default_textures();

@@ -104,9 +104,10 @@ struct TerminalLayer : public Layer {
     }
 
     bool onKeyPressed(KeyPressedEvent event) {
-        if (event.keycode == Key::mapping["Exit Debugger"]) {
-            isMinimized = false;
-            return false;
+        if (isMinimized == false &&
+            event.keycode == Key::mapping["Exit Debugger"]) {
+            isMinimized = true;
+            return true;
         }
         if (event.keycode == Key::mapping["Toggle Debugger"]) {
             isMinimized = !isMinimized;
