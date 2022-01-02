@@ -298,7 +298,7 @@ struct SuperLayer : public Layer {
         }
         return false;
     }
-    bool onMouseMoved(Mouse::MouseMovedEvent& e) {
+    bool onMouseMoved(Mouse::MouseMovedEvent&) {
         glm::vec3 mouseInWorld = getMouseInWorld();
 
         if (Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft)) {

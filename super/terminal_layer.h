@@ -69,10 +69,7 @@ struct TerminalLayer : public Layer {
         UIFrame BandE(terminalCameraController);
         IUI::get()->kbFocusID = command_field_id;
 
-        int item = 0;
-
         float h1_fs = 64.f;
-        float p_fs = 32.f;
 
         auto drawer_location = getPositionSizeForUIRect({0, 0, WIN_W, 400});
 

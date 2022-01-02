@@ -8,7 +8,9 @@
 #define DEFAULT_PATH "/tmp"
 #endif
 
-static void openNotification() {
+__attribute__((unused))  // TODO use this or remove it
+static void
+openNotification() {
     // Notification
     pfd::notify("Important Notification",
                 "This is ' a message, pay \" attention \\ to it!",
@@ -40,10 +42,12 @@ static int openMessage(const char* title, const char* msg,
     return -1;
 }
 
-static std::vector<std::string> getFilesFromUser(
-    const char* startPath = DEFAULT_PATH, const char* title = "Choose files",
-    std::vector<std::string> filters = {"All Files", "*"},
-    bool multiselect = false) {
+__attribute__((unused))  // TODO use this or remove it
+static std::vector<std::string>
+getFilesFromUser(const char* startPath = DEFAULT_PATH,
+                 const char* title = "Choose files",
+                 std::vector<std::string> filters = {"All Files", "*"},
+                 bool multiselect = false) {
     pfd::opt choice_option =
         multiselect ? pfd::opt::multiselect : pfd::opt::none;
 
@@ -51,7 +55,9 @@ static std::vector<std::string> getFilesFromUser(
     return dialog.result();
 }
 
-static void directorySelect() {
+__attribute__((unused))  // TODO use this or remove it
+static void
+directorySelect() {
     // Check that a backend is available
     if (!pfd::settings::available()) {
         log_error("Portable File Dialogs are not available on this platform.");
@@ -64,6 +70,10 @@ static void directorySelect() {
     std::cout << "Selected dir: " << dir << "\n";
 }
 
+// NOTE: This is commented out since it has popups
+// its great for a test example file
+// but not really useful to run everytime i startup the program
+//
 // static void test_file_functionality() {
 // // pfd::settings
 // pfd::settings::verbose(true);
