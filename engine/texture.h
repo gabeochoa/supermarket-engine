@@ -109,7 +109,7 @@ struct Texture2D : public Texture {
             internalFormat = GL_RED;
             dataFormat = GL_RED;
         }
-        log_info("texture {} has {} channels", path, channels);
+        log_trace("texture {} has {} channels", path, channels);
         M_ASSERT(internalFormat, "image format not supported: {}", channels);
 
         this->width = w;
@@ -200,7 +200,7 @@ struct TextureLibrary {
                 texture->name);
             return "";
         }
-        log_info("Adding Texture \"{}\" to our library", texture->name);
+        log_trace("Adding Texture \"{}\" to our library", texture->name);
         if (texture->temporary) {
             numTemporaryTextures++;
         }
@@ -211,7 +211,7 @@ struct TextureLibrary {
                 if (i->second->temporary) {
                     numTemporaryTextures--;
                     name = i->second->name;
-                    log_info(
+                    log_trace(
                         "Evicting Temporary Texture \"{}\" from our library",
                         name);
                     i = textures.erase(i);
@@ -266,7 +266,7 @@ struct TextureLibrary {
     void addSubtextureMinMax(const std::shared_ptr<Texture> &texture,
                              const std::string &name, glm::vec2 min,
                              glm::vec2 max) {
-        log_info("Adding subtexture \"{}\" to our library", name);
+        log_trace("Adding subtexture \"{}\" to our library", name);
         subtextures[name] = std::make_shared<Subtexture>(texture, min, max);
     }
 

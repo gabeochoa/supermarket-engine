@@ -12,8 +12,6 @@ struct TerminalLayer : public Layer {
     const glm::vec2 camTopLeft = {35.f, 19.5f};
     const glm::vec2 camBottomRight = {35.f, -18.f};
     glm::vec4 rect = glm::vec4{200.f, 1000.f, 1500.f, 200.f};
-    // TODO ive just realized that UUID 000 is basically every layer
-    // probably instead of using parent we should use layer as the first id...
     IUI::uuid drawer_uuid = IUI::uuid({id, -1, 0});
     IUI::uuid command_field_id = IUI::uuid({id, -2, 0});
     std::wstring commandContent;

@@ -25,7 +25,6 @@ struct DragArea : public Entity {
 
     virtual void onUpdate(Time dt) override {
         (void)dt;
-        // TODO figure out a way to lock on tiles round up?
         position = round_higher(mouseDragStart);
         size = round_higher(mouseDragEnd - mouseDragStart);
     }
