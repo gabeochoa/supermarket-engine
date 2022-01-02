@@ -2,8 +2,10 @@
 #pragma once
 
 #include <any>
+#include <sstream>
 #include <variant>
 
+#include "camera.h"
 #include "external_include.h"
 #include "log.h"
 #include "strutil.h"
@@ -36,6 +38,17 @@ struct Deserializer {
     std::string input;
     Deserializer(std::string i) : input(i) {}
     operator T() = 0;
+};
+
+template <>
+struct Deserializer<bool> {
+    std::string input;
+    Deserializer(std::string i) : input(i) {}
+    operator bool() {
+        bool b;
+        std::istringstream(this->input.c_str()) >> std::boolalpha >> b;
+        return b;
+    }
 };
 
 template <>
@@ -83,6 +96,51 @@ struct EditValueCommand : Command<T> {
     }
 };
 
+// TODO idk if this is the best way to handle Structs
+// basically Command<struct> and EditValue<struct>
+// we lose access to add / set since those will be add<struct> instead of
+// add<struct->value>
+//
+// we also have to manually tokens[0] == struct->var every time
+// since c++ has no reflection
+//
+// Nice: we dont have to label every struct / create macros
+// Bad: have to do it here in the command which is probably worse
+//
+//          Example use
+// GLOBALS.set<OrthoCameraController>("gameUICameraController",
+// gameUICameraController.get()); EDITOR_COMMANDS.registerCommand(
+// "gameui_cam_set", SetValueCommand<OrthoCameraController>(), "Edit game UI
+// camera controller settings");
+//
+template <>
+struct EditValueCommand<OrthoCameraController>
+    : Command<OrthoCameraController> {
+    std::vector<std::any> convert(const std::vector<std::string>& tokens) {
+        // Need to convert to T* and T
+        std::vector<std::any> out;
+        if (tokens.size() != 2) {
+            this->msg = fmt::format("Invalid number of parameters {} wanted {}",
+                                    tokens.size(), 2);
+            return out;
+        }
+        // Normally we would put this in globals but too bad
+        //
+        OrthoCameraController* guicc =
+            GLOBALS.get_ptr<OrthoCameraController>("gameUICameraController");
+
+        if (tokens[0] == "movementEnabled") {
+            bool* mvt = &(guicc->movementEnabled);
+            out.push_back(mvt);
+            bool val = Deserializer<bool>(tokens[1]);
+            out.push_back(val);
+            return out;
+        }
+        this->msg = "no matching supported camera controller variable";
+        return out;
+    }
+};
+
 template <typename T>
 struct SetValueCommand : public EditValueCommand<T> {
     std::string operator()(const std::vector<std::string>& params) {
@@ -91,6 +149,23 @@ struct SetValueCommand : public EditValueCommand<T> {
             T val = std::any_cast<T>(values[1]);
             this->set(std::any_cast<T*>(values[0]), val);
             this->msg = fmt::format("{} is now {}", params[0], val);
+        }
+        return this->msg;
+    }
+};
+
+template <>
+struct SetValueCommand<OrthoCameraController>
+    : public EditValueCommand<OrthoCameraController> {
+    std::string operator()(const std::vector<std::string>& params) {
+        auto values = this->convert(params);
+        if (!values.empty()) {
+            if (params[0] == "movementEnabled") {
+                bool* mvt = std::any_cast<bool*>(values[0]);
+                bool val = std::any_cast<bool>(values[1]);
+                *mvt = val;
+                this->msg = fmt::format("{} is now {}", params[0], val);
+            }
         }
         return this->msg;
     }
