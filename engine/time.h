@@ -100,6 +100,18 @@ inline const std::string computeFileLocation(const std::string& file,
     return fmt::format("{}:{} ", file, lineNum);
 }
 
+// TODO: Ive noticed that every fifth time we start the program
+// it gets stuck before rendering anything
+// I was able to repro once inside the debugger
+// and it seems like its being caused by this function
+// when called in app
+//
+// super.exe`computeMethodName(function="run", prettyFunction="int App::run()",
+// extra="") at time.h:117:12
+//
+// seems like the formatting is the problem
+//
+
 // https://stackoverflow.com/a/29856690
 inline const std::string computeMethodName(const std::string& function,
                                            const std::string& prettyFunction,
