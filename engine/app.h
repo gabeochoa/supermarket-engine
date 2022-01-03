@@ -123,6 +123,8 @@ struct App {
         while (running) {
             prof give_me_a_name(__PROFILE_FUNC__);
             time.end();
+            Renderer::stats.reset();
+            Renderer::stats.begin();
             if (isMinimized) continue;
             if (settings.clearEnabled)
                 Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
@@ -130,6 +132,7 @@ struct App {
                 layer->onUpdate(time);
             }
             window->update();
+            Renderer::stats.end();
         }
         return 0;
     }
