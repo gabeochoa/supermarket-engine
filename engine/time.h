@@ -71,6 +71,10 @@ struct prof {
     const char* name;
     std::chrono::high_resolution_clock::time_point start;
 
+#if defined(SUPER_ENGINE_PROFILING_DISABLED)
+    prof(const char*, const char*) {}
+    ~prof() {}
+#else
     prof(const char* fileloc, const char* n) : filename(fileloc), name(n) {
         start = std::chrono::high_resolution_clock::now();
     }
@@ -93,6 +97,7 @@ struct prof {
         }
         _acc[name].addSample(duration);
     }
+#endif
 };
 
 inline const std::string computeFileLocation(const std::string& file,
