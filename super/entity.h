@@ -1,18 +1,20 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "../engine/pch.hpp"
 #include "../engine/renderer.h"
 
-const std::array<glm::vec2, 4> getBoundingBox(glm::vec2 position,
-                                              glm::vec2 size) {
+constexpr inline std::array<glm::vec2, 4> getBoundingBox(glm::vec2 position,
+                                                         glm::vec2 size) {
     return {position,
             {position.x + size.x, position.y + 0},
             {position.x, position.y + size.y},
             {position.x + size.x, position.y + size.y}};
 }
 
-static int ENTITY_ID_GEN = 0;
+static std::atomic_int ENTITY_ID_GEN;
 struct Entity {
     int id;
     glm::vec2 position;
@@ -21,9 +23,10 @@ struct Entity {
     glm::vec4 color;
     std::string textureName;
     bool center = true;
+    bool cleanup = false;
 
     Entity()
-        : id(ENTITY_ID_GEN),
+        : id(ENTITY_ID_GEN++),
           position({0.f, 0.f}),
           size({1.f, 1.f}),
           angle(0.f),

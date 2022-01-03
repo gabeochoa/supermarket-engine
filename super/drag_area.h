@@ -10,8 +10,7 @@ struct DragArea : public Entity {
     bool isMouseDragging = false;
     glm::vec2 mouseDragStart;
     glm::vec2 mouseDragEnd;
-
-    bool isPlacing = false;
+    int tool = 0;
 
     std::vector<std::shared_ptr<Entity>> selected;
 
@@ -25,8 +24,8 @@ struct DragArea : public Entity {
     virtual ~DragArea() {}
     virtual const char* typeString() const override { return "DragArea"; }
 
-    void place(std::string object) {
-        isPlacing = true;
+    void place(int selectedTool, std::string object) {
+        tool = selectedTool;
         textureName = object;
     }
 
@@ -35,7 +34,7 @@ struct DragArea : public Entity {
         position = round_higher(mouseDragStart);
         size = round_higher(mouseDragEnd - mouseDragStart);
 
-        if (isPlacing) {
+        if (tool != 0 && tool != 3) {
             if (abs(size.y) > abs(size.x)) {
                 size = glm::vec2{1.f, size.y};
             } else {
@@ -50,13 +49,20 @@ struct DragArea : public Entity {
         position = glm::vec2{0.f};
         mouseDragStart = glm::vec2{0.f};
         mouseDragEnd = glm::vec2{0.f};
-        isPlacing = false;
+        tool = 0;
         textureName = "white";
     }
 
+    void onDragStart(glm::vec3 mouse) {
+        selected.clear();
+        mouseDragStart = mouse;
+        mouseDragEnd = mouse;
+    }
+
     void onDragEnd() {
-        if (isPlacing) {
-            if (textureName == "shelf") {
+        if (tool != 0 && tool != 3) {
+            if (0) {
+            } else if (textureName == "shelf") {
                 forEachPlaced(false, [](glm::vec2 pos) {
                     entities.push_back(std::make_shared<Shelf>(Shelf(
                         pos, glm::vec2{1.f}, 0.f, glm::vec4{1.f}, "shelf")));
@@ -95,6 +101,11 @@ struct DragArea : public Entity {
         }
         selected = Storable::getStorageInSelection<Entity>(rect);
 
+        if (tool == 3) {
+            delete_selected();
+            selected.clear();
+        }
+
         clear();
     }
 
@@ -129,6 +140,12 @@ struct DragArea : public Entity {
                 textureName      //
             );
         });
+    }
+
+    void delete_selected() {
+        for (auto e : selected) {
+            e->cleanup = true;
+        }
     }
 
     void render_selected() {

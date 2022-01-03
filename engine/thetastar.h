@@ -122,8 +122,9 @@ struct Theta {
             openSet.Q.clear();
         }
 
-        prof(__PROFILE_FUNC__);
-        while (!openSet.empty()) {
+        prof give_me_a_name(__PROFILE_FUNC__);
+        int i = 0;
+        while (i < LOOP_LIMIT && !openSet.empty()) {
             ThetaPQ::Qi qi = openSet.pop();
             auto s = qi.first;
             if (lazy) {
@@ -151,6 +152,7 @@ struct Theta {
                     update_vertex(s, neighbor);
                 }
             }
+            i++;
         }
         log_trace("no path found to thing");
         return std::vector<glm::vec2>();

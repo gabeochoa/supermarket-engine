@@ -16,14 +16,17 @@
 //
 
 enum FurnitureTool {
-    NONE = 0,
+    SELECTION = 0,
     STORAGE = 1,
     SHELF = 2,
+    DELETE = 3,
 };
 
 constexpr inline const char* furnitureToolToTexture(FurnitureTool id) {
     switch (id) {
-        case FurnitureTool::NONE:
+        // TODO adda like a red x texture
+        case FurnitureTool::DELETE:
+        case FurnitureTool::SELECTION:
             return "white";
         case FurnitureTool::STORAGE:
             return "box";
@@ -145,9 +148,10 @@ struct GameUILayer : public Layer {
             }
         }
         std::vector<WidgetConfig> dropdownConfigs;
-        dropdownConfigs.push_back(IUI::WidgetConfig({.text = "None"}));
+        dropdownConfigs.push_back(IUI::WidgetConfig({.text = "Selection"}));
         dropdownConfigs.push_back(IUI::WidgetConfig({.text = "Storage"}));
         dropdownConfigs.push_back(IUI::WidgetConfig({.text = "Shelf"}));
+        dropdownConfigs.push_back(IUI::WidgetConfig({.text = "Delete"}));
 
         WidgetConfig dropdownMain = IUI::WidgetConfig({
             .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},         //
@@ -159,16 +163,17 @@ struct GameUILayer : public Layer {
 
         if (dropdown(uuid({id, item++, 0}), dropdownMain, dropdownConfigs,
                      &dropdownState, &dropdownIndex)) {
-            auto tool = GLOBALS.update<FurnitureTool>(
-                "selected_tool", static_cast<FurnitureTool>(dropdownIndex));
-            if (tool != FurnitureTool::NONE) {
-                GLOBALS.get_ptr<DragArea>("drag_area")
-                    ->place(furnitureToolToTexture(tool));
-            }
         }
 
         uicontext->end();
         Renderer::end();
+
+        auto tool = GLOBALS.update<FurnitureTool>(
+            "selected_tool", static_cast<FurnitureTool>(dropdownIndex));
+        if (tool != FurnitureTool::SELECTION) {
+            GLOBALS.get_ptr<DragArea>("drag_area")
+                ->place(dropdownIndex, furnitureToolToTexture(tool));
+        }
     }
 
     virtual void onUpdate(Time dt) override {
@@ -339,8 +344,7 @@ struct SuperLayer : public Layer {
 
         // TODO allow people to remap their mouse buttons?
         if (e.GetMouseButton() == Mouse::MouseCode::ButtonLeft) {
-            dragArea->mouseDragStart = mouseInWorld;
-            dragArea->mouseDragEnd = mouseInWorld;
+            dragArea->onDragStart(mouseInWorld);
         }
         if (e.GetMouseButton() == Mouse::MouseCode::ButtonRight) {
             JobQueue::addJob(
@@ -390,6 +394,16 @@ struct SuperLayer : public Layer {
         render();             // draw everything
         fillJobQueue();       // add more jobs if needed
         JobQueue::cleanup();  // Cleanup all completed jobs
+
+        // Cleanup entities marked cleanup
+        auto it = entities.begin();
+        while (it != entities.end()) {
+            if ((*it)->cleanup) {
+                entities.erase(it);
+                continue;
+            }
+            it++;
+        }
     }
 
     virtual void onEvent(Event& event) override {
