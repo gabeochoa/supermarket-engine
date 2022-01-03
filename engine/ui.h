@@ -129,7 +129,7 @@ bool dropdown(uuid id,
               bool* dropdownState,
               // which item is selected
               int* selectedIndex)
-    returns true if dropdown was opened or closed
+    returns true if dropdown value was changed
 
 bool checkbox(uuid id,
         WidgetConfig config,
@@ -755,9 +755,17 @@ bool dropdown(uuid id, WidgetConfig config,
                        .flipTextY = config.flipTextY,
                        .position = config.position + offset}));
 
+    auto ret = *dropdownState != state->on.asT() ||
+               *selectedIndex != state->selected.asT() ||
+               (pressed && state->on.asT());
+    if (pressed) {
+        state->on = !state->on;
+    }
+
     if (dropdownState) *dropdownState = state->on;
     if (selectedIndex) *selectedIndex = state->selected;
-    return pressed;
+
+    return ret;
 }
 
 bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
