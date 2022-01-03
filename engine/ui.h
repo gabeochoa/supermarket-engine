@@ -643,6 +643,7 @@ bool button(uuid id, WidgetConfig config) {
                        config.texture, config.rotation);
 
         if (config.text.size() != 0) {
+            float sign = config.flipTextY ? 1 : -1;
             text(uuid({id.item, 0, 0}),
                  WidgetConfig({
                      // TODO detect if the button color is dark
@@ -650,10 +651,10 @@ bool button(uuid id, WidgetConfig config) {
                      .color = glm::vec4{1.f - config.color.r,  //
                                         1.f - config.color.g,
                                         1.f - config.color.b, 1.f},
-                     .position =
-                         config.position +
-                         glm::vec2{(-config.size.x / 2.f) + 0.10f, -0.5f},
-                     .size = glm::vec2{0.75f, 0.75f},
+                     .position = config.position +
+                                 glm::vec2{(-config.size.x / 2.f) + 0.10f,
+                                           config.size.y * sign * 0.5f},
+                     .size = 0.75f * glm::vec2{config.size.y, config.size.y},
                      .text = config.text,
                      .flipTextY = config.flipTextY,
                  }));
@@ -706,7 +707,8 @@ bool dropdown(uuid id, WidgetConfig config,
     config.text = configs[state->selected].text;
 
     if (state->on) {
-        float spacing = 1.0f;
+        float spacing = config.size.y * 1.0f;
+        float sign = config.flipTextY ? 1.f : -1.f;
         int button_item_id = item++;
 
         for (size_t i = 0; i < configs.size(); i++) {
@@ -719,9 +721,10 @@ bool dropdown(uuid id, WidgetConfig config,
                     WidgetConfig({
                         .color = config.color,
                         .position = config.position +
-                                    glm::vec2{0.f, -1.0f * spacing * (i + 1)},
+                                    glm::vec2{0.f, sign * spacing * (i + 1)},
                         .size = config.size,
                         .text = configs[i].text,
+                        .flipTextY = config.flipTextY,
                     }))) {
                 state->selected = i;
                 state->on = false;
@@ -744,7 +747,8 @@ bool dropdown(uuid id, WidgetConfig config,
 
     // TODO rotation is not really working correctly and so we have to
     // offset the V a little more than ^ in order to make it look nice
-    auto offset = glm::vec2{config.size.x - (state->on ? 1.f : 1.6f), -0.25f};
+    auto offset = glm::vec2{config.size.x - (state->on ? 1.f : 1.6f),
+                            config.size.y * -0.25f};
     text(uuid({id.item, item++, 0}),
          WidgetConfig({.rotation = state->on ? 90.f : 270.f,
                        .text = ">",

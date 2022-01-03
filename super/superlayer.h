@@ -20,6 +20,8 @@ struct GameUILayer : public Layer {
     const glm::vec2 camBottomRight = {35.f, -18.f};
     glm::vec4 rect = glm::vec4{200.f, 1000.f, 1500.f, 200.f};
     std::shared_ptr<IUI::UIContext> uicontext;
+    bool dropdownState = false;
+    int dropdownIndex = 0;
 
     GameUILayer() : Layer("Game UI") {
         isMinimized = true;
@@ -89,7 +91,7 @@ struct GameUILayer : public Layer {
         float h1_fs = 64.f;
         float p_fs = 32.f;
 
-        auto window_location = getPositionSizeForUIRect({0, 100, 300, 1000});
+        auto window_location = getPositionSizeForUIRect({0, 100, 300, 500});
         uuid window_id = uuid({id, item++, 0});
         if (window(window_id, WidgetConfig({
                                   .color = blue,
@@ -122,6 +124,23 @@ struct GameUILayer : public Layer {
                 text(uuid({id, items_id, i}), textConfig);
                 i++;
             }
+        }
+        std::vector<WidgetConfig> dropdownConfigs;
+        dropdownConfigs.push_back(IUI::WidgetConfig({.text = "None"}));
+        dropdownConfigs.push_back(IUI::WidgetConfig({.text = "Storage"}));
+        dropdownConfigs.push_back(IUI::WidgetConfig({.text = "Shelf"}));
+
+        WidgetConfig dropdownMain = IUI::WidgetConfig({
+            .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},         //
+            .position = convertUIPos(glm::vec2{p_fs, 500.f}),  //
+            .size = glm::vec2{h1_fs * 3, h1_fs},               //
+            .transparent = false,                              //
+            .flipTextY = true,
+        });
+
+        if (dropdown(uuid({id, item++, 0}), dropdownMain, dropdownConfigs,
+                     &dropdownState, &dropdownIndex)) {
+            dropdownState = !dropdownState;
         }
 
         uicontext->end();
