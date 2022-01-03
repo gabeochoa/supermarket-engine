@@ -91,6 +91,13 @@ struct MovableEntity : public Entity {
                 return path.empty() ? true : false;
             }
 
+            // TODO I keep seeing the path has some rogue points
+            // I tried removing them and replacing the hole
+            // with a path but theres issues where
+            // when the point is closer than 2.f but further than TRAVEL_DIST
+            // and the character will just sit there and do nothing since path
+            // is always empty
+
             // TODO @FIX moveSpeed is not really moveSpeed,
             // its move distance and so we cant actually
             // change the speed without breaking pathing..
