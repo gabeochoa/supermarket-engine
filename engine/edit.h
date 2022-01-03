@@ -37,7 +37,7 @@ template <typename T>
 struct Deserializer {
     std::string input;
     Deserializer(std::string i) : input(i) {}
-    operator T() = 0;
+    virtual operator T() = 0;
 };
 
 template <>
@@ -56,6 +56,13 @@ struct Deserializer<float> {
     std::string input;
     Deserializer(std::string i) : input(i) {}
     operator float() { return ::atof(this->input.c_str()); }
+};
+
+template <>
+struct Deserializer<int> {
+    std::string input;
+    Deserializer(std::string i) : input(i) {}
+    operator int() { return ::atoi(this->input.c_str()); }
 };
 
 template <typename T>
