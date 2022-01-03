@@ -2,6 +2,7 @@
 
 
 Libraries this uses:
+(Libs with * I edited, look for @SUPERMARKET for the changes)
 
 https://github.com/vallentin/glText
 - debug text drawing
@@ -16,6 +17,10 @@ https://github.com/nothings/stb
 
 https://github.com/samhocevar/portable-file-dialogs
 - file dialoges
+
+https://github.com/bombela/backward-cpp
+- * added extra signal 
+- stack traces
 
 
 ```
