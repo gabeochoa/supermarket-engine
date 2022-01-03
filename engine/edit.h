@@ -36,6 +36,13 @@ struct GlobalValueRegister {
         globals[name] = (void*)value;
     }
 
+    template <typename T>
+    T update(const std::string& name, T value) {
+        T* t = get_ptr<T>(name);
+        (*t) = value;
+        return value;
+    }
+
     bool contains(const std::string& name) {
         return globals.find(name) != globals.end();
     }
