@@ -19,6 +19,7 @@ struct GameUILayer : public Layer {
     const glm::vec2 camTopLeft = {35.f, 19.5f};
     const glm::vec2 camBottomRight = {35.f, -18.f};
     glm::vec4 rect = glm::vec4{200.f, 1000.f, 1500.f, 200.f};
+    std::shared_ptr<IUI::UIContext> uicontext;
 
     GameUILayer() : Layer("Game UI") {
         isMinimized = true;
@@ -29,6 +30,9 @@ struct GameUILayer : public Layer {
         gameUICameraController->rotationEnabled = false;
         gameUICameraController->zoomEnabled = false;
         gameUICameraController->resizeEnabled = false;
+
+        uicontext.reset(new IUI::UIContext());
+        uicontext->init();
     }
 
     virtual ~GameUILayer() {}
@@ -76,50 +80,51 @@ struct GameUILayer : public Layer {
     void render() {
         gameUICameraController->camera.setProjection(0.f, WIN_W, WIN_H, 0.f);
         Renderer::begin(gameUICameraController->camera);
-        // using namespace IUI;
-        // UIFrame BandE(gameUICameraController);
-        // int item = 0;
-        //
-        // std::vector<std::function<bool(uuid)>> children;
-        //
-        // float h1_fs = 64.f;
-        // float p_fs = 32.f;
-        //
-        // auto window_location = getPositionSizeForUIRect({0, 100, 300, 1000});
-        // uuid window_id = uuid({id, item++, 0});
-        // if (window(window_id, WidgetConfig({
-        // .color = blue,
-        // .position = window_location[0],
-        // .size = window_location[1],
-        // })  //
-        // )) {
-        // auto textConfig = WidgetConfig({
-        // .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-        // .position = convertUIPos({0, 100.f + h1_fs + 1.f}),
-        // .size = glm::vec2{h1_fs, h1_fs},
-        // .text = "Inventory",
-        // .flipTextY = true,
-        // });
-        // text(uuid({id, item++, 0}), textConfig);
-        //
-        // // TODO replace with list view when exists
-        // int items_id = item++;
-        // int i = 0;
-        // for (auto kv : getTotalInventory()) {
-        // auto str = fmt::format(
-        // "{} : {}", ItemManager::getItem(kv.first).name, kv.second);
-        // auto textConfig = WidgetConfig({
-        // .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-        // .position = convertUIPos({p_fs, 200.f + (p_fs * i)}),
-        // .size = glm::vec2{p_fs, p_fs},
-        // .text = str,
-        // .flipTextY = true,
-        // });
-        // text(uuid({id, items_id, i}), textConfig);
-        // i++;
-        // }
-        // }
-        //
+        using namespace IUI;
+        uicontext->begin(gameUICameraController);
+        int item = 0;
+
+        std::vector<std::function<bool(uuid)>> children;
+
+        float h1_fs = 64.f;
+        float p_fs = 32.f;
+
+        auto window_location = getPositionSizeForUIRect({0, 100, 300, 1000});
+        uuid window_id = uuid({id, item++, 0});
+        if (window(window_id, WidgetConfig({
+                                  .color = blue,
+                                  .position = window_location[0],
+                                  .size = window_location[1],
+                              })  //
+                   )) {
+            auto textConfig = WidgetConfig({
+                .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+                .position = convertUIPos({0, 100.f + h1_fs + 1.f}),
+                .size = glm::vec2{h1_fs, h1_fs},
+                .text = "Inventory",
+                .flipTextY = true,
+            });
+            text(uuid({id, item++, 0}), textConfig);
+
+            // TODO replace with list view when exists
+            int items_id = item++;
+            int i = 0;
+            for (auto kv : getTotalInventory()) {
+                auto str = fmt::format(
+                    "{} : {}", ItemManager::getItem(kv.first).name, kv.second);
+                auto textConfig = WidgetConfig({
+                    .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+                    .position = convertUIPos({p_fs, 200.f + (p_fs * i)}),
+                    .size = glm::vec2{p_fs, p_fs},
+                    .text = str,
+                    .flipTextY = true,
+                });
+                text(uuid({id, items_id, i}), textConfig);
+                i++;
+            }
+        }
+
+        uicontext->end();
         Renderer::end();
     }
 

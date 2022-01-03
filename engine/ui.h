@@ -283,6 +283,7 @@ keyboard focus. Must be called after the widget code has run.
 #include "edit.h"
 #include "event.h"
 #include "pch.hpp"
+#include "typeutil.h"
 
 //
 #include "camera.h"
@@ -297,27 +298,6 @@ static const glm::vec4 red = glm::vec4{1.0f, 0.0f, 0.0f, 1.0f};
 static const glm::vec4 green = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
 static const glm::vec4 blue = glm::vec4{0.0f, 0.0f, 1.0f, 1.0f};
 static const glm::vec4 teal = glm::vec4{0.0f, 1.0f, 1.0f, 1.0f};
-
-template <typename T>
-constexpr auto type_name() {
-    std::string_view name, prefix, suffix;
-#ifdef __clang__
-    name = __PRETTY_FUNCTION__;
-    prefix = "auto type_name() [T = ";
-    suffix = "]";
-#elif defined(__GNUC__)
-    name = __PRETTY_FUNCTION__;
-    prefix = "constexpr auto type_name() [with T = ";
-    suffix = "]";
-#elif defined(_MSC_VER)
-    name = __FUNCSIG__;
-    prefix = "auto __cdecl type_name<";
-    suffix = ">(void)";
-#endif
-    name.remove_prefix(prefix.size());
-    name.remove_suffix(suffix.size());
-    return name;
-}
 
 struct uuid {
     int owner;
