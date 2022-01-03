@@ -3,19 +3,26 @@
 /////////////////////////////////// ///////////////////////////////////
 /*
 
-Before using any components, you should `IUI::init_context()` this only needs to
-happen once on startup, dont call it every frame.
+Before using any components, you should create and init a context. this only
+needs to happen once on startup, dont call it every frame.
+
+```
+    std::shared_ptr<IUI::UIContext> uicontext;
+    uicontext.reset(new IUI::UIContext());
+    uicontext->init();
+```
 
 To create a UI widget:
-  1. Create a UIFrame to handle set/reset for the frame
+  1. call uicontext->begin to handle set for the frame
   2. create a unique uuid
   3. setup a WidgetConfig
   4. call the widget func you want to render ie `text(id, config)`
+  5. call uicontext->end
 
 Example :
 ```
 {
-    UIFrame BeginandEnd(cameraController);
+    uicontext->begin(cameraController);
     if (
         button(uuid({0, 0, 0}),
                WidgetConfig({
@@ -26,15 +33,24 @@ Example :
     ) {
         log_info("clicked button");
     }
+    uicontext->end();
 }
 ```
 
 
-1. UIFrame(cameraController)
+1. begin(cameraController)
 Handles setting up and tearing down any information needed on a frame by frame
 basis.
 
 Should be called once per frame before any of the widget functions.
+
+TODO is this safe to be called inside itself?
+something like:
+{
+begin();
+{ begin(); end(); }
+end();
+}
 
 
 2. UUID
@@ -247,13 +263,11 @@ struct Style {
 };
 
 
-Global State is stored in the Statemanager and you can fetch the underlying
+State is stored in the Statemanager and you can fetch the underlying
 state of a widget using IUI::get()->statemanager.get(uuid).
-//
+
 TODO Would we rather have the user specify an output
 or just let them search the UIContext?
-Something like get()->statemanager.get(uuid)
-//
 
 
 Util functions:
@@ -284,6 +298,7 @@ keyboard focus. Must be called after the widget code has run.
 #include "event.h"
 #include "pch.hpp"
 #include "typeutil.h"
+#include "uuid.h"
 
 //
 #include "camera.h"
@@ -298,35 +313,6 @@ static const glm::vec4 red = glm::vec4{1.0f, 0.0f, 0.0f, 1.0f};
 static const glm::vec4 green = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
 static const glm::vec4 blue = glm::vec4{0.0f, 0.0f, 1.0f, 1.0f};
 static const glm::vec4 teal = glm::vec4{0.0f, 1.0f, 1.0f, 1.0f};
-
-struct uuid {
-    int owner;
-    int item;
-    int index;
-
-    bool operator==(const uuid& other) const {
-        return owner == other.owner && item == other.item &&
-               index == other.index;
-    }
-
-    bool operator<(const uuid& other) const {
-        if (owner < other.owner) return true;
-        if (owner > other.owner) return false;
-        if (item < other.item) return true;
-        if (item > other.item) return false;
-        if (index < other.index) return true;
-        if (index > other.index) return false;
-        return false;
-    }
-};
-std::ostream& operator<<(std::ostream& os, const uuid& obj) {
-    os << fmt::format("owner: {} item: {} index: {}", obj.owner, obj.item,
-                      obj.index);
-    return os;
-}
-
-uuid rootID = uuid({.owner = -1, .item = 0, .index = 0});
-uuid fakeID = uuid({.owner = -2, .item = 0, .index = 0});
 
 template <typename T>
 struct State {
