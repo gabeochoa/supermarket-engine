@@ -22,6 +22,15 @@ struct GlobalValueRegister {
     T get(const std::string& name) {
         return *(get_ptr<T>(name));
     }
+
+    template <typename T>
+    T get_or_default(const std::string& name, T default_value) {
+        T* t = get_ptr<T>(name);
+        if (t) {
+            return *t;
+        }
+        return default_value;
+    }
     template <typename T>
     void set(const std::string& name, T* value) {
         globals[name] = (void*)value;
