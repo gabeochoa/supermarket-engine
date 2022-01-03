@@ -62,7 +62,7 @@ void add_globals() {
 
     GLOBALS.set("menu_state", menu.get());
     EDITOR_COMMANDS.registerCommand("set_menu_state", SetMenuCommand(),
-                                    "Change Menu:: state");
+                                    "Change Menu:: state; set_menu_state <id>");
 }
 
 int main(int argc, char** argv) {
