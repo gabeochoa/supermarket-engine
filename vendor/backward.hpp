@@ -4141,6 +4141,9 @@ class SignalHandling {
 public:
   static std::vector<int> make_default_signals() {
     const int posix_signals[] = {
+#if defined (BACKWARD_SUPERMARKET)
+      SIGINT, // Killed by user @SUPERMARKET
+#else 
       // Signals for which the default action is "Core".
       SIGABRT, // Abort signal from abort(3)
       SIGBUS,  // Bus error (bad memory access)
@@ -4153,9 +4156,10 @@ public:
       SIGTRAP, // Trace/breakpoint trap
       SIGXCPU, // CPU time limit exceeded (4.2BSD)
       SIGXFSZ, // File size limit exceeded (4.2BSD)
-      SIGINT, // Killed by user @SUPERMARKET
+
 #if defined(BACKWARD_SYSTEM_DARWIN)
       SIGEMT, // emulation instruction executed
+#endif
 #endif
     };
     return std::vector<int>(posix_signals,

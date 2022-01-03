@@ -20,6 +20,8 @@ https://github.com/samhocevar/portable-file-dialogs
 
 https://github.com/bombela/backward-cpp
 - * added extra signal 
+- TODO change output format to be readable
+- TODO remove if cant get good format
 - stack traces
 
 
