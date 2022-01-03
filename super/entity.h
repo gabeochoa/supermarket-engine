@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../engine/pch.hpp"
+#include "../engine/renderer.h"
 
 const std::array<glm::vec2, 4> getBoundingBox(glm::vec2 position,
                                               glm::vec2 size) {
@@ -114,7 +115,7 @@ struct fmt::formatter<Entity> {
 };
 
 void Entity::announce(const std::string& tosay) const {
-    log_trace("{}: {}", *asEntity(), tosay);
+    log_info("{}: {}", *asEntity(), tosay);
 }
 
 static std::vector<std::shared_ptr<Entity>> entities;

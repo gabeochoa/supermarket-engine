@@ -65,7 +65,7 @@ struct ItemGroup {
             return amount;
         }
         int has = group[itemID];
-        group[itemID] = 0;
+        group.erase(itemID);
         return has;
     }
 
@@ -84,6 +84,7 @@ struct ItemGroup {
     auto rend() { return group.rend(); }
 
     auto empty() const { return group.empty(); }
+    auto find(int id) const { return group.find(id); }
 
     friend std::ostream& operator<<(std::ostream& os, const ItemGroup& ig) {
         for (auto& kv : ig.group) {
@@ -174,6 +175,21 @@ struct Storable : public Entity {
             auto s = dynamic_pointer_cast<T>(e);
             if (!s) continue;
             if (glm::distance(pos, e->position) < range) {
+                matching.push_back(s);
+            }
+        }
+        return matching;
+    }
+
+    template <typename T>
+    static std::vector<std::shared_ptr<T>> getStorageInRangeWithItem(
+        glm::vec2 pos, int itemID, float range) {
+        std::vector<std::shared_ptr<T>> matching;
+        for (auto& e : entities) {
+            auto s = dynamic_pointer_cast<T>(e);
+            if (!s) continue;
+            if (glm::distance(pos, e->position) > range) continue;
+            if (s->contents.find(itemID) != s->contents.end()) {
                 matching.push_back(s);
             }
         }

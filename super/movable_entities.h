@@ -86,8 +86,8 @@ struct MovableEntity : public Entity {
             // and next cycle we'll grab the next POI
             if (distance(position, *target) < TRAVEL_DIST) {
                 path.erase(target);
-                announce(fmt::format(" reached local target, {} to go",
-                                     path.size()));
+                // announce(fmt::format(" reached local target, {} to go",
+                // path.size()));
                 return path.empty() ? true : false;
             }
 
@@ -104,9 +104,9 @@ struct MovableEntity : public Entity {
             }
             return false;
         }
-        announce(
-            fmt::format(" distance to location end {}  (need to be within {})",
-                        glm::distance(position, location), TRAVEL_DIST));
+        // announce(
+        // fmt::format(" distance to location end {}  (need to be within {})",
+        // glm::distance(position, location), TRAVEL_DIST));
 
         path =
             generateWalkablePath(id, moveSpeed, position, location, this->size);
@@ -199,31 +199,23 @@ struct Employee : public Person {
             } break;
             case 1:  // Reached start
             {
-                announce("grab something");
-                auto shelves =
-                    Storable::getStorageInRange<Storage>(position, REACH_DIST);
-                // announce(fmt::format("trying to grab {} item{} from {}",
-                // j->itemAmount, j->itemID,
-                // (*shelves.begin())->contents));
-                // TODO need to support finding a shelf instead of
-                // setting the start and end manually
+                // announce("grab something");
+                auto shelves = Storable::getStorageInRangeWithItem<Storage>(
+                    position, j->itemID, REACH_DIST);
                 if (shelves.empty()) {
+                    announce("no matching shelf");
                     // log_warn("no matching shelf, so uh what can we do");
                     j->jobStatus = 5;
                     return false;
                 }
+                // announce(fmt::format("trying to grab {} item{} from {}",
+                // j->itemAmount, j->itemID,
+                // (*shelves.begin())->contents));
 
-                // TODO set some kind of hand size cause 1 at a time doesnt make
-                // sense
-                int amt = (*shelves.begin())->contents.removeItem(j->itemID, 1);
-                // ->contents.removeItem(j->itemID, j->itemAmount);
+                int handSize = 5;
+                int amt = (*shelves.begin())
+                              ->contents.removeItem(j->itemID, handSize);
                 inventory.addItem(j->itemID, amt);
-                if (j->itemAmount - inventory[j->itemID] > 0) {
-                    // log_warn("shelf didnt have enough, so giving up");
-                    j->jobStatus = 5;
-                }
-                // announce(fmt::format("tried to grab {} from {}, howd it go?
-                // ", j->itemID, (*shelves.begin())->contents));
                 j->jobStatus = 2;
             } break;
             case 2:  // Grabbed item
@@ -260,7 +252,7 @@ struct Employee : public Person {
 
             case 5:  // Something bad happened...
             {
-                log_warn("Something bad happened and i couldnt finish");
+                // log_warn("Something bad happened and i couldnt finish");
                 j->isComplete = true;
                 return true;
             } break;
