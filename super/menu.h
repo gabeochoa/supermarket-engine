@@ -9,10 +9,10 @@ static std::shared_ptr<Menu> menu;
 struct Menu {
     enum State {
         Root = 0,
-        Game,
-        Paused,
+        Game = 1,
+        Paused = 2,
 
-        UITest,
+        UITest = 98,
         Any = 99,
     };
 
