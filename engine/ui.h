@@ -954,7 +954,7 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
                       config.flipTextY ? -tSize : 0.5f};
 
         std::wstring focusStr = has_kb_focus(id) ? L"_" : L"";
-        std::wstring content =
+        std::wstring focused_content =
             fmt::format(L"{}{}", state->buffer.asT(), focusStr);
 
         text(uuid({id.item, item++, 0}),
@@ -962,7 +962,7 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
                  .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
                  .position = tStartLocation,
                  .size = glm::vec2{tSize},
-                 .text = to_string(content),
+                 .text = to_string(focused_content),
                  .flipTextY = config.flipTextY,
                  .temporary = true,
              }));
@@ -1006,9 +1006,8 @@ bool commandfield(uuid id, WidgetConfig config, std::wstring& content) {
     // global state to match and for them to have the
     // same keyboard focus
     auto state = widget_init<TextfieldState>(id);
-    // TODO what should we return here,
-    // changed? or user ran command
-    textfield(id, config, content);
+    if (textfield(id, config, content)) {
+    }
 
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::mapping["Command Enter"])) {
@@ -1027,6 +1026,8 @@ bool commandfield(uuid id, WidgetConfig config, std::wstring& content) {
             state->buffer.asT().clear();
         }
     }
+    // TODO what should we return here,
+    // changed? or user ran command
     return false;
 }
 

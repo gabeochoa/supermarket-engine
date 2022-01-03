@@ -14,7 +14,7 @@ struct TerminalLayer : public Layer {
     glm::vec4 rect = glm::vec4{200.f, 1000.f, 1500.f, 200.f};
     IUI::uuid drawer_uuid = IUI::uuid({id, -1, 0});
     IUI::uuid command_field_id = IUI::uuid({id, -2, 0});
-    std::wstring commandContent;
+    std::wstring commandContent = L"test";
     float drawerPctOpen = 0.f;
 
     TerminalLayer() : Layer("Debug Terminal") {
@@ -65,7 +65,6 @@ struct TerminalLayer : public Layer {
 
         using namespace IUI;
         UIFrame BandE(terminalCameraController);
-        IUI::get()->kbFocusID = command_field_id;
 
         float h1_fs = 64.f;
 
@@ -89,6 +88,7 @@ struct TerminalLayer : public Layer {
             });
             text(uuid({id, drawer_uuid.item, index++}), textConfig);
 
+            IUI::get()->kbFocusID = command_field_id;
             auto cfsize = glm::vec2{drawer_location[1].x, h1_fs};
             auto commandFieldConfig = WidgetConfig({
                 .color = glm::vec4{0.4f},
@@ -97,7 +97,11 @@ struct TerminalLayer : public Layer {
                                                (drawer_location[1].y / 2.f)},
                 .size = cfsize,
             });
-            commandfield(command_field_id, commandFieldConfig, commandContent);
+            if (commandfield(command_field_id, commandFieldConfig,
+                             commandContent)) {
+                log_info("command field: {}",
+                         EDITOR_COMMANDS.command_history.back());
+            }
 
         }  // end drawer
         Renderer::end();
@@ -112,12 +116,15 @@ struct TerminalLayer : public Layer {
         if (event.keycode == Key::mapping["Toggle Debugger"]) {
             isMinimized = !isMinimized;
             drawerPctOpen = 0.f;
+            return true;
         }
+
         // TODO is there a way for us to not have to do this?
         // or make it required so you cant even start without it accidentally
         if (IUI::get()->processKeyPressEvent(event)) {
             return true;
         }
+
         // TODO since we have no way to have IUI return true (yet!)
         // eat all keypresses while we are open
         if (!isMinimized) return true;
@@ -126,11 +133,11 @@ struct TerminalLayer : public Layer {
 
     virtual void onEvent(Event& event) override {
         EventDispatcher dispatcher(event);
-        dispatcher.dispatch<KeyPressedEvent>(std::bind(
-            &TerminalLayer::onKeyPressed, this, std::placeholders::_1));
         terminalCameraController->onEvent(event);
         dispatcher.dispatch<CharPressedEvent>(
             IUI::get()->getCharPressHandler());
+        dispatcher.dispatch<KeyPressedEvent>(std::bind(
+            &TerminalLayer::onKeyPressed, this, std::placeholders::_1));
     }
 };
 
