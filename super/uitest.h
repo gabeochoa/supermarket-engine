@@ -253,7 +253,8 @@ struct UITestLayer : public Layer {
             if (IUI::dropdown(IUI::uuid({id, item++, 0}), dropdownMain,
                               dropdownConfigs, &dropdownState,
                               &dropdownIndex)) {
-                dropdownState = !dropdownState;
+                log_info("dropdown selected {}",
+                         dropdownConfigs[dropdownIndex].text);
             }
         }
         ui_context->end();

@@ -15,6 +15,23 @@
 
 //
 
+enum FurnitureTool {
+    NONE = 0,
+    STORAGE = 1,
+    SHELF = 2,
+};
+
+constexpr inline const char* furnitureToolToTexture(FurnitureTool id) {
+    switch (id) {
+        case FurnitureTool::NONE:
+            return "white";
+        case FurnitureTool::STORAGE:
+            return "box";
+        case FurnitureTool::SHELF:
+            return "shelf";
+    }
+}
+
 struct GameUILayer : public Layer {
     const glm::vec2 camTopLeft = {35.f, 19.5f};
     const glm::vec2 camBottomRight = {35.f, -18.f};
@@ -22,6 +39,7 @@ struct GameUILayer : public Layer {
     std::shared_ptr<IUI::UIContext> uicontext;
     bool dropdownState = false;
     int dropdownIndex = 0;
+    FurnitureTool selectedTool;
 
     GameUILayer() : Layer("Game UI") {
         isMinimized = true;
@@ -35,6 +53,7 @@ struct GameUILayer : public Layer {
 
         uicontext.reset(new IUI::UIContext());
         uicontext->init();
+        GLOBALS.set("selected_tool", &selectedTool);
     }
 
     virtual ~GameUILayer() {}
@@ -140,7 +159,12 @@ struct GameUILayer : public Layer {
 
         if (dropdown(uuid({id, item++, 0}), dropdownMain, dropdownConfigs,
                      &dropdownState, &dropdownIndex)) {
-            dropdownState = !dropdownState;
+            auto tool = GLOBALS.update<FurnitureTool>(
+                "selected_tool", static_cast<FurnitureTool>(dropdownIndex));
+            if (tool != FurnitureTool::NONE) {
+                GLOBALS.get_ptr<DragArea>("drag_area")
+                    ->place(furnitureToolToTexture(tool));
+            }
         }
 
         uicontext->end();
@@ -152,7 +176,6 @@ struct GameUILayer : public Layer {
 
         log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
         prof give_me_a_name(__PROFILE_FUNC__);  //
-                                                //
 
         gameUICameraController->onUpdate(dt);
         render();  // draw everything
@@ -238,6 +261,7 @@ struct SuperLayer : public Layer {
 
         dragArea.reset(new DragArea(glm::vec2{0.f}, glm::vec2{0.f}, 0.f,
                                     glm::vec4{0.75f}));
+        GLOBALS.set("drag_area", dragArea.get());
     }
 
     virtual ~SuperLayer() {}
@@ -248,9 +272,11 @@ struct SuperLayer : public Layer {
         if (GLOBALS.get<bool>("terminal_closed")) {
             cameraController->onUpdate(dt);
         }
+
         for (auto& entity : entities) {
             entity->onUpdate(dt);
         }
+
         dragArea->onUpdate(dt);
     }
 

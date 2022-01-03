@@ -11,6 +11,8 @@ struct DragArea : public Entity {
     glm::vec2 mouseDragStart;
     glm::vec2 mouseDragEnd;
 
+    bool isPlacing = false;
+
     std::vector<std::shared_ptr<Entity>> selected;
 
     DragArea(const glm::vec2& position, const glm::vec2& size, float angle,
@@ -23,13 +25,52 @@ struct DragArea : public Entity {
     virtual ~DragArea() {}
     virtual const char* typeString() const override { return "DragArea"; }
 
+    void place(std::string object) {
+        isPlacing = true;
+        textureName = object;
+    }
+
     virtual void onUpdate(Time dt) override {
         (void)dt;
         position = round_higher(mouseDragStart);
         size = round_higher(mouseDragEnd - mouseDragStart);
+
+        if (isPlacing) {
+            if (abs(size.y) > abs(size.x)) {
+                size = glm::vec2{1.f, size.y};
+            } else {
+                size = glm::vec2{size.x, 1.f};
+            }
+        }
+    }
+
+    void clear() {
+        // clear drag area
+        size = glm::vec2{0.f};
+        position = glm::vec2{0.f};
+        mouseDragStart = glm::vec2{0.f};
+        mouseDragEnd = glm::vec2{0.f};
+        isPlacing = false;
+        textureName = "white";
     }
 
     void onDragEnd() {
+        if (isPlacing) {
+            if (textureName == "shelf") {
+                forEachPlaced(false, [](glm::vec2 pos) {
+                    entities.push_back(std::make_shared<Shelf>(Shelf(
+                        pos, glm::vec2{1.f}, 0.f, glm::vec4{1.f}, "shelf")));
+                });
+            } else if (textureName == "box") {
+                forEachPlaced(false, [](glm::vec2 pos) {
+                    entities.push_back(std::make_shared<Storage>(Storage(
+                        pos, glm::vec2{1.f}, 0.f, glm::vec4{1.f}, "box")));
+                });
+            }
+            clear();
+            return;
+        }
+
         auto a = mouseDragStart;
         auto b = mouseDragEnd;
 
@@ -40,7 +81,7 @@ struct DragArea : public Entity {
         //  2. top right to bottom left
         //  3. bottom left to top right
         //  4. bottom right to top left
-
+        //
         auto rect = glm::vec4{0.f};
         if (0) {
         } else if (a.x <= b.x && a.y >= b.y) {
@@ -52,14 +93,42 @@ struct DragArea : public Entity {
         } else if (a.x >= b.x && a.y <= b.y) {
             rect = glm::vec4{b.x, a.y, a.x, b.y};
         }
-
         selected = Storable::getStorageInSelection<Entity>(rect);
 
-        // clear drag area
-        size = glm::vec2{0.f};
-        position = glm::vec2{0.f};
-        mouseDragStart = glm::vec2{0.f};
-        mouseDragEnd = glm::vec2{0.f};
+        clear();
+    }
+
+    void forEachPlaced(bool center, std::function<void(glm::vec2)> cb) {
+        auto sx = sgn(size.x);
+        auto sy = sgn(size.y);
+        auto loc = position;
+        if (center) loc = loc + glm::vec2{sx * 0.5f, sy * 0.5f};
+        for (int i = 0; i < abs(size.x); i++) {
+            for (int j = 0; j < abs(size.y); j++) {
+                auto pos = loc + glm::vec2{sx * i, sy * j};
+                cb(pos);
+            }
+        }
+    }
+
+    virtual void render() override {
+        if (textureName == "white") {
+            auto loc = position;
+            if (center) {
+                loc = loc + glm::vec2{size.x / 2, size.y / 2};
+            }
+            Renderer::drawQuad(loc, size, color, textureName);
+            return;
+        }
+
+        forEachPlaced(true, [&](glm::vec2 pos) {
+            Renderer::drawQuad(  //
+                pos,             //
+                glm::vec2{1.f},  //
+                color,           //
+                textureName      //
+            );
+        });
     }
 
     void render_selected() {
