@@ -135,6 +135,10 @@ inline const std::string computeMethodName(const std::string& function,
                        suffix, extra);
 }
 
+#if defined(SUPER_ENGINE_PROFILING_DISABLED)
+#define __PROFILE_FUNC__ "", ""
+#define __PROFILE_LOC__(x) "", ""
+#else
 #define __PROFILE_FUNC__                             \
     computeFileLocation(__FILE__, __LINE__).c_str(), \
         computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__, "").c_str()
@@ -142,3 +146,4 @@ inline const std::string computeMethodName(const std::string& function,
 #define __PROFILE_LOC__(x)                           \
     computeFileLocation(__FILE__, __LINE__).c_str(), \
         computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__, x).c_str()
+#endif
