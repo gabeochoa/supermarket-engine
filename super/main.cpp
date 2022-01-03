@@ -23,6 +23,13 @@
 #include "tests.h"
 #include "uitest.h"
 
+void add_globals() {
+    //
+    GLOBALS.set("menu_state", menu.get());
+    EDITOR_COMMANDS.registerCommand("set_menu_state", SetValueCommand<int>(),
+                                    "Change Menu:: state");
+}
+
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
@@ -45,6 +52,8 @@ int main(int argc, char** argv) {
 
         test_global_commands();
     }
+
+    add_globals();
 
     app.reset(App::create({
         .width = WIN_W,
