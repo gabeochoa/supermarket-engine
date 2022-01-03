@@ -1,5 +1,8 @@
 
 
+#include "../vendor/backward.hpp"
+//
+
 #include "../engine/app.h"
 #include "../engine/edit.h"
 #include "../engine/file.h"
@@ -33,6 +36,7 @@ void add_globals() {
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
+    backward::SignalHandling sh;
 
     // on start tests
     {

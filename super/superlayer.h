@@ -146,8 +146,6 @@ struct GameUILayer : public Layer {
 };
 
 struct SuperLayer : public Layer {
-    // TODO should we add some system for "named" entities
-    // allowing to store this globally and hide it from the layer
     std::shared_ptr<DragArea> dragArea;
     glm::vec4 viewport = {0, 0, WIN_W, WIN_H};
 
@@ -239,14 +237,15 @@ struct SuperLayer : public Layer {
 
     void render() {
         Renderer::begin(cameraController->camera);
-        // render under items
-        dragArea->render();
         // should go underneath entities also
         dragArea->render_selected();
 
         for (auto& entity : entities) {
             entity->render();
         }
+
+        // render above items
+        dragArea->render();
 
         Renderer::end();
     }
