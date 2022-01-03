@@ -236,6 +236,11 @@ struct EntityDebugLayer : public Layer {
         if (Menu::get().state != Menu::State::Game) {
             return;
         }
+        if (!cameraController) {
+            // This requires the game to be loaded,
+            // so just do nothing if game not existing
+            return;
+        }
 
         prof(__PROFILE_FUNC__);
 
