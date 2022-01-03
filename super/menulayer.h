@@ -69,6 +69,7 @@ struct MenuLayer : public Layer {
     float rightextra = 0.f;
     std::shared_ptr<Billboard> left_convey;
     std::shared_ptr<Billboard> right_convey;
+    std::shared_ptr<IUI::UIContext> uicontext;
 
     std::vector<std::shared_ptr<Billboard>> screen0;
     std::vector<std::shared_ptr<Billboard>> billys;
@@ -87,7 +88,8 @@ struct MenuLayer : public Layer {
 
         Renderer::addTexture("./resources/transparent.png");
 
-        IUI::init_context();
+        uicontext.reset(new IUI::UIContext());
+        uicontext->init();
 
         b1Pos = camPosInterp.camPositions[0] + glm::vec2{7.f, 0.f};
         b1Size = glm::vec2{40.f, 20.f};
@@ -330,11 +332,12 @@ struct MenuLayer : public Layer {
             glm::vec3{camPosInterp.interp.next(),
                       menuCameraController->camera.position.z};
         {
-            IUI::UIFrame frame(menuCameraController);
+            uicontext->begin(menuCameraController);
             int parent = 0;
             cam_pos_0(parent++);
             cam_pos_1(parent++);
             cam_pos_2(parent++);
+            uicontext->end();
         }
     }
 

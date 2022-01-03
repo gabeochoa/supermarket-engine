@@ -16,6 +16,7 @@ struct TerminalLayer : public Layer {
     IUI::uuid command_field_id = IUI::uuid({id, -2, 0});
     std::wstring commandContent = L"test";
     float drawerPctOpen = 0.f;
+    std::shared_ptr<IUI::UIContext> uicontext;
 
     TerminalLayer() : Layer("Debug Terminal") {
         isMinimized = true;
@@ -28,6 +29,9 @@ struct TerminalLayer : public Layer {
         terminalCameraController->rotationEnabled = false;
         terminalCameraController->zoomEnabled = false;
         terminalCameraController->resizeEnabled = false;
+
+        uicontext.reset(new IUI::UIContext());
+        uicontext->init();
     }
 
     virtual ~TerminalLayer() {}
@@ -62,48 +66,51 @@ struct TerminalLayer : public Layer {
         terminalCameraController->camera.setProjection(0.f, WIN_W, WIN_H, 0.f);
 
         Renderer::begin(terminalCameraController->camera);
+        {
+            using namespace IUI;
+            uicontext->begin(terminalCameraController);
 
-        using namespace IUI;
-        UIFrame BandE(terminalCameraController);
+            float h1_fs = 64.f;
 
-        float h1_fs = 64.f;
+            auto drawer_location = getPositionSizeForUIRect({0, 0, WIN_W, 400});
 
-        auto drawer_location = getPositionSizeForUIRect({0, 0, WIN_W, 400});
+            if (drawer(drawer_uuid,
+                       WidgetConfig({
+                           .color = blue,
+                           .position = drawer_location[0],
+                           .size = drawer_location[1],
+                       }),
+                       &drawerPctOpen)) {
+                int index = 0;
 
-        if (drawer(drawer_uuid,
-                   WidgetConfig({
-                       .color = blue,
-                       .position = drawer_location[0],
-                       .size = drawer_location[1],
-                   }),
-                   &drawerPctOpen)) {
-            int index = 0;
+                auto textConfig = WidgetConfig({
+                    .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+                    .position = convertUIPos({0, h1_fs + 1.f}),
+                    .size = glm::vec2{h1_fs, h1_fs},
+                    .text = "Terminal",
+                    .flipTextY = true,
+                });
+                text(uuid({id, drawer_uuid.item, index++}), textConfig);
 
-            auto textConfig = WidgetConfig({
-                .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-                .position = convertUIPos({0, h1_fs + 1.f}),
-                .size = glm::vec2{h1_fs, h1_fs},
-                .text = "Terminal",
-                .flipTextY = true,
-            });
-            text(uuid({id, drawer_uuid.item, index++}), textConfig);
+                uicontext->kbFocusID = command_field_id;
+                auto cfsize = glm::vec2{drawer_location[1].x, h1_fs};
+                auto commandFieldConfig = WidgetConfig({
+                    .color = glm::vec4{0.4f},
+                    .flipTextY = true,
+                    .position =
+                        glm::vec2{0.f, drawer_location[0].y +
+                                           (drawer_location[1].y / 2.f)},
+                    .size = cfsize,
+                });
+                if (commandfield(command_field_id, commandFieldConfig,
+                                 commandContent)) {
+                    log_info("command field: {}",
+                             EDITOR_COMMANDS.command_history.back());
+                }
 
-            IUI::get()->kbFocusID = command_field_id;
-            auto cfsize = glm::vec2{drawer_location[1].x, h1_fs};
-            auto commandFieldConfig = WidgetConfig({
-                .color = glm::vec4{0.4f},
-                .flipTextY = true,
-                .position = glm::vec2{0.f, drawer_location[0].y +
-                                               (drawer_location[1].y / 2.f)},
-                .size = cfsize,
-            });
-            if (commandfield(command_field_id, commandFieldConfig,
-                             commandContent)) {
-                log_info("command field: {}",
-                         EDITOR_COMMANDS.command_history.back());
-            }
-
-        }  // end drawer
+            }  // end drawer
+            uicontext->end();
+        }
         Renderer::end();
     }
 
@@ -119,25 +126,25 @@ struct TerminalLayer : public Layer {
             return true;
         }
 
-        // TODO is there a way for us to not have to do this?
-        // or make it required so you cant even start without it accidentally
-        if (IUI::get()->processKeyPressEvent(event)) {
-            return true;
+        if (isMinimized) {
+            return false;
         }
 
-        // TODO since we have no way to have IUI return true (yet!)
-        // eat all keypresses while we are open
-        if (!isMinimized) return true;
+        // TODO is there a way for us to not have to do this?
+        // or make it required so you cant even start without it accidentally
+        if (uicontext->processKeyPressEvent(event)) {
+            return true;
+        }
         return false;
     }
 
     virtual void onEvent(Event& event) override {
         EventDispatcher dispatcher(event);
         terminalCameraController->onEvent(event);
-        dispatcher.dispatch<CharPressedEvent>(
-            IUI::get()->getCharPressHandler());
         dispatcher.dispatch<KeyPressedEvent>(std::bind(
             &TerminalLayer::onKeyPressed, this, std::placeholders::_1));
+        if (isMinimized) return;
+        dispatcher.dispatch<CharPressedEvent>(uicontext->getCharPressHandler());
     }
 };
 

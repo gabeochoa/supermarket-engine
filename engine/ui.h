@@ -292,6 +292,12 @@ keyboard focus. Must be called after the widget code has run.
 
 namespace IUI {
 
+static const glm::vec4 white = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
+static const glm::vec4 red = glm::vec4{1.0f, 0.0f, 0.0f, 1.0f};
+static const glm::vec4 green = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
+static const glm::vec4 blue = glm::vec4{0.0f, 0.0f, 1.0f, 1.0f};
+static const glm::vec4 teal = glm::vec4{0.0f, 1.0f, 1.0f, 1.0f};
+
 template <typename T>
 constexpr auto type_name() {
     std::string_view name, prefix, suffix;
@@ -338,6 +344,9 @@ std::ostream& operator<<(std::ostream& os, const uuid& obj) {
                       obj.index);
     return os;
 }
+
+uuid rootID = uuid({.owner = -1, .item = 0, .index = 0});
+uuid fakeID = uuid({.owner = -2, .item = 0, .index = 0});
 
 template <typename T>
 struct State {
@@ -418,7 +427,17 @@ struct StateManager {
     }
 };
 
+struct UIContext;
+static UIContext* globalContext;
+inline UIContext* get() {
+    if (!globalContext) {
+        log_error("{}", "Trying to grab context but you dont have one active");
+    }
+    return globalContext;
+}
+
 struct UIContext {
+    int c_id = 0;
     StateManager statemanager;
 
     std::shared_ptr<OrthoCameraController> camController;
@@ -473,29 +492,41 @@ struct UIContext {
         return std::bind(&UIContext::processCharPressEvent, this,
                          std::placeholders::_1);
     }
+
+    void init() {
+        hotID = rootID;
+        activeID = rootID;
+        lmouseDown = false;
+        mousePosition = Input::getMousePosition();
+    }
+
+    void begin(const std::shared_ptr<OrthoCameraController> controller) {
+        globalContext = this;
+        camController = controller;
+        hotID = rootID;
+        lmouseDown = Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
+        mousePosition = screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
+                                      camController->camera.view,        //
+                                      camController->camera.projection,  //
+                                      camController->camera.viewport     //
+        );
+    }
+    void end() {
+        if (lmouseDown) {
+            if (activeID == rootID) {
+                activeID = fakeID;
+            }
+        } else {
+            activeID = IUI::rootID;
+        }
+        key = Key::KeyCode();
+        mod = Key::KeyCode();
+
+        keychar = Key::KeyCode();
+        modchar = Key::KeyCode();
+        globalContext = nullptr;
+    }
 };
-
-uuid rootID = uuid({.owner = -1, .item = 0, .index = 0});
-uuid fakeID = uuid({.owner = -2, .item = 0, .index = 0});
-static std::shared_ptr<UIContext> globalContext;
-
-static const glm::vec4 white = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
-static const glm::vec4 red = glm::vec4{1.0f, 0.0f, 0.0f, 1.0f};
-static const glm::vec4 green = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
-static const glm::vec4 blue = glm::vec4{0.0f, 0.0f, 1.0f, 1.0f};
-static const glm::vec4 teal = glm::vec4{0.0f, 1.0f, 1.0f, 1.0f};
-
-inline std::shared_ptr<UIContext> get() {
-    if (!globalContext) globalContext.reset(new UIContext());
-    return globalContext;
-}
-
-inline void init_context() {
-    get()->hotID = rootID;
-    get()->activeID = rootID;
-    get()->lmouseDown = false;
-    get()->mousePosition = Input::getMousePosition();
-}
 
 inline void try_to_grab_kb(uuid id) {
     if (get()->kbFocusID == rootID) {
@@ -1005,11 +1036,11 @@ bool commandfield(uuid id, WidgetConfig config, std::wstring& content) {
     // We dont need a separate ID since we want
     // global state to match and for them to have the
     // same keyboard focus
-    auto state = widget_init<TextfieldState>(id);
-    if (textfield(id, config, content)) {
-    }
+    textfield(id, config, content);
 
     if (has_kb_focus(id)) {
+        // TODO this could totally throw and you know it
+        auto state = get()->statemanager.get_as<TextfieldState>(id);
         if (get()->pressed(Key::mapping["Command Enter"])) {
             // Any concerned about non english characters?
             EDITOR_COMMANDS.triggerCommand(to_string(state->buffer.asT()));
@@ -1053,34 +1084,5 @@ bool drawer(uuid id, WidgetConfig config, float* pct_open) {
     if (state->heightPct > 0.9) return true;
     return false;
 }
-
-struct UIFrame {
-    UIFrame(const std::shared_ptr<OrthoCameraController> controller) {
-        get()->camController = controller;
-        get()->hotID = IUI::rootID;
-        get()->lmouseDown =
-            Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
-        get()->mousePosition =
-            screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
-                          get()->camController->camera.view,        //
-                          get()->camController->camera.projection,  //
-                          get()->camController->camera.viewport     //
-            );
-    }
-    ~UIFrame() {
-        if (get()->lmouseDown) {
-            if (get()->activeID == IUI::rootID) {
-                get()->activeID = fakeID;
-            }
-        } else {
-            get()->activeID = IUI::rootID;
-        }
-        get()->key = Key::KeyCode();
-        get()->mod = Key::KeyCode();
-
-        get()->keychar = Key::KeyCode();
-        get()->modchar = Key::KeyCode();
-    }
-};
 
 }  // namespace IUI
