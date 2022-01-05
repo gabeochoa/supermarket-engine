@@ -18,7 +18,7 @@ enum LogLevel : int {
 
 // TODO lets move this to an env var or something
 // we shouldnt have to recompile to change the level
-constexpr auto LOG_LEVEL = LogLevel::INFO;
+static auto LOG_LEVEL = LogLevel::INFO;
 
 inline const char* level_to_string(int level) {
     switch (level) {

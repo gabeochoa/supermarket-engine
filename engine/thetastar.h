@@ -90,11 +90,13 @@ struct Theta {
         log_trace("trying to find path from {} to {}", start, end);
 
         // if the goal isnt reachable, then we have to change the goal for now
-        if (!isWalkable(end)) {
+        if (!this->isWalkable(end)) {
             // uses the closedSet
             end = expandUntilWalkable(end);
             closedSet.Q.clear();
             log_trace("couldnt get to end so end is now {}", end);
+        } else {
+            log_trace("goal is reachable {}", end);
         }
 
         // init vars
@@ -109,14 +111,14 @@ struct Theta {
             n = qi.first;
             for (int i = 0; i < 8; i++) {
                 glm::vec2 neighbor = {n.x + (x[i] * dst), n.y + (y[i] * dst)};
-                if (isWalkable(neighbor)) return neighbor;
+                if (this->isWalkable(neighbor)) return neighbor;
                 closedSet.add(neighbor, qi.second + 1);
             }
         }
     }
 
     std::vector<glm::vec2> go() {
-        if (!isWalkable(end)) {
+        if (!this->isWalkable(end)) {
             // for now just clear it,
             // otherwise itll inf loop
             openSet.Q.clear();
@@ -138,7 +140,7 @@ struct Theta {
             // Loop through each immediate neighbor of s
             for (int i = 0; i < 8; i++) {
                 glm::vec2 neighbor = {s.x + (x[i] * dst), s.y + (y[i] * dst)};
-                if (!isWalkable(neighbor)) continue;
+                if (!this->isWalkable(neighbor)) continue;
                 // if (neighbor not in closed){
                 if (!closedSet.contains(neighbor)) {
                     // if (neighbor not in open){
@@ -154,19 +156,22 @@ struct Theta {
             }
             i++;
         }
+        if (i >= LOOP_LIMIT) {
+            log_trace("hit loop limit and quit early");
+        }
         log_trace("no path found to thing");
         return std::vector<glm::vec2>();
     }
 
     bool line_of_sight(const glm::vec2& parent, const glm::vec2& neighbor) {
         // technically we can see it but cant walk to it its in the wall?
-        if (!isWalkable(neighbor)) {
+        if (!this->isWalkable(neighbor)) {
             return false;
         }
         glm::vec2 loc(parent);
         while (distance(loc, neighbor) > 0.5f) {
             loc = lerp(loc, neighbor, 0.25f);
-            if (!isWalkable(loc)) {
+            if (!this->isWalkable(loc)) {
                 return false;
             }
         }
@@ -191,7 +196,7 @@ struct Theta {
             double minS = -1;
             for (int i = 0; i < 8; i++) {
                 glm::vec2 neighbor = {s.x + (x[i] * dst), s.y + (y[i] * dst)};
-                if (!isWalkable(neighbor)) continue;
+                if (!this->isWalkable(neighbor)) continue;
                 if (closedSet.contains(neighbor)) {
                     if (minS == -1 || minS > gScore[neighbor]) {
                         minN = neighbor;

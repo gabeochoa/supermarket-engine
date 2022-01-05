@@ -43,6 +43,8 @@ struct Entity {
           color(color_),
           textureName(textureName_) {}
 
+    virtual inline bool canMove() const { return false; }
+
     virtual ~Entity() {}
 
     virtual void onUpdate(Time dt) { (void)dt; }
@@ -68,16 +70,17 @@ struct Entity {
         );                   //
     }
 
-    inline glm::vec4 getRect() const {
+    constexpr inline glm::vec4 getRect() const {
         return posSizeToRect(this->position, this->size);
     }
 
-    inline bool entityCollides(const glm::vec2 position,
-                               const glm::vec2 size) const {
+    constexpr inline bool entityCollides(const glm::vec2 position,
+                                         const glm::vec2 size) const {
         return aabb(this->position, this->size, position, size);
     }
 
-    inline bool entityCollides(const std::shared_ptr<Entity>& other) const {
+    constexpr inline bool entityCollides(
+        const std::shared_ptr<Entity>& other) const {
         return entityCollides(other->position, other->size);
     }
 
@@ -121,7 +124,10 @@ struct Entity {
     }
 
     virtual const Entity* asEntity() const { return this; }
-    void announce(const std::string& tosay) const;
+
+    constexpr inline void announce(const std::string& tosay) const {
+        log_info("{}: {}", *asEntity(), tosay);
+    }
 
     virtual const char* typeString() const = 0;
 };
@@ -140,10 +146,6 @@ struct fmt::formatter<Entity> {
     }
 };
 
-void Entity::announce(const std::string& tosay) const {
-    log_info("{}: {}", *asEntity(), tosay);
-}
-
 static std::vector<std::shared_ptr<Entity>> entities;
 
 struct EntityHelper {
@@ -154,13 +156,13 @@ struct EntityHelper {
         return false;
     }
 
-    static bool entityInLocation(glm::vec2 pos, glm::vec2 size) {
+    static constexpr bool entityInLocation(glm::vec2 pos, glm::vec2 size) {
         return EntityHelper::entityInLocation(posSizeToRect(pos, size));
     }
 
     template <typename T>
-    static std::shared_ptr<T> getRandomEntity(const glm::vec2& notpos = {
-                                                  -99.f, -99.f}) {
+    static constexpr std::shared_ptr<T> getRandomEntity(
+        const glm::vec2& notpos = {-99.f, -99.f}) {
         std::vector<std::shared_ptr<T>> matching;
         for (auto& e : entities) {
             auto s = dynamic_pointer_cast<T>(e);
@@ -172,8 +174,8 @@ struct EntityHelper {
     }
 
     template <typename T>
-    static std::vector<std::shared_ptr<T>> getEntitiesInRange(glm::vec2 pos,
-                                                              float range) {
+    static constexpr std::vector<std::shared_ptr<T>> getEntitiesInRange(
+        glm::vec2 pos, float range) {
         std::vector<std::shared_ptr<T>> matching;
         for (auto& e : entities) {
             auto s = dynamic_pointer_cast<T>(e);
@@ -215,6 +217,18 @@ struct EntityHelper {
             }
         }
         return matching;
+    }
+
+    static bool isWalkable(const glm::vec2& pos, const glm::vec2 size) {
+        for (auto& e : entities) {
+            if (e->canMove()) {
+                continue;
+            }
+            if (aabb(e->getRect(), posSizeToRect(pos, size))) {
+                return false;
+            }
+        }
+        return true;
     }
 };
 

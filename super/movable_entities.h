@@ -10,29 +10,6 @@
 const float REACH_DIST = 1.4f;
 const float TRAVEL_DIST = 0.2f;
 
-inline bool isWalkable(const glm::vec2& size, const glm::vec2& pos) {
-    // TODO replace with a function in EntityHelper
-    // is valid location
-    for (auto& e : entities) {
-        auto s = dynamic_pointer_cast<Storable>(e);
-        if (!s) continue;
-        // if (e->pointCollides(pos)) return false;
-        {
-            // collision x-axis?
-            bool collisionX = pos.x + size.x >= e->position.x &&
-                              e->position.x + e->size.x >= pos.x;
-            // collision y-axis?
-            bool collisionY = pos.y + size.y >= e->position.y &&
-                              e->position.y + e->size.y >= pos.y;
-            // collision only if on both axes
-            if (collisionX && collisionY) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 inline std::vector<glm::vec2> generateWalkablePath(  //
     int skipID,                                      //
     float movement,                                  //
@@ -46,7 +23,9 @@ inline std::vector<glm::vec2> generateWalkablePath(  //
     // TODO @FIX trace actually will still run
     // we gotta do some kind of fancy #if log thing
     log_trace("starting theta");
-    LazyTheta t(start, end, std::bind(isWalkable, size, std::placeholders::_1));
+    LazyTheta t(
+        start, end,
+        std::bind(EntityHelper::isWalkable, std::placeholders::_1, size));
     auto a = t.go();
     std::reverse(a.begin(), a.end());
     for (auto i : a) {
@@ -62,6 +41,8 @@ struct MovableEntity : public Entity {
     float moveSpeed = 0.05f;
     float timeBetweenMoves = 0.025f;
     float timeSinceLastMove = 0.025f;
+
+    virtual inline bool canMove() const override { return true; }
 
     bool walkToLocation(const glm::vec2 location, const WorkInput& wi) {
         prof give_me_a_name(__PROFILE_FUNC__);
@@ -79,7 +60,7 @@ struct MovableEntity : public Entity {
             auto target = path.begin();
             if (target == path.end()) return true;
 
-            if (!isWalkable(this->size, *target)) {
+            if (!EntityHelper::isWalkable(*target, this->size)) {
                 announce("my next target isnt walkable....");
             }
 
@@ -121,13 +102,11 @@ struct MovableEntity : public Entity {
         return false;
     }
 
-    virtual void onUpdate(Time dt) {
+    virtual void onUpdate(Time dt) override {
         (void)dt;
         if (angle >= 360) angle -= 360;
         if (angle < 0) angle += 360;
     }
-
-    virtual const char* typeString() const = 0;
 };
 
 struct Person : public MovableEntity {

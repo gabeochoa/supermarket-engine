@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include "../engine/pch.hpp"
 #include "../engine/log.h"
+#include "../engine/pch.hpp"
 
 // Lower number means lower priority
 enum JobType {
@@ -25,7 +25,7 @@ enum JobType {
     MAX_JOB_TYPE,
 };
 
-inline std::string jobTypeToString(JobType t) {
+constexpr inline const char* jobTypeToString(JobType t) {
     switch (t) {
         case JobType::None:
             return "None";
@@ -51,7 +51,7 @@ inline std::string jobTypeToString(JobType t) {
             return "MAX_JOB_TYPE";
         default:
             log_warn("JobType {} has no toString handler", t);
-            return std::to_string(t);
+            return "UNKNOWN TYPE";
     }
 }
 

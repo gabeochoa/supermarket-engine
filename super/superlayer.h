@@ -255,7 +255,7 @@ struct SuperLayer : public Layer {
             "player3",
         };
 
-        for (int i = 0; i < 0; i++) {
+        for (int i = 0; i < 5; i++) {
             auto emp = Employee();
             emp.color = gen_rand_vec4(0.3f, 1.0f);
             emp.color.w = 1.f;

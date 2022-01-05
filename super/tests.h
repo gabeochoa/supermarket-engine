@@ -1,9 +1,17 @@
 
 #pragma once
 
+#include "../engine/external_include.h"
+#include "../engine/thetastar.h"
+#include "entities.h"
+#include "entity.h"
+
 void theta_test() {
     // Walk straight through
     //  - i expect it to just walk around
+
+    auto ll = LOG_LEVEL;
+    LOG_LEVEL = LogLevel::ALL;
     {
         auto shelf = std::make_shared<Shelf>(
             glm::vec2{1.f, 0.f}, glm::vec2{1.f, 1.f}, 0.f,
@@ -24,7 +32,8 @@ void theta_test() {
         entities.push_back(std::make_shared<Employee>(emp));
 
         LazyTheta t(start, end,
-                    std::bind(isWalkable, emp.size, std::placeholders::_1));
+                    std::bind(EntityHelper::isWalkable, std::placeholders::_1,
+                              emp.size));
         auto result = t.go();
         std::reverse(result.begin(), result.end());
         for (auto i : result) {
@@ -33,6 +42,7 @@ void theta_test() {
         M_ASSERT(result.size(), "Path is empty but shouldnt be");
         entities.clear();
     }
+    LOG_LEVEL = ll;
     return;
 }
 
