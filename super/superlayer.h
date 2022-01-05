@@ -322,7 +322,7 @@ struct SuperLayer : public Layer {
                         .type = JobType::Fill,
                         .startPosition = storage->position,
                         .endPosition =
-                            Storage::getRandomStorage<Shelf>()->position,
+                            EntityHelper::getRandomEntity<Shelf>()->position,
                         .itemID = storage->contents.rbegin()->first,
                         .itemAmount = storage->contents.rbegin()->second,
                     };

@@ -153,62 +153,6 @@ struct Storable : public Entity {
             index++;
         }
     }
-
-    template <typename T>
-    static std::shared_ptr<T> getRandomStorage(const glm::vec2& notpos = {
-                                                   -99.f, -99.f}) {
-        std::vector<std::shared_ptr<T>> matching;
-        for (auto& e : entities) {
-            auto s = dynamic_pointer_cast<T>(e);
-            if (!s) continue;
-            if (glm::distance(s->position, notpos) > 1.f) matching.push_back(s);
-        }
-        int i = randIn(0, matching.size() - 1);
-        return matching[i];
-    }
-
-    template <typename T>
-    static std::vector<std::shared_ptr<T>> getStorageInRange(glm::vec2 pos,
-                                                             float range) {
-        std::vector<std::shared_ptr<T>> matching;
-        for (auto& e : entities) {
-            auto s = dynamic_pointer_cast<T>(e);
-            if (!s) continue;
-            if (glm::distance(pos, e->position) < range) {
-                matching.push_back(s);
-            }
-        }
-        return matching;
-    }
-
-    template <typename T>
-    static std::vector<std::shared_ptr<T>> getStorageInRangeWithItem(
-        glm::vec2 pos, int itemID, float range) {
-        std::vector<std::shared_ptr<T>> matching;
-        for (auto& e : entities) {
-            auto s = dynamic_pointer_cast<T>(e);
-            if (!s) continue;
-            if (glm::distance(pos, e->position) > range) continue;
-            if (s->contents.find(itemID) != s->contents.end()) {
-                matching.push_back(s);
-            }
-        }
-        return matching;
-    }
-
-    template <typename T>
-    static std::vector<std::shared_ptr<T>> getStorageInSelection(
-        glm::vec4 rect) {
-        std::vector<std::shared_ptr<T>> matching;
-        for (auto& e : entities) {
-            auto s = dynamic_pointer_cast<T>(e);
-            if (!s) continue;
-            if (aabb(s->getRect(), rect)) {
-                matching.push_back(s);
-            }
-        }
-        return matching;
-    }
 };
 
 struct Storage : public Storable {

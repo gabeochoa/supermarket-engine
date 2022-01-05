@@ -11,6 +11,7 @@ const float REACH_DIST = 1.4f;
 const float TRAVEL_DIST = 0.2f;
 
 inline bool isWalkable(const glm::vec2& size, const glm::vec2& pos) {
+    // TODO replace with a function in EntityHelper
     // is valid location
     for (auto& e : entities) {
         auto s = dynamic_pointer_cast<Storable>(e);
@@ -63,7 +64,7 @@ struct MovableEntity : public Entity {
     float timeSinceLastMove = 0.025f;
 
     bool walkToLocation(const glm::vec2 location, const WorkInput& wi) {
-        prof(__PROFILE_FUNC__);
+        prof give_me_a_name(__PROFILE_FUNC__);
         // Have we reached the position yet?
         if (path.empty() && glm::distance(position, location) < TRAVEL_DIST) {
             // our path should be empty but just in case
@@ -207,7 +208,7 @@ struct Employee : public Person {
             case 1:  // Reached start
             {
                 // announce("grab something");
-                auto shelves = Storable::getStorageInRangeWithItem<Storage>(
+                auto shelves = EntityHelper::getEntityInRangeWithItem<Storage>(
                     position, j->itemID, REACH_DIST);
                 if (shelves.empty()) {
                     announce("no matching shelf");
@@ -237,8 +238,8 @@ struct Employee : public Person {
             case 3:  // Got to End
             {
                 // announce("drop it off ");
-                auto shelves =
-                    Storable::getStorageInRange<Shelf>(position, REACH_DIST);
+                auto shelves = EntityHelper::getEntitiesInRange<Shelf>(
+                    position, REACH_DIST);
                 // TODO need to support finding a shelf instead of
                 // setting the start and end manually
                 if (shelves.empty()) {

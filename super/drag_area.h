@@ -104,7 +104,7 @@ struct DragArea : public Entity {
         } else if (a.x >= b.x && a.y <= b.y) {
             rect = glm::vec4{b.x, a.y, a.x, b.y};
         }
-        selected = Storable::getStorageInSelection<Entity>(rect);
+        selected = EntityHelper::getEntityInSelection<Entity>(rect);
 
         if (tool == 3) {
             delete_selected();
@@ -115,6 +115,8 @@ struct DragArea : public Entity {
     }
 
     void forEachPlaced(bool center, std::function<void(glm::vec2)> cb) {
+        // TODO theres something wrong with the selection,
+        // it seems to move my selection up a block but not every time
         auto sx = sgn(size.x);
         auto sy = sgn(size.y);
         auto loc = position;
