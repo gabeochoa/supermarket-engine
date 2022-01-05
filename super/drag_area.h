@@ -129,7 +129,7 @@ struct DragArea : public Entity {
         }
     }
 
-    virtual void render() override {
+    virtual void render(const RenderOptions& = RenderOptions()) override {
         if (textureName == "white") {
             auto loc = position;
             if (center) {
@@ -139,6 +139,8 @@ struct DragArea : public Entity {
             return;
         }
 
+        // TODO better or worse than just creating a temporary item and
+        // delegating rendering to that
         forEachPlaced(true, [&](glm::vec2 pos) {
             Renderer::drawQuad(  //
                 pos,             //
@@ -156,28 +158,16 @@ struct DragArea : public Entity {
     }
 
     void render_selected() {
+        // TODO should we just do "selected" in renderoptions directly
         for (auto& entity : selected) {
-            // TODO this is stolen from entity,
-            // maybe we need some way to render these outlines built in?
-
-            // computing angle transforms are expensive so
-            // if the angle is under thresh, just render it square
-            if (entity->angle <= 5.f) {
-                auto loc = glm::vec2{
-                    entity->position.x,
-                    entity->position.y,
-                };
-                if (center) {
-                    loc =
-                        loc + glm::vec2{entity->size.x / 2, entity->size.y / 2};
-                }
-                Renderer::drawQuad(loc, entity->size + glm::vec2{0.1f},
-                                   IUI::teal, "white");
-            } else {
-                Renderer::drawQuadRotated(
-                    entity->position, entity->size + glm::vec2{0.f},
-                    glm::radians(entity->angle), IUI::teal, "white");
-            }
+            entity->render(RenderOptions({
+                .position = entity->position + (0.5f * glm::vec2{entity->size}),
+                .color = std::make_optional(IUI::teal),
+                .textureName = std::make_optional("white"),
+                .size = entity->size + (entity->angle <= 5.f ? glm::vec2{0.1f}
+                                                             : glm::vec2{0.0f}),
+                .center = false,
+            }));
         }
     }
 };

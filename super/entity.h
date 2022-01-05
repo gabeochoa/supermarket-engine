@@ -81,7 +81,28 @@ struct Entity {
         return entityCollides(other->position, other->size);
     }
 
-    virtual void render() {
+    struct RenderOptions {
+        std::optional<glm::vec2> position;
+        std::optional<glm::vec2> size;
+        std::optional<glm::vec4> color;
+        std::optional<std::string> textureName;
+        std::optional<bool> center;
+    };
+
+    virtual void render(const RenderOptions& ro = RenderOptions()) {
+        glm::vec2 position = this->position;
+        glm::vec2 size = this->size;
+        glm::vec4 color = this->color;
+        bool center = this->center;
+        float angle = this->angle;
+        std::string textureName = this->textureName;
+
+        if (ro.position) position = ro.position.value();
+        if (ro.size) size = ro.size.value();
+        if (ro.color) color = ro.color.value();
+        if (ro.textureName) textureName = ro.textureName.value();
+        if (ro.center) center = ro.center.value();
+
         // computing angle transforms are expensive so
         // if the angle is under thresh, just render it square
         if (angle <= 5.f) {
