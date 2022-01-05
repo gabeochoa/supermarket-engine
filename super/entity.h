@@ -130,6 +130,8 @@ struct Entity {
     }
 
     virtual const char* typeString() const = 0;
+
+    bool operator==(const Entity& other) { return this->id == other.id; }
 };
 
 template <>
