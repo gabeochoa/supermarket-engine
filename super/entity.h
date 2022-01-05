@@ -66,17 +66,17 @@ struct Entity {
         );                   //
     }
 
-    bool entityCollides(const std::shared_ptr<Entity>& other) const {
-        // collision x-axis?
-        bool collisionX =
-            this->position.x + this->size.x >= other->position.x &&
-            other->position.x + other->size.x >= this->position.x;
-        // collision y-axis?
-        bool collisionY =
-            this->position.y + this->size.y >= other->position.y &&
-            other->position.y + other->size.y >= this->position.y;
-        // collision only if on both axes
-        return collisionX && collisionY;
+    inline glm::vec4 getRect() const {
+        return posSizeToRect(this->position, this->size);
+    }
+
+    inline bool entityCollides(const glm::vec2 position,
+                               const glm::vec2 size) const {
+        return aabb(this->position, this->size, position, size);
+    }
+
+    inline bool entityCollides(const std::shared_ptr<Entity>& other) const {
+        return entityCollides(other->position, other->size);
     }
 
     virtual void render() {
@@ -122,3 +122,17 @@ void Entity::announce(const std::string& tosay) const {
 }
 
 static std::vector<std::shared_ptr<Entity>> entities;
+
+struct EntityHelper {
+    static bool entityInLocation(glm::vec4 rect) {
+        for (auto e : entities) {
+            if (aabb(e->getRect(), rect)) return true;
+        }
+        return false;
+    }
+
+    static bool entityInLocation(glm::vec2 pos, glm::vec2 size) {
+        return EntityHelper::entityInLocation(posSizeToRect(pos, size));
+    }
+};
+

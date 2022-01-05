@@ -54,3 +54,21 @@ inline glm::vec2 round_higher(glm::vec2 val) {
     return glm::vec2{round_higher(val.x), round_higher(val.y)};
 }
 
+inline glm::vec4 posSizeToRect(glm::vec2 pos, glm::vec2 size) {
+    return glm::vec4{pos, pos.x + size.x, pos.y + size.y};
+}
+
+inline bool aabb(glm::vec4 a, glm::vec4 b) {
+    return (          //
+        a.x < b.z &&  //
+        a.z > b.x &&  //
+        a.y < b.w &&  //
+        a.w > b.y     //
+    );
+}
+
+inline bool aabb(glm::vec2 apos, glm::vec2 asize, glm::vec2 bpos,
+                 glm::vec2 bsize) {
+    return aabb(posSizeToRect(apos, asize), posSizeToRect(bpos, bsize));
+}
+

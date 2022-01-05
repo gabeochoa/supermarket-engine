@@ -4,6 +4,7 @@
 #include "../engine/pch.hpp"
 #include "../engine/ui.h"
 #include "entities.h"
+#include "entity.h"
 #include "movable_entities.h"
 
 struct DragArea : public Entity {
@@ -64,11 +65,15 @@ struct DragArea : public Entity {
             if (0) {
             } else if (textureName == "shelf") {
                 forEachPlaced(false, [](glm::vec2 pos) {
+                    if (EntityHelper::entityInLocation(pos, glm::vec2{0.5f}))
+                        return;
                     entities.push_back(std::make_shared<Shelf>(Shelf(
                         pos, glm::vec2{1.f}, 0.f, glm::vec4{1.f}, "shelf")));
                 });
             } else if (textureName == "box") {
                 forEachPlaced(false, [](glm::vec2 pos) {
+                    if (EntityHelper::entityInLocation(pos, glm::vec2{0.5f}))
+                        return;
                     entities.push_back(std::make_shared<Storage>(Storage(
                         pos, glm::vec2{1.f}, 0.f, glm::vec4{1.f}, "box")));
                 });
