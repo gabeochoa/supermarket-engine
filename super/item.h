@@ -126,8 +126,8 @@ struct Storable : public Entity {
              const glm::vec4& color, const std::string& textureName)
         : Entity(position, size, angle, color, textureName) {}
 
-    virtual void render() override {
-        Entity::render();
+    virtual void render(const RenderOptions& ro = RenderOptions()) {
+        Entity::render(ro);
 
         if (contents.size() > 4) {
             log_warn("Contents is too large and so not all items will display");
