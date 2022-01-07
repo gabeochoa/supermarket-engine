@@ -406,6 +406,14 @@ struct Renderer {
         stats.quadCount++;
     }
 
+    // for (int i = 0; i < 360; i += 10) {
+    // Renderer::drawLine(glm::vec3{0.f, 0.f, 0.f},
+    // glm::vec2{
+    // 10.f * sin(glm::radians(1.f * i)),
+    // 10.f * cos(glm::radians(1.f * i)),
+    // },
+    // glm::vec4{1, 1, 1, 1});
+    // }
     static void drawLine(const glm::vec3& start, const glm::vec3& end,
                          const glm::vec4& color) {
         sceneData->lvbufferptr->position = start;
