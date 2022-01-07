@@ -14,6 +14,9 @@
     out vec4 v_color;
 
     void main(){
+        // TODO::
+        // Why when we turn on vP can we not see the lines...
+        // is it because its too thin a line? 
         // gl_Position = viewProjection * vec4(i_pos, 1.0);
         gl_Position = vec4(i_pos, 1.0);
         v_color = i_color;
