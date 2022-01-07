@@ -62,6 +62,11 @@ struct Renderer {
         // float tilingfactor;
     };
 
+    struct LineVert {
+        glm::vec3 position;
+        glm::vec4 color;
+    };
+
     struct Statistics {
         std::array<float, 100> renderTimes;
         int drawCalls = 0;
@@ -107,6 +112,13 @@ struct Renderer {
         QuadVert* qvbufferstart = nullptr;
         QuadVert* qvbufferptr = nullptr;
 
+        std::shared_ptr<VertexArray> lineVA;
+        std::shared_ptr<VertexBuffer> lineVB;
+
+        int lineVertexCount = 0;
+        LineVert* lvbufferstart = nullptr;
+        LineVert* lvbufferptr = nullptr;
+
         glm::mat4 viewProjection;
 
         ShaderLibrary shaderLibrary;
@@ -132,6 +144,7 @@ struct Renderer {
     static void init_default_shaders() {
         sceneData->shaderLibrary.load("./engine/shaders/flat.glsl");
         sceneData->shaderLibrary.load("./engine/shaders/texture.glsl");
+        sceneData->shaderLibrary.load("./engine/shaders/line.glsl");
     }
 
     static void init_default_textures() {
@@ -142,19 +155,27 @@ struct Renderer {
         textureLibrary.add(whiteTexture);
     }
 
-    static void init() {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        // glEnable(GL_DEPTH_TEST);
+    static void init_line_buffers() {
+        std::shared_ptr<VertexBuffer> lineVB;
+        std::shared_ptr<Shader> lineShader;
 
-        init_default_shaders();
-        init_default_textures();
+        sceneData->lineVA.reset(VertexArray::create());
+        sceneData->lineVB.reset(
+            VertexBuffer::create(sceneData->MAX_VERTS * sizeof(LineVert)));
+        sceneData->lineVB->setLayout(BufferLayout{
+            {"i_pos", BufferType::Float3},
+            {"i_color", BufferType::Float4},
+        });
+        sceneData->lineVA->addVertexBuffer(sceneData->lineVB);
+        sceneData->lvbufferstart = new LineVert[sceneData->MAX_VERTS];
+    }
 
+    static void init_quad_buffers() {
         std::shared_ptr<VertexBuffer> squareVB;
         std::shared_ptr<IndexBuffer> squareIB;
         std::shared_ptr<IndexBuffer> quadIB;
-        sceneData->quadVA.reset(VertexArray::create());
 
+        sceneData->quadVA.reset(VertexArray::create());
         sceneData->quadVB.reset(
             VertexBuffer::create(sceneData->MAX_VERTS * sizeof(QuadVert)));
         sceneData->quadVB->setLayout(BufferLayout{
@@ -186,6 +207,21 @@ struct Renderer {
         quadIB.reset(IndexBuffer::create(quadIndices, sceneData->MAX_IND));
         sceneData->quadVA->setIndexBuffer(quadIB);
         delete[] quadIndices;
+    }
+
+    static void init() {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // glEnable(GL_DEPTH_TEST);
+        glEnable(GL_LINE_SMOOTH);
+        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+        Renderer::setLineThickness(1.f);
+
+        init_default_shaders();
+        init_default_textures();
+
+        init_quad_buffers();
+        init_line_buffers();
 
         std::array<int, MAX_TEX> samples = {0};
         for (size_t i = 0; i < MAX_TEX; i++) {
@@ -224,6 +260,18 @@ struct Renderer {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
+    static void drawLines(const std::shared_ptr<VertexArray>& vertexArray,
+                          int vertexCount) {
+        prof drlns(__PROFILE_FUNC__);
+        vertexArray->bind();
+        glDrawArrays(GL_LINES, 0, vertexCount);
+        // glDrawArrays(GL_LINE_STRIP, 0, vertexCount);
+        // glDrawArrays(GL_LINE_LOOP, 0, vertexCount);
+        // glDrawElements(GL_LINES, vertexCount, GL_UNSIGNED_INT, nullptr);
+        // glDrawElements(GL_LINE_STRIP, vertexCount, GL_UNSIGNED_INT, nullptr);
+        // glDrawElements(GL_LINE_LOOP, vertexCount, GL_UNSIGNED_INT, nullptr);
+    }
+
     static void begin(OrthoCamera& cam) {
         prof give_me_a_name(__PROFILE_FUNC__);
         sceneData->viewProjection = cam.viewProjection;
@@ -247,6 +295,9 @@ struct Renderer {
         sceneData->quadIndexCount = 0;
         sceneData->qvbufferptr = sceneData->qvbufferstart;
         sceneData->nextTexSlot = 1;
+
+        sceneData->lineVertexCount = 0;
+        sceneData->lvbufferptr = sceneData->lvbufferstart;
     }
 
     static void next_batch() {
@@ -255,20 +306,30 @@ struct Renderer {
     }
 
     static void flush() {
-        if (sceneData->quadIndexCount == 0) return;  // Nothing to draw
-        uint32_t dataSize = (uint32_t)((uint8_t*)sceneData->qvbufferptr -
-                                       (uint8_t*)sceneData->qvbufferstart);
-        sceneData->quadVB->setData(sceneData->qvbufferstart, dataSize);
+        if (sceneData->quadIndexCount) {
+            uint32_t dataSize = (uint32_t)((uint8_t*)sceneData->qvbufferptr -
+                                           (uint8_t*)sceneData->qvbufferstart);
+            sceneData->quadVB->setData(sceneData->qvbufferstart, dataSize);
 
-        for (int i = 0; i < sceneData->nextTexSlot; i++)
-            sceneData->textureSlots[i]->bind(i);
+            for (int i = 0; i < sceneData->nextTexSlot; i++)
+                sceneData->textureSlots[i]->bind(i);
 
-        sceneData->shaderLibrary.get("texture")->bind();
+            sceneData->shaderLibrary.get("texture")->bind();
 
-        draw(sceneData->quadVA, sceneData->quadIndexCount);
+            draw(sceneData->quadVA, sceneData->quadIndexCount);
+            stats.drawCalls++;
+        }
+
+        if (sceneData->lineVertexCount) {
+            uint32_t dataSize = (uint32_t)((uint8_t*)sceneData->lvbufferptr -
+                                           (uint8_t*)sceneData->lvbufferstart);
+            sceneData->lineVB->setData(sceneData->lvbufferstart, dataSize);
+            sceneData->shaderLibrary.get("line")->bind();
+            drawLines(sceneData->lineVA, sceneData->lineVertexCount);
+            stats.drawCalls++;
+        }
 
         //
-        stats.drawCalls++;
     }
 
     static void drawQuad(const glm::mat4& transform, const glm::vec4& color,
@@ -338,8 +399,6 @@ struct Renderer {
                 textureStatus != 1 ? texture->textureCoords[i]
                                    : subtexture->textureCoords[i];
             sceneData->qvbufferptr->texindex = textureIndex;
-            // sceneData->qvbufferptr->tilingfactor = texture->tilingFactor;
-            // sceneData->qvbufferptr->entityID = entityID;
             sceneData->qvbufferptr++;
         }
         sceneData->quadIndexCount += 6;
@@ -347,9 +406,33 @@ struct Renderer {
         stats.quadCount++;
     }
 
+    static void drawLine(const glm::vec3& start, const glm::vec3& end,
+                         const glm::vec4& color) {
+        sceneData->lvbufferptr->position = start;
+        sceneData->lvbufferptr->color = color;
+        sceneData->lvbufferptr++;
+
+        sceneData->lvbufferptr->position = end;
+        sceneData->lvbufferptr->color = color;
+        sceneData->lvbufferptr++;
+
+        sceneData->lineVertexCount += 2;
+
+        // if (sceneData->lineVertexCount >= sceneData->MAX_IND) {
+        // next_batch();
+        // }
+    }
+
+    static void setLineThickness(float thickness) { glLineWidth(thickness); };
+
     ////// ////// ////// ////// ////// ////// ////// //////
-    //      the draw quads below here, just call one of the ones above
+    //      the draw calls below here, just call one of the ones above
     ////// ////// ////// ////// ////// ////// ////// //////
+
+    static void drawLine(const glm::vec2& start, const glm::vec2& end,
+                         const glm::vec4& color) {
+        Renderer::drawLine(glm::vec3{start, 0.f}, glm::vec3{end, 0.f}, color);
+    }
 
     static void drawQuad(const glm::vec2& position, const glm::vec2& size,
                          const glm::vec4& color,
