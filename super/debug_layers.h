@@ -10,6 +10,7 @@
 #include "global.h"
 #include "job.h"
 #include "menu.h"
+#include "navmesh.h"
 
 inline GLTtext* drawText(const std::string& content, int x, int y,
                          float scale) {
@@ -286,6 +287,9 @@ struct EntityDebugLayer : public Layer {
         gltTerminate();
 
         Renderer::begin(cameraController->camera);
+
+        auto nav = GLOBALS.get<NavMesh>("navmesh");
+        Renderer::drawPolygon(nav.shape.hull, glm::vec4{0.7, 0.0, 0.7, 0.4f});
 
         for (auto& e : entities) {
             auto [a, b, c, d] = getBoundingBox(e->position, e->size);

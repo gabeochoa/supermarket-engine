@@ -92,6 +92,7 @@ int main(int argc, char** argv) {
         // test_file_functionality();
 
         test_global_commands();
+        test_polygon_hull();
     }
 
     add_globals();

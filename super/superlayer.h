@@ -12,6 +12,7 @@
 #include "entities.h"
 #include "job.h"
 #include "menu.h"
+#include "navmesh.h"
 
 //
 
@@ -287,6 +288,21 @@ struct SuperLayer : public Layer {
         dragArea.reset(new DragArea(glm::vec2{0.f}, glm::vec2{0.f}, 0.f,
                                     glm::vec4{0.75f}));
         GLOBALS.set("drag_area", dragArea.get());
+
+        // TODO: need to make sure that any entity added
+        // thats not walkable gets into this list
+        auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
+        for (auto e : entities) {
+            if (e->canMove()) {
+                continue;
+            }
+
+            nav->shape.add(e->position);
+            nav->shape.add(glm::vec2{e->position.x + e->size.x, e->position.y});
+
+            nav->shape.add(e->position + e->size);
+            nav->shape.add(glm::vec2{e->position.x, e->position.y + e->size.y});
+        }
     }
 
     virtual ~SuperLayer() {}
