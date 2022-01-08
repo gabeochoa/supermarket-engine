@@ -36,6 +36,10 @@ struct VectorHash {
     std::size_t operator()(const glm::vec2& a) const {
         return std::hash<float>()(a.x) ^ ((std::hash<float>()(a.y) << 1) >> 1);
     }
+
+    bool operator()(const glm::vec2& a, const glm::vec2& b) const {
+        return a.x == b.x && a.y == b.y;
+    }
 };
 
 inline glm::vec3 worldToScreen(const glm::vec3& position, const glm::mat4& view,
