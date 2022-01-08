@@ -67,6 +67,11 @@ struct Renderer {
         glm::vec4 color;
     };
 
+    struct PolyVert {
+        glm::vec3 position;
+        glm::vec4 color;
+    };
+
     struct Statistics {
         std::array<float, 100> renderTimes;
         int drawCalls = 0;
@@ -119,6 +124,13 @@ struct Renderer {
         LineVert* lvbufferstart = nullptr;
         LineVert* lvbufferptr = nullptr;
 
+        std::shared_ptr<VertexArray> polyVA;
+        std::shared_ptr<VertexBuffer> polyVB;
+
+        int polyVertexCount = 0;
+        PolyVert* pvbufferstart = nullptr;
+        PolyVert* pvbufferptr = nullptr;
+
         glm::mat4 viewProjection;
 
         ShaderLibrary shaderLibrary;
@@ -145,6 +157,7 @@ struct Renderer {
         sceneData->shaderLibrary.load("./engine/shaders/flat.glsl");
         sceneData->shaderLibrary.load("./engine/shaders/texture.glsl");
         sceneData->shaderLibrary.load("./engine/shaders/line.glsl");
+        sceneData->shaderLibrary.load("./engine/shaders/poly.glsl");
     }
 
     static void init_default_textures() {
@@ -209,6 +222,42 @@ struct Renderer {
         delete[] quadIndices;
     }
 
+    static void init_poly_buffers() {
+        std::shared_ptr<VertexBuffer> squareVB;
+        std::shared_ptr<IndexBuffer> squareIB;
+        std::shared_ptr<IndexBuffer> polyIB;
+
+        sceneData->polyVA.reset(VertexArray::create());
+        sceneData->polyVB.reset(
+            VertexBuffer::create(sceneData->MAX_VERTS * sizeof(PolyVert)));
+        sceneData->polyVB->setLayout(BufferLayout{
+            {"i_pos", BufferType::Float3},
+            {"i_color", BufferType::Float4},
+        });
+        sceneData->polyVA->addVertexBuffer(sceneData->polyVB);
+
+        sceneData->pvbufferstart = new PolyVert[sceneData->MAX_VERTS];
+
+        uint32_t* polyIndices = new uint32_t[sceneData->MAX_IND];
+        uint32_t offset = 0;
+
+        for (int i = 0; i < sceneData->MAX_IND; i += 6) {
+            polyIndices[i + 0] = offset + 0;
+            polyIndices[i + 1] = offset + 1;
+            polyIndices[i + 2] = offset + 2;
+
+            polyIndices[i + 3] = offset + 2;
+            polyIndices[i + 4] = offset + 3;
+            polyIndices[i + 5] = offset + 0;
+
+            offset += 4;
+        }
+
+        polyIB.reset(IndexBuffer::create(polyIndices, sceneData->MAX_IND));
+        sceneData->polyVA->setIndexBuffer(polyIB);
+        delete[] polyIndices;
+    }
+
     static void init() {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -222,6 +271,7 @@ struct Renderer {
 
         init_quad_buffers();
         init_line_buffers();
+        init_poly_buffers();
 
         std::array<int, MAX_TEX> samples = {0};
         for (size_t i = 0; i < MAX_TEX; i++) {
@@ -239,6 +289,8 @@ struct Renderer {
 
     static void shutdown() {
         delete[] sceneData->qvbufferstart;
+        delete[] sceneData->lvbufferstart;
+        delete[] sceneData->pvbufferstart;
         delete sceneData;
     }
 
@@ -249,8 +301,8 @@ struct Renderer {
                 GL_DEPTH_BUFFER_BIT);  // Clear the buffers
     }
 
-    static void draw(const std::shared_ptr<VertexArray>& vertexArray,
-                     int indexCount = 0) {
+    static void draw_INTERNAL(const std::shared_ptr<VertexArray>& vertexArray,
+                              int indexCount = 0) {
         prof give_me_a_name(__PROFILE_FUNC__);
         int count =
             indexCount ? indexCount : vertexArray->indexBuffer->getCount();
@@ -260,8 +312,19 @@ struct Renderer {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    static void drawLines(const std::shared_ptr<VertexArray>& vertexArray,
-                          int vertexCount) {
+    static void drawPoly_INTERNAL(
+        const std::shared_ptr<VertexArray>& vertexArray, int indexCount = 0) {
+        prof give_me_a_name(__PROFILE_FUNC__);
+        int count =
+            indexCount ? indexCount : vertexArray->indexBuffer->getCount();
+        vertexArray->bind();
+        glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    static void drawLines_INTERNAL(
+        const std::shared_ptr<VertexArray>& vertexArray, int vertexCount) {
         prof drlns(__PROFILE_FUNC__);
         vertexArray->bind();
         glDrawArrays(GL_LINES, 0, vertexCount);
@@ -281,6 +344,11 @@ struct Renderer {
         textureShader->uploadUniformMat4("viewProjection",
                                          sceneData->viewProjection);
 
+        auto polyShader = sceneData->shaderLibrary.get("poly");
+        polyShader->bind();
+        polyShader->uploadUniformMat4("viewProjection",
+                                      sceneData->viewProjection);
+
         start_batch();
     }
 
@@ -298,6 +366,9 @@ struct Renderer {
 
         sceneData->lineVertexCount = 0;
         sceneData->lvbufferptr = sceneData->lvbufferstart;
+
+        sceneData->polyVertexCount = 0;
+        sceneData->pvbufferptr = sceneData->pvbufferstart;
     }
 
     static void next_batch() {
@@ -316,7 +387,7 @@ struct Renderer {
 
             sceneData->shaderLibrary.get("texture")->bind();
 
-            draw(sceneData->quadVA, sceneData->quadIndexCount);
+            draw_INTERNAL(sceneData->quadVA, sceneData->quadIndexCount);
             stats.drawCalls++;
         }
 
@@ -325,7 +396,16 @@ struct Renderer {
                                            (uint8_t*)sceneData->lvbufferstart);
             sceneData->lineVB->setData(sceneData->lvbufferstart, dataSize);
             sceneData->shaderLibrary.get("line")->bind();
-            drawLines(sceneData->lineVA, sceneData->lineVertexCount);
+            drawLines_INTERNAL(sceneData->lineVA, sceneData->lineVertexCount);
+            stats.drawCalls++;
+        }
+
+        if (sceneData->polyVertexCount) {
+            uint32_t dataSize = (uint32_t)((uint8_t*)sceneData->pvbufferptr -
+                                           (uint8_t*)sceneData->pvbufferstart);
+            sceneData->polyVB->setData(sceneData->pvbufferstart, dataSize);
+            sceneData->shaderLibrary.get("poly")->bind();
+            drawPoly_INTERNAL(sceneData->polyVA, sceneData->polyVertexCount);
             stats.drawCalls++;
         }
 
@@ -425,10 +505,17 @@ struct Renderer {
         sceneData->lvbufferptr++;
 
         sceneData->lineVertexCount += 2;
+    }
 
-        // if (sceneData->lineVertexCount >= sceneData->MAX_IND) {
-        // next_batch();
-        // }
+    static void drawPolygon(const std::vector<glm::vec2> points,
+                            const glm::vec4& color) {
+        for (int i = 0; i < (int)points.size(); i++) {
+            sceneData->pvbufferptr->position = glm::vec3{points[i], 0.f};
+            sceneData->pvbufferptr->color = color;
+
+            sceneData->pvbufferptr++;
+            sceneData->polyVertexCount += 1;
+        }
     }
 
     static void setLineThickness(float thickness) { glLineWidth(thickness); };
