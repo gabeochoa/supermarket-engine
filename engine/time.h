@@ -64,18 +64,31 @@ struct Samples {
     }
 };
 
-static std::map<std::string, Samples> _acc;
 typedef std::pair<std::string, Samples> SamplePair;
-struct prof {
-    const char* filename;
-    const char* name;
-    std::chrono::high_resolution_clock::time_point start;
+struct Profiler {
+    std::map<std::string, Samples> _acc;
 
+    void addSample(const std::string& name, const std::string& filename,
+                   float amt) {
+        if (_acc.find(name) == _acc.end()) {
+            _acc.insert(std::make_pair(name, Samples()));
+            _acc[name].setFilename(filename);
+        }
+        _acc[name].addSample(amt);
+    }
+};
+static Profiler profiler__DO_NOT_USE;
+
+struct prof {
+    std::string filename;
+    std::string name;
+    std::chrono::high_resolution_clock::time_point start;
 #if defined(SUPER_ENGINE_PROFILING_DISABLED)
     prof(const char*, const char*) {}
     ~prof() {}
 #else
-    prof(const char* fileloc, const char* n) : filename(fileloc), name(n) {
+    prof(const std::string& fileloc, const std::string& n)
+        : filename(fileloc), name(n) {
         start = std::chrono::high_resolution_clock::now();
     }
     ~prof() {
@@ -89,13 +102,7 @@ struct prof {
                 .time_since_epoch()
                 .count();
         float duration = (end_as_ms - start_as_ms);
-
-        std::map<std::string, Samples>::iterator p = _acc.find(name);
-        if (p == _acc.end()) {
-            _acc.insert(std::make_pair(name, Samples()));
-            _acc[name].setFilename(filename);
-        }
-        _acc[name].addSample(duration);
+        profiler__DO_NOT_USE.addSample(name, filename, duration);
     }
 #endif
 };
@@ -139,11 +146,11 @@ inline const std::string computeMethodName(const std::string& function,
 #define __PROFILE_FUNC__ "", ""
 #define __PROFILE_LOC__(x) "", ""
 #else
-#define __PROFILE_FUNC__                             \
-    computeFileLocation(__FILE__, __LINE__).c_str(), \
-        computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__, "").c_str()
+#define __PROFILE_FUNC__                     \
+    computeFileLocation(__FILE__, __LINE__), \
+        computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__, "")
 
-#define __PROFILE_LOC__(x)                           \
-    computeFileLocation(__FILE__, __LINE__).c_str(), \
-        computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__, x).c_str()
+#define __PROFILE_LOC__(x)                   \
+    computeFileLocation(__FILE__, __LINE__), \
+        computeMethodName(__FUNCTION__, __PRETTY_FUNCTION__, x)
 #endif

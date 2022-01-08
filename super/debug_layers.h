@@ -126,7 +126,7 @@ struct ProfileLayer : public Layer {
     ProfileLayer() : Layer("Profiling"), showFilenames(false) {
         isMinimized = true;  //! IS_DEBUG;
         // Reset all profiling
-        _acc.clear();
+        profiler__DO_NOT_USE._acc.clear();
         seconds = 0.f;
     }
 
@@ -146,7 +146,7 @@ struct ProfileLayer : public Layer {
             return;
         }
 
-        int y = 10;
+        int y = 40;
         float scale = 1.f;
         gltInit();
         gltBeginDraw();
@@ -154,19 +154,20 @@ struct ProfileLayer : public Layer {
         std::vector<GLTtext*> texts;
 
         std::vector<SamplePair> pairs;
-        pairs.insert(pairs.end(), _acc.begin(), _acc.end());
-        sort(pairs.begin(), pairs.end(),
-             [](const SamplePair& a, const SamplePair& b) {
-                 return a.second.average() > b.second.average();
-             });
+        pairs.insert(pairs.end(), profiler__DO_NOT_USE._acc.begin(),
+                     profiler__DO_NOT_USE._acc.end());
+        // sort(pairs.begin(), pairs.end(),
+        // [](const SamplePair& a, const SamplePair& b) {
+        // return a.second.average() > b.second.average();
+        // });
 
         for (const auto& x : pairs) {
             auto stats = x.second;
             texts.push_back(
-                drawText(fmt::format("{}{}: avg: {:.2f}ns",
+                drawText(fmt::format("{}{}: avg: {:.2f}ms",
                                      showFilenames ? stats.filename : "",
                                      x.first, stats.average()),
-                         10, y, scale));
+                         WIN_W - 520, y, scale));
             y += 30;
         }
 
@@ -174,14 +175,6 @@ struct ProfileLayer : public Layer {
             drawText(fmt::format("Press delete to toggle filenames {}",
                                  showFilenames ? "off" : "on"),
                      0, y, scale));
-        y += 30;
-
-        auto avgRenderTime =
-            Renderer::stats.totalFrameTime / Renderer::stats.renderTimes.size();
-        texts.push_back(
-            drawText(fmt::format("Avg render time {:.4f} ms ({:.2f} fps)",
-                                 avgRenderTime, 1.f / avgRenderTime),
-                     WIN_W - 100, y, scale));
         y += 30;
 
         gltEndDraw();
@@ -198,7 +191,7 @@ struct ProfileLayer : public Layer {
             showFilenames = !showFilenames;
         }
         if (event.keycode == Key::mapping["Profiler Clear Stats"]) {
-            _acc.clear();
+            profiler__DO_NOT_USE._acc.clear();
         }
         // log_info(std::to_string(event.keycode));
         return false;

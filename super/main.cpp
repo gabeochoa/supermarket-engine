@@ -3,7 +3,7 @@
 #define BACKWARD_SUPERMARKET
 #include "../vendor/backward.hpp"
 //
-#define SUPER_ENGINE_PROFILING_DISABLED
+// #define SUPER_ENGINE_PROFILING_DISABLED
 
 #include "../engine/app.h"
 #include "../engine/edit.h"
@@ -77,6 +77,7 @@ int main(int argc, char** argv) {
 
     // on start tests
     {
+        prof give_me_a_name(__PROFILE_FUNC__);
         theta_test();
         point_collision_test();
 
