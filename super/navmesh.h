@@ -182,16 +182,24 @@ struct NavMesh {
     std::vector<Polygon> shapes;
 
     void addShape(Polygon p) {
-        for (auto& s : shapes) {
-            if (overlap(s, p)) {
-                // merge
-                for (auto pt : p.points) {
-                    s.add(pt);
-                }
-                return;
-            }
-        }
         shapes.push_back(p);
+
+        size_t i = 0;
+        size_t j = 1;
+        while (i < shapes.size()) {
+            j = i + 1;
+            while (j < shapes.size()) {
+                if (overlap(shapes[i], shapes[j])) {
+                    for (auto pt : shapes[j].points) {
+                        shapes[i].add(pt);
+                    }
+                    shapes.erase(shapes.begin() + j);
+                } else {
+                    j++;
+                }
+            }
+            i++;
+        }
     }
 
     bool overlap(Polygon a, Polygon b) const {

@@ -516,6 +516,8 @@ struct Renderer {
             sceneData->pvbufferptr++;
             sceneData->polyVertexCount += 1;
         }
+
+        next_batch();
     }
 
     static void setLineThickness(float thickness) { glLineWidth(thickness); };

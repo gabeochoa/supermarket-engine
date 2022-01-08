@@ -5,6 +5,7 @@
 
 #include "../engine/pch.hpp"
 #include "../engine/renderer.h"
+#include "navmesh.h"
 
 struct Storable;
 
@@ -152,8 +153,19 @@ static std::vector<std::shared_ptr<Entity>> entities_DO_NOT_USE;
 
 struct EntityHelper {
     //
-    static void addEntity(std::shared_ptr<Entity> entity) {
-        entities_DO_NOT_USE.push_back(entity);
+    static void addEntity(std::shared_ptr<Entity> e) {
+        entities_DO_NOT_USE.push_back(e);
+
+        if (e->canMove()) return;
+        auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
+        if (nav) {
+            Polygon shape;
+            shape.add(e->position);
+            shape.add(glm::vec2{e->position.x + e->size.x, e->position.y});
+            shape.add(e->position + e->size);
+            shape.add(glm::vec2{e->position.x, e->position.y + e->size.y});
+            nav->addShape(shape);
+        }
     }
 
     static void cleanup() {
@@ -254,13 +266,13 @@ struct EntityHelper {
     }
 
     static bool isWalkable(const glm::vec2& pos, const glm::vec2 size) {
-        for (auto& e : entities_DO_NOT_USE) {
-            if (e->canMove()) {
-                continue;
-            }
-            if (aabb(e->getRect(), posSizeToRect(pos, size))) {
-                return false;
-            }
+        auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
+        if (!nav) return true;
+
+        for (auto s : nav->shapes) {
+            if (s.inside(pos)) return false;
+            if (s.inside(pos + (size / 2.f))) return false;
+            if (s.inside(pos + size)) return false;
         }
         return true;
     }
