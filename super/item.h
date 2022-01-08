@@ -1,14 +1,17 @@
 #pragma once
 
+#include "../engine/edit.h"
 #include "../engine/pch.hpp"
 #include "../engine/renderer.h"
 #include "../vendor/fmt/ostream.h"
 //
+#include <memory>
+
 #include "entity.h"
 
 struct Item {
     const char* name;
-    const float price;
+    float price;
     const char* textureName;
     const glm::vec4 color;
 
@@ -31,15 +34,28 @@ static constexpr std::array<std::pair<int, Item>, 4> items_{
 };
 
 struct ItemManager {
-    static void init_items() {
+    std::map<int, std::shared_ptr<Item>> items;
+    int longestName = 0;
+
+    ItemManager() {
+        init_items();
+        GLOBALS.set("item_manager", this);
+    }
+
+    void init_items() {
         // TODO read from a file;
+        for (auto it : items_) {
+            items[it.first] = std::make_shared<Item>(it.second);
+            int nlen = (int)strlen(it.second.name);
+            if (nlen > longestName) longestName = nlen;
+        }
     }
-    static Item getItem(int id) {
-        static constexpr auto ALL_ITEMS =
-            CEMap<int, Item, items_.size()>{{items_}};
-        return ALL_ITEMS.at(id);
-    }
+
+    void update_price(int id, float p) { items[id]->price = p; }
+    Item& get(int id) { return *items.at(id); }
+    std::shared_ptr<Item> get_ptr(int id) { return items.at(id); }
 };
+static ItemManager itemManager_DO_NOT_USE_DIRECTLY;
 
 struct ItemGroup {
     std::map<int, int> group;
@@ -135,7 +151,7 @@ struct Storable : public Entity {
         int index = 0;
         for (auto& kv : contents) {
             if (index >= 4) break;
-            Item item = ItemManager::getItem(kv.first);
+            Item item = GLOBALS.get<ItemManager>("item_manager").get(kv.first);
             auto basepos =
                 glm::vec3{position.x + item_positions[index].first,
                           position.y + item_positions[index].second, 0.f};

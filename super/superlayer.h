@@ -43,6 +43,10 @@ struct GameUILayer : public Layer {
     bool dropdownState = false;
     int dropdownIndex = 0;
     FurnitureTool selectedTool;
+    ItemManager* itemManager;
+
+    const float H1_FS = 64.f;
+    const float P_FS = 32.f;
 
     GameUILayer() : Layer("Game UI") {
         isMinimized = true;
@@ -57,6 +61,8 @@ struct GameUILayer : public Layer {
         uicontext.reset(new IUI::UIContext());
         uicontext->init();
         GLOBALS.set("selected_tool", &selectedTool);
+
+        itemManager = GLOBALS.get_ptr<ItemManager>("item_manager");
     }
 
     virtual ~GameUILayer() {}
@@ -101,6 +107,34 @@ struct GameUILayer : public Layer {
         return ig;
     }
 
+    void render_item_row(int& ui_id, int index, int item_id,
+                         int amountInInventory) {
+        using namespace IUI;
+
+        std::shared_ptr<Item> item = itemManager->get_ptr(item_id);
+
+        // {name:<{length}}: {amountInInventory} {price}
+        auto formatstr = "{0:<{1}} {2} @ ${3:.2f}";
+        auto str = fmt::format(formatstr,                          //
+                               item->name,                         //
+                               (int)itemManager->longestName * 2,  //
+                               amountInInventory,                  //
+                               item->price);
+
+        auto pmButtonConfig = WidgetConfig({
+            .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+            .position = convertUIPos({P_FS, 200.f + (P_FS * index)}),
+            .size = glm::vec2{P_FS, P_FS},
+            .text = str,
+            .flipTextY = true,
+        });
+        float local_price = item->price;
+        if (plusMinusButton(uuid({id, ui_id++, 0}), pmButtonConfig,
+                            &local_price)) {
+            itemManager->update_price(item_id, local_price);
+        }
+    }
+
     void render() {
         gameUICameraController->camera.setProjection(0.f, WIN_W, WIN_H, 0.f);
         Renderer::begin(gameUICameraController->camera);
@@ -110,10 +144,7 @@ struct GameUILayer : public Layer {
 
         std::vector<std::function<bool(uuid)>> children;
 
-        float h1_fs = 64.f;
-        float p_fs = 32.f;
-
-        auto window_location = getPositionSizeForUIRect({0, 100, 300, 500});
+        auto window_location = getPositionSizeForUIRect({0, 100, 500, 500});
         uuid window_id = uuid({id, item++, 0});
         if (window(window_id, WidgetConfig({
                                   .color = blue,
@@ -123,28 +154,17 @@ struct GameUILayer : public Layer {
                    )) {
             auto textConfig = WidgetConfig({
                 .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-                .position = convertUIPos({0, 100.f + h1_fs + 1.f}),
-                .size = glm::vec2{h1_fs, h1_fs},
+                .position = convertUIPos({0, 100.f + H1_FS + 1.f}),
+                .size = glm::vec2{H1_FS, H1_FS},
                 .text = "Inventory",
                 .flipTextY = true,
             });
             text(uuid({id, item++, 0}), textConfig);
 
             // TODO replace with list view when exists
-            int items_id = item++;
             int i = 0;
             for (auto kv : getTotalInventory()) {
-                auto str = fmt::format(
-                    "{} : {}", ItemManager::getItem(kv.first).name, kv.second);
-                auto textConfig = WidgetConfig({
-                    .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-                    .position = convertUIPos({p_fs, 200.f + (p_fs * i)}),
-                    .size = glm::vec2{p_fs, p_fs},
-                    .text = str,
-                    .flipTextY = true,
-                });
-                text(uuid({id, items_id, i}), textConfig);
-                i++;
+                render_item_row(item, i++, kv.first, kv.second);
             }
         }
         std::vector<WidgetConfig> dropdownConfigs;
@@ -155,8 +175,8 @@ struct GameUILayer : public Layer {
 
         WidgetConfig dropdownMain = IUI::WidgetConfig({
             .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},         //
-            .position = convertUIPos(glm::vec2{p_fs, 500.f}),  //
-            .size = glm::vec2{h1_fs * 3, h1_fs},               //
+            .position = convertUIPos(glm::vec2{P_FS, 500.f}),  //
+            .size = glm::vec2{H1_FS * 3, H1_FS},               //
             .transparent = false,                              //
             .flipTextY = true,
         });

@@ -366,6 +366,10 @@ struct DrawerState : public ToggleState {
     State<float> heightPct;
 };
 
+struct PlusMinusButtonState : public UIState {
+    State<float> value;
+};
+
 struct StateManager {
     std::map<uuid, std::shared_ptr<UIState>> states;
 
@@ -644,20 +648,18 @@ bool button(uuid id, WidgetConfig config) {
 
         if (config.text.size() != 0) {
             float sign = config.flipTextY ? 1 : -1;
-            text(uuid({id.item, 0, 0}),
-                 WidgetConfig({
-                     // TODO detect if the button color is dark
-                     // and change the color to white automatically
-                     .color = glm::vec4{1.f - config.color.r,  //
-                                        1.f - config.color.g,
-                                        1.f - config.color.b, 1.f},
-                     .position = config.position +
-                                 glm::vec2{(-config.size.x / 2.f) + 0.10f,
-                                           config.size.y * sign * 0.5f},
-                     .size = 0.75f * glm::vec2{config.size.y, config.size.y},
-                     .text = config.text,
-                     .flipTextY = config.flipTextY,
-                 }));
+
+            WidgetConfig textConfig(config);
+            // TODO detect if the button color is dark
+            // and change the color to white automatically
+            textConfig.color =
+                glm::vec4{1.f - config.color.r,  //
+                          1.f - config.color.g, 1.f - config.color.b, 1.f};
+            textConfig.position =
+                config.position + glm::vec2{(-config.size.x / 2.f) + 0.10f,
+                                            config.size.y * sign * 0.5f};
+            textConfig.size = 0.75f * glm::vec2{config.size.y, config.size.y};
+            text(uuid({id.item, 0, 0}), textConfig);
         }
 
     }  // end render
@@ -1046,7 +1048,7 @@ bool window(uuid, WidgetConfig config) {
     return true;
 }
 
-bool drawer(uuid id, WidgetConfig config, float* pct_open) {
+bool drawer(uuid id, WidgetConfig config, float* pct_open = nullptr) {
     auto state = widget_init<DrawerState>(id);
     if (pct_open) state->heightPct = *pct_open;
 
@@ -1061,6 +1063,44 @@ bool drawer(uuid id, WidgetConfig config, float* pct_open) {
     // return if drawer should render children
     if (state->heightPct > 0.9) return true;
     return false;
+}
+
+// TODO not ready for use, need to mess around with the location / scales
+// some more
+inline bool plusMinusButton(uuid id, WidgetConfig config,
+                            float* value = nullptr, float increment = 0.1) {
+    auto state = widget_init<PlusMinusButtonState>(id);
+    if (value) state->value = *value;
+    int item = 0;
+    bool changed = false;
+
+    WidgetConfig original(config);
+
+    config.size /= 2.f;
+    config.position += glm::vec2{0, +config.size.y};
+    config.text = ">";
+    config.rotation = 270.f;
+    if (button(uuid({id.owner, id.item, item++}), config)) {
+        state->value = state->value + increment;
+        changed = true;
+    }
+
+    config.rotation = 90.f;
+    config.position.y -= config.size.y * 2;
+    if (button(uuid({id.owner, id.item, item++}), config)) {
+        state->value = state->value + increment;
+        changed = true;
+    }
+
+    original.position.x += config.size.x;
+    text(uuid({id.owner, id.item, item++}), original);
+
+    // TODO allow support for setting these
+    state->value = fmaxf(0, state->value);
+    state->value = fminf(9999, state->value);
+
+    if (value) *value = state->value;
+    return changed;
 }
 
 }  // namespace IUI
