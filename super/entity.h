@@ -159,13 +159,17 @@ struct EntityHelper {
         if (e->canMove()) return;
         auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
         if (nav) {
-            Polygon shape;
-            shape.add(e->position);
-            shape.add(glm::vec2{e->position.x + e->size.x, e->position.y});
-            shape.add(e->position + e->size);
-            shape.add(glm::vec2{e->position.x, e->position.y + e->size.y});
-            nav->addShape(shape);
+            nav->addShape(getPolyForEntity(e));
         }
+    }
+
+    static Polygon getPolyForEntity(std::shared_ptr<Entity> e) {
+        Polygon shape;
+        shape.add(e->position);
+        shape.add(glm::vec2{e->position.x + e->size.x, e->position.y});
+        shape.add(e->position + e->size);
+        shape.add(glm::vec2{e->position.x, e->position.y + e->size.y});
+        return shape;
     }
 
     static void cleanup() {
@@ -173,6 +177,11 @@ struct EntityHelper {
         auto it = entities_DO_NOT_USE.begin();
         while (it != entities_DO_NOT_USE.end()) {
             if ((*it)->cleanup) {
+                auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
+                if (nav) {
+                    nav->removeShape(getPolyForEntity(*it));
+                }
+
                 entities_DO_NOT_USE.erase(it);
                 continue;
             }

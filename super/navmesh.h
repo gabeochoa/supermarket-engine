@@ -117,9 +117,30 @@ struct Polygon {
         }
     };
 
+    void remove(glm::vec2 p) {
+        auto hasp = std::find(points.begin(), points.end(), p);
+        if (hasp == points.end()) {
+            if (inside(p)) {
+                log_warn(
+                    "Trying to remove a point that is inside the nav mesh");
+            } else {
+                // log_warn(
+                // "Trying to remove a point that isnt in the original nav "
+                // "set mesh");
+            }
+            return;
+        }
+        points.erase(hasp);
+        andrew_chain();
+    }
+
     // https://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain#C++
     void andrew_chain() {
         int n = points.size();
+        if (n <= 3) {
+            hull = points;
+            return;
+        }
         int k = 0;
 
         std::vector<glm::vec2> h(2 * n);
@@ -202,9 +223,21 @@ struct NavMesh {
         }
     }
 
+    void removeShape(Polygon p) {
+        // TODO this might split the shape in two
+        // how do we figure out if we need to split ...
+        for (auto& s : shapes) {
+            if (overlap(s, p)) {
+                for (auto pt : p.points) {
+                    s.remove(pt);
+                }
+            }
+        }
+    }
+
     bool overlap(Polygon a, Polygon b) const {
         // first check if the two max radii circles overlap
-        for (size_t i = 0; i < a.hull.size(); i++) {
+        for (size_t i = 0; i < a.points.size(); i++) {
             if (b.inside(a.points[i])) return true;
         }
         return false;
