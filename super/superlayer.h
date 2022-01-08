@@ -273,7 +273,7 @@ struct SuperLayer : public Layer {
             "player3",
         };
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 1; i++) {
             auto emp = Employee();
             emp.color = gen_rand_vec4(0.3f, 1.0f);
             emp.color.w = 1.f;
@@ -319,6 +319,8 @@ struct SuperLayer : public Layer {
     }
 
     void fillJobQueue() {
+        return;
+
         if (JobQueue::numOfJobsWithType(JobType::IdleWalk) < 5) {
             JobQueue::addJob(
                 JobType::IdleWalk,

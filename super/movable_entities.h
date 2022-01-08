@@ -25,6 +25,8 @@ inline std::vector<glm::vec2> generateWalkablePath(  //
     log_trace("starting theta");
     LazyTheta t(
         start, end,
+        // TODO figure out a better bounds than this
+        glm::vec4{-20.f, -20.f, 20.f, 20.f},
         std::bind(EntityHelper::isWalkable, std::placeholders::_1, size));
     auto a = t.go();
     std::reverse(a.begin(), a.end());

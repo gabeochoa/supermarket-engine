@@ -21,6 +21,23 @@
 //
 ///////// ///////// ///////// ///////// ///////// ///////// ///////// /////////
 
+typedef std::pair<glm::vec2, double> Qi;
+struct CompareQi {
+    bool operator()(Qi a, Qi b) { return a.second > b.second; }
+};
+typedef std::priority_queue<Qi, std::vector<Qi>, CompareQi> ThetaPQ;
+
+template <class T, class S, class C>
+S& UnderlyingContainer(std::priority_queue<T, S, C>& q) {
+    struct HackedQueue : private std::priority_queue<T, S, C> {
+        static S& UnderlyingContainer(std::priority_queue<T, S, C>& q) {
+            return q.*&HackedQueue::c;
+        }
+    };
+    return HackedQueue::UnderlyingContainer(q);
+}
+
+/*
 struct ThetaPQ {
     typedef std::pair<glm::vec2, double> Qi;
     std::vector<Qi> Q;
@@ -62,6 +79,7 @@ struct ThetaPQ {
         }
     }
 };
+*/
 
 struct Theta {
     const float EQUAL_RANGE = 0.5f;
@@ -73,6 +91,7 @@ struct Theta {
 
     glm::vec2 start;
     glm::vec2 end;
+    glm::vec4 bounds;
     std::function<bool(const glm::vec2& pos)> isWalkable;
     bool lazy;
 
@@ -84,16 +103,16 @@ struct Theta {
     ThetaPQ openSet;
     ThetaPQ closedSet;
 
-    Theta(const glm::vec2& s, const glm::vec2& e,
+    Theta(const glm::vec2& s, const glm::vec2& e, const glm::vec4& b,
           std::function<bool(const glm::vec2& pos)> valid, bool isLazy = false)
-        : start(s), end(e), isWalkable(valid), lazy(isLazy) {
+        : start(s), end(e), bounds(b), isWalkable(valid), lazy(isLazy) {
         log_trace("trying to find path from {} to {}", start, end);
 
         // if the goal isnt reachable, then we have to change the goal for now
-        if (!this->isWalkable(end)) {
+        if (!canVisit(end)) {
             // uses the closedSet
             end = expandUntilWalkable(end);
-            closedSet.Q.clear();
+            while (!closedSet.empty()) closedSet.pop();
             log_trace("couldnt get to end so end is now {}", end);
         } else {
             log_trace("goal is reachable {}", end);
@@ -101,33 +120,62 @@ struct Theta {
 
         // init vars
         gScore[start] = 0;
-        openSet.add(start, (gScore[start] + glm::distance(start, end)));
+        openSet.push(Qi{start, (gScore[start] + glm::distance(start, end))});
+    }
+
+    bool canVisit(glm::vec2 p) {
+        auto l = p.x >= bounds.x;
+        auto r = p.x <= bounds.z;
+        auto t = p.y >= bounds.y;
+        auto b = p.y <= bounds.w;
+        if (l && r && t && b) return this->isWalkable(p);
+        return false;
     }
 
     glm::vec2 expandUntilWalkable(glm::vec2 n) {
-        closedSet.add(n, 0);
+        closedSet.push(Qi{n, 0});
         while (true) {
-            ThetaPQ::Qi qi = closedSet.pop();
+            Qi qi = closedSet.top();
+            closedSet.pop();
             n = qi.first;
             for (int i = 0; i < 8; i++) {
                 glm::vec2 neighbor = {n.x + (x[i] * dst), n.y + (y[i] * dst)};
-                if (this->isWalkable(neighbor)) return neighbor;
-                closedSet.add(neighbor, qi.second + 1);
+                if (canVisit(neighbor)) return neighbor;
+                closedSet.push(Qi{neighbor, qi.second + 1});
+            }
+        }
+    }
+
+    bool contains(ThetaPQ pq, glm::vec2 pos) {
+        auto c = UnderlyingContainer(pq);
+        for (auto it = c.begin(); it != c.end(); it++) {
+            if (it->first == pos) return true;
+        }
+        return false;
+    }
+
+    void erase(ThetaPQ pq, glm::vec2 pos) {
+        auto c = UnderlyingContainer(pq);
+        for (auto it = c.begin(); it != c.end(); it++) {
+            if (it->first == pos) {
+                c.erase(it);
+                return;
             }
         }
     }
 
     std::vector<glm::vec2> go() {
-        if (!this->isWalkable(end)) {
+        if (!canVisit(end)) {
             // for now just clear it,
             // otherwise itll inf loop
-            openSet.Q.clear();
+            while (!openSet.empty()) openSet.pop();
         }
 
         prof give_me_a_name(__PROFILE_FUNC__);
         int i = 0;
         while (i < LOOP_LIMIT && !openSet.empty()) {
-            ThetaPQ::Qi qi = openSet.pop();
+            Qi qi = openSet.top();
+            openSet.pop();
             auto s = qi.first;
             if (lazy) {
                 set_vertex(s);
@@ -136,15 +184,15 @@ struct Theta {
             if (glm::distance(s, end) < EQUAL_RANGE) {
                 return reconstruct_path(s);
             }
-            closedSet.add(s, 0);
+            closedSet.push(Qi{s, 0});
             // Loop through each immediate neighbor of s
             for (int i = 0; i < 8; i++) {
                 glm::vec2 neighbor = {s.x + (x[i] * dst), s.y + (y[i] * dst)};
-                if (!this->isWalkable(neighbor)) continue;
+                if (!canVisit(neighbor)) continue;
                 // if (neighbor not in closed){
-                if (!closedSet.contains(neighbor)) {
+                if (!contains(closedSet, neighbor)) {
                     // if (neighbor not in open){
-                    if (!openSet.contains(neighbor)) {
+                    if (!contains(openSet, neighbor)) {
                         // Initialize values for neighbor if it is
                         // not already in the open list
                         // gScore(neighbor) := infinity;
@@ -165,13 +213,13 @@ struct Theta {
 
     bool line_of_sight(const glm::vec2& parent, const glm::vec2& neighbor) {
         // technically we can see it but cant walk to it its in the wall?
-        if (!this->isWalkable(neighbor)) {
+        if (!canVisit(neighbor)) {
             return false;
         }
         glm::vec2 loc(parent);
         while (distance(loc, neighbor) > 0.5f) {
             loc = lerp(loc, neighbor, 0.25f);
-            if (!this->isWalkable(loc)) {
+            if (!canVisit(loc)) {
                 return false;
             }
         }
@@ -196,8 +244,8 @@ struct Theta {
             double minS = -1;
             for (int i = 0; i < 8; i++) {
                 glm::vec2 neighbor = {s.x + (x[i] * dst), s.y + (y[i] * dst)};
-                if (!this->isWalkable(neighbor)) continue;
-                if (closedSet.contains(neighbor)) {
+                if (!canVisit(neighbor)) continue;
+                if (contains(closedSet, neighbor)) {
                     if (minS == -1 || minS > gScore[neighbor]) {
                         minN = neighbor;
                         minS = gScore[neighbor];
@@ -223,9 +271,9 @@ struct Theta {
                 gScore[neighbor] = newPathScore;
             }
             if (gScore[neighbor] < oldScore) {
-                openSet.erase(neighbor);
-                openSet.add(neighbor,
-                            (gScore[neighbor] + glm::distance(neighbor, end)));
+                erase(openSet, neighbor);
+                openSet.push(Qi{neighbor, (gScore[neighbor] +
+                                           glm::distance(neighbor, end))});
             }
             return;
         }
@@ -242,9 +290,9 @@ struct Theta {
                 gScore[neighbor] = newPathScore;
             }
             if (gScore[neighbor] < oldScore) {
-                openSet.erase(neighbor);
-                openSet.add(neighbor,
-                            (gScore[neighbor] + glm::distance(neighbor, end)));
+                erase(openSet, neighbor);
+                openSet.push(Qi{neighbor, (gScore[neighbor] +
+                                           glm::distance(neighbor, end))});
             }
         } else {
             // If the length of the path from start to s and from s to
@@ -256,16 +304,16 @@ struct Theta {
                 gScore[neighbor] = newPathScore;
             }
             if (gScore[neighbor] < oldScore) {
-                openSet.erase(neighbor);
-                openSet.add(neighbor,
-                            (gScore[neighbor] + glm::distance(neighbor, end)));
+                erase(openSet, neighbor);
+                openSet.push(Qi{neighbor, (gScore[neighbor] +
+                                           glm::distance(neighbor, end))});
             }
         }
     }
 };
 
 struct LazyTheta : public Theta {
-    LazyTheta(const glm::vec2& s, const glm::vec2& e,
+    LazyTheta(const glm::vec2& s, const glm::vec2& e, const glm::vec4& b,
               std::function<bool(const glm::vec2& pos)> valid)
-        : Theta(s, e, valid, true) {}
+        : Theta(s, e, b, valid, true) {}
 };

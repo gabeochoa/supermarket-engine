@@ -33,7 +33,7 @@ void theta_test() {
         emp.size = {0.6f, 0.6f};
         entities_DO_NOT_USE.push_back(std::make_shared<Employee>(emp));
 
-        LazyTheta t(start, end,
+        LazyTheta t(start, end, glm::vec4{-2.f, -2.f, 10.f, 10.f},
                     std::bind(EntityHelper::isWalkable, std::placeholders::_1,
                               emp.size));
         auto result = t.go();
