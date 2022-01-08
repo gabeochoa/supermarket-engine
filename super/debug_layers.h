@@ -253,7 +253,7 @@ struct EntityDebugLayer : public Layer {
 
         std::vector<std::shared_ptr<MovableEntity>> movables;
 
-        for (auto& e : entities) {
+        EntityHelper::forEachEntity([&](auto e) {
             auto s = fmt::format("{}", *e);
             GLTtext* text = gltCreateText();
             gltSetText(text, s.c_str());
@@ -280,7 +280,7 @@ struct EntityDebugLayer : public Layer {
             if (m && !m->path.empty()) {
                 movables.push_back(m);
             }
-        }
+        });
 
         gltEndDraw();
         for (auto text : texts) gltDeleteText(text);
@@ -293,7 +293,7 @@ struct EntityDebugLayer : public Layer {
             Renderer::drawPolygon(shape.hull, glm::vec4{0.7, 0.0, 0.7, 0.4f});
         }
 
-        for (auto& e : entities) {
+        EntityHelper::forEachEntity([&](auto e) {
             auto [a, b, c, d] = getBoundingBox(e->position, e->size);
             node->position = a;
             node->render();
@@ -303,7 +303,7 @@ struct EntityDebugLayer : public Layer {
             node->render();
             node->position = d;
             node->render();
-        }
+        });
 
         for (auto& m : movables) {
             for (auto it = m->path.begin(); it != m->path.end(); it++) {

@@ -10,18 +10,20 @@ void theta_test() {
     // Walk straight through
     //  - i expect it to just walk around
 
+    // TODO add a way for us to test this without clobbering entities....
+
     auto ll = LOG_LEVEL;
     LOG_LEVEL = LogLevel::ALL;
     {
         auto shelf = std::make_shared<Shelf>(
             glm::vec2{1.f, 0.f}, glm::vec2{1.f, 1.f}, 0.f,
             glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
-        entities.push_back(shelf);
+        entities_DO_NOT_USE.push_back(shelf);
 
         auto shelf2 = std::make_shared<Shelf>(
             glm::vec2{3.f, 0.f}, glm::vec2{1.f, 1.f}, 0.f,
             glm::vec4{1.0f, 1.0f, 1.0f, 1.0f}, "box");
-        entities.push_back(shelf2);
+        entities_DO_NOT_USE.push_back(shelf2);
 
         glm::vec2 start = {0.f, 0.f};
         glm::vec2 end = {6.f, 0.f};
@@ -29,7 +31,7 @@ void theta_test() {
         auto emp = Employee();
         emp.position = start;
         emp.size = {0.6f, 0.6f};
-        entities.push_back(std::make_shared<Employee>(emp));
+        entities_DO_NOT_USE.push_back(std::make_shared<Employee>(emp));
 
         LazyTheta t(start, end,
                     std::bind(EntityHelper::isWalkable, std::placeholders::_1,
@@ -40,7 +42,7 @@ void theta_test() {
             log_info("{}", i);
         }
         M_ASSERT(result.size(), "Path is empty but shouldnt be");
-        entities.clear();
+        entities_DO_NOT_USE.clear();
     }
     LOG_LEVEL = ll;
     return;

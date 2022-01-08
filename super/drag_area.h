@@ -67,14 +67,14 @@ struct DragArea : public Entity {
                 forEachPlaced(false, [](glm::vec2 pos) {
                     if (EntityHelper::entityInLocation(pos, glm::vec2{0.5f}))
                         return;
-                    entities.push_back(std::make_shared<Shelf>(Shelf(
+                    EntityHelper::addEntity(std::make_shared<Shelf>(Shelf(
                         pos, glm::vec2{1.f}, 0.f, glm::vec4{1.f}, "shelf")));
                 });
             } else if (textureName == "box") {
                 forEachPlaced(false, [](glm::vec2 pos) {
                     if (EntityHelper::entityInLocation(pos, glm::vec2{0.5f}))
                         return;
-                    entities.push_back(std::make_shared<Storage>(Storage(
+                    EntityHelper::addEntity(std::make_shared<Storage>(Storage(
                         pos, glm::vec2{1.f}, 0.f, glm::vec4{1.f}, "box")));
                 });
             }

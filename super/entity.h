@@ -148,11 +148,43 @@ struct fmt::formatter<Entity> {
     }
 };
 
-static std::vector<std::shared_ptr<Entity>> entities;
+static std::vector<std::shared_ptr<Entity>> entities_DO_NOT_USE;
 
 struct EntityHelper {
+    //
+    static void addEntity(std::shared_ptr<Entity> entity) {
+        entities_DO_NOT_USE.push_back(entity);
+    }
+
+    static void cleanup() {
+        // Cleanup entities marked cleanup
+        auto it = entities_DO_NOT_USE.begin();
+        while (it != entities_DO_NOT_USE.end()) {
+            if ((*it)->cleanup) {
+                entities_DO_NOT_USE.erase(it);
+                continue;
+            }
+            it++;
+        }
+    }
+
+    static void forEachEntity(std::function<void(std::shared_ptr<Entity>)> cb) {
+        for (auto e : entities_DO_NOT_USE) {
+            cb(e);
+        }
+    }
+
+    template <typename T>
+    static void forEach(std::function<void(std::shared_ptr<T>)> cb) {
+        for (auto e : entities_DO_NOT_USE) {
+            auto t = dynamic_pointer_cast<T>(e);
+            if (!t) continue;
+            cb(t);
+        }
+    }
+
     static bool entityInLocation(glm::vec4 rect) {
-        for (auto e : entities) {
+        for (auto e : entities_DO_NOT_USE) {
             if (aabb(e->getRect(), rect)) return true;
         }
         return false;
@@ -166,7 +198,7 @@ struct EntityHelper {
     static constexpr std::shared_ptr<T> getRandomEntity(
         const glm::vec2& notpos = {-99.f, -99.f}) {
         std::vector<std::shared_ptr<T>> matching;
-        for (auto& e : entities) {
+        for (auto& e : entities_DO_NOT_USE) {
             auto s = dynamic_pointer_cast<T>(e);
             if (!s) continue;
             if (glm::distance(s->position, notpos) > 1.f) matching.push_back(s);
@@ -179,7 +211,7 @@ struct EntityHelper {
     static constexpr std::vector<std::shared_ptr<T>> getEntitiesInRange(
         glm::vec2 pos, float range) {
         std::vector<std::shared_ptr<T>> matching;
-        for (auto& e : entities) {
+        for (auto& e : entities_DO_NOT_USE) {
             auto s = dynamic_pointer_cast<T>(e);
             if (!s) continue;
             if (glm::distance(pos, e->position) < range) {
@@ -196,7 +228,7 @@ struct EntityHelper {
             std::is_base_of<Storable, T>::value,
             "Can only be called with a T that is a child of Storable");
         std::vector<std::shared_ptr<T>> matching;
-        for (auto& e : entities) {
+        for (auto& e : entities_DO_NOT_USE) {
             auto s = dynamic_pointer_cast<T>(e);
             if (!s) continue;
             if (glm::distance(pos, e->position) > range) continue;
@@ -211,7 +243,7 @@ struct EntityHelper {
     static std::vector<std::shared_ptr<T>> getEntityInSelection(
         glm::vec4 rect) {
         std::vector<std::shared_ptr<T>> matching;
-        for (auto& e : entities) {
+        for (auto& e : entities_DO_NOT_USE) {
             auto s = dynamic_pointer_cast<T>(e);
             if (!s) continue;
             if (aabb(s->getRect(), rect)) {
@@ -222,7 +254,7 @@ struct EntityHelper {
     }
 
     static bool isWalkable(const glm::vec2& pos, const glm::vec2 size) {
-        for (auto& e : entities) {
+        for (auto& e : entities_DO_NOT_USE) {
             if (e->canMove()) {
                 continue;
             }
