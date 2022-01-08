@@ -289,7 +289,9 @@ struct EntityDebugLayer : public Layer {
         Renderer::begin(cameraController->camera);
 
         auto nav = GLOBALS.get<NavMesh>("navmesh");
-        Renderer::drawPolygon(nav.shape.hull, glm::vec4{0.7, 0.0, 0.7, 0.4f});
+        for (auto shape : nav.shapes) {
+            Renderer::drawPolygon(shape.hull, glm::vec4{0.7, 0.0, 0.7, 0.4f});
+        }
 
         for (auto& e : entities) {
             auto [a, b, c, d] = getBoundingBox(e->position, e->size);

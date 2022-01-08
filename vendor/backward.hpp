@@ -4143,6 +4143,7 @@ public:
     const int posix_signals[] = {
 #if defined (BACKWARD_SUPERMARKET)
       SIGINT, // Killed by user @SUPERMARKET
+      SIGSEGV, // Invalid memory reference
 #else 
       // Signals for which the default action is "Core".
       SIGABRT, // Abort signal from abort(3)

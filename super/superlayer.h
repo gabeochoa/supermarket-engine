@@ -289,19 +289,26 @@ struct SuperLayer : public Layer {
                                     glm::vec4{0.75f}));
         GLOBALS.set("drag_area", dragArea.get());
 
+        init_navmesh();
+    }
+
+    void init_navmesh() {
+        GLOBALS.set("navmesh", &__navmesh___DO_NOT_USE_DIRECTLY);
+
         // TODO: need to make sure that any entity added
         // thats not walkable gets into this list
         auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
+        if (!nav) return;
         for (auto e : entities) {
-            if (e->canMove()) {
-                continue;
-            }
+            if (e->canMove()) continue;
 
-            nav->shape.add(e->position);
-            nav->shape.add(glm::vec2{e->position.x + e->size.x, e->position.y});
+            Polygon shape;
+            shape.add(e->position);
+            shape.add(glm::vec2{e->position.x + e->size.x, e->position.y});
+            shape.add(e->position + e->size);
+            shape.add(glm::vec2{e->position.x, e->position.y + e->size.y});
 
-            nav->shape.add(e->position + e->size);
-            nav->shape.add(glm::vec2{e->position.x, e->position.y + e->size.y});
+            nav->addShape(shape);
         }
     }
 

@@ -93,6 +93,8 @@ int main(int argc, char** argv) {
 
         test_global_commands();
         test_polygon_hull();
+        test_navmesh();
+        log_info("Finished running all tests successfully");
     }
 
     add_globals();
