@@ -281,9 +281,12 @@ struct EntityDebugLayer : public Layer {
 
         Renderer::begin(cameraController->camera);
 
-        auto nav = GLOBALS.get<NavMesh>("navmesh");
-        for (auto shape : nav.shapes) {
-            Renderer::drawPolygon(shape.hull, glm::vec4{0.7, 0.0, 0.7, 0.4f});
+        auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
+        if (nav) {
+            for (auto shape : nav->shapes) {
+                Renderer::drawPolygon(shape.hull,
+                                      glm::vec4{0.7, 0.0, 0.7, 0.4f});
+            }
         }
 
         EntityHelper::forEachEntity([&](auto e) {

@@ -202,8 +202,10 @@ struct Polygon {
 struct NavMesh {
     std::vector<Polygon> shapes;
 
-    void addShape(Polygon p) {
+    void addShape(Polygon p, bool merge = true) {
         shapes.push_back(p);
+
+        if (!merge) return;
 
         size_t i = 0;
         size_t j = 1;

@@ -509,6 +509,8 @@ struct Renderer {
 
     static void drawPolygon(const std::vector<glm::vec2> points,
                             const glm::vec4& color) {
+        if (points.empty()) return;
+
         for (int i = 0; i < (int)points.size() + 2; i++) {
             sceneData->pvbufferptr->position =
                 glm::vec3{points[i % points.size()], 0.f};

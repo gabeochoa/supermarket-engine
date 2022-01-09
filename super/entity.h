@@ -159,7 +159,9 @@ struct EntityHelper {
         if (e->canMove()) return;
         auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
         if (nav) {
-            nav->addShape(getPolyForEntity(e));
+            // TODO turn off merging for now until splitting works
+            //
+            nav->addShape(getPolyForEntity(e), false);
         }
     }
 
