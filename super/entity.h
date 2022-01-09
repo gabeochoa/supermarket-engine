@@ -17,7 +17,7 @@ constexpr inline std::array<glm::vec2, 4> getBoundingBox(glm::vec2 position,
             {position.x + size.x, position.y + size.y}};
 }
 
-static std::atomic_int ENTITY_ID_GEN;
+static std::atomic_int ENTITY_ID_GEN = 0;
 struct Entity {
     int id;
     glm::vec2 position;
@@ -38,7 +38,8 @@ struct Entity {
 
     Entity(const glm::vec2& position_, const glm::vec2& size_, float angle_,
            const glm::vec4& color_, const std::string& textureName_)
-        : position(position_),
+        : id(ENTITY_ID_GEN++),
+          position(position_),
           size(size_),
           angle(angle_),
           color(color_),
@@ -159,9 +160,7 @@ struct EntityHelper {
         if (e->canMove()) return;
         auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
         if (nav) {
-            // TODO turn off merging for now until splitting works
-            //
-            nav->addShape(getPolyForEntity(e), false);
+            nav->addEntity(e->id, getPolyForEntity(e));
         }
     }
 
@@ -181,7 +180,7 @@ struct EntityHelper {
             if ((*it)->cleanup) {
                 auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
                 if (nav) {
-                    nav->removeShape(getPolyForEntity(*it));
+                    nav->removeEntity((*it)->id);
                 }
 
                 entities_DO_NOT_USE.erase(it);

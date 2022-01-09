@@ -283,8 +283,8 @@ struct EntityDebugLayer : public Layer {
 
         auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
         if (nav) {
-            for (auto shape : nav->shapes) {
-                Renderer::drawPolygon(shape.hull,
+            for (auto kv : nav->entityShapes) {
+                Renderer::drawPolygon(kv.second.hull,
                                       glm::vec4{0.7, 0.0, 0.7, 0.4f});
             }
         }

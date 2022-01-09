@@ -200,7 +200,15 @@ struct Polygon {
 };
 
 struct NavMesh {
+    std::map<int, Polygon> entityShapes;
     std::vector<Polygon> shapes;
+
+    void addEntity(int e_id, Polygon p) { entityShapes.insert({e_id, p}); }
+    void removeEntity(int e_id) {
+        auto it = entityShapes.find(e_id);
+        if (it != entityShapes.end()) entityShapes.erase(it);
+        return;
+    }
 
     void addShape(Polygon p, bool merge = true) {
         shapes.push_back(p);
