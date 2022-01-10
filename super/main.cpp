@@ -75,28 +75,7 @@ int main(int argc, char** argv) {
     // to open and run it
     backward::SignalHandling sh;
 
-    // on start tests
-    {
-        prof give_me_a_name(__PROFILE_FUNC__);
-        theta_test();
-        point_collision_test();
-
-        {  // make sure linear interp always goes up
-            float c = 0.f;
-            auto a = LinearInterp(0.f, 1.f, 100);
-            for (int i = 0; i < 100; i++) {
-                auto b = a.next();
-                M_ASSERT(c - b < 0.1, "should linearly interpolate");
-                c += 0.01;
-            }
-        }
-        // test_file_functionality();
-
-        test_global_commands();
-        test_polygon_hull();
-        test_navmesh();
-        log_info("Finished running all tests successfully");
-    }
+    all_tests();
 
     add_globals();
 

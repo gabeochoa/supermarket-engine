@@ -65,3 +65,25 @@ void point_collision_test() {
     M_ASSERT(shelf->pointCollides(glm::vec2{2.0001f, 3.f}) == false, "200013");
 }
 
+void all_tests() {
+    prof give_me_a_name(__PROFILE_FUNC__);
+    theta_test();
+    point_collision_test();
+
+    {  // make sure linear interp always goes up
+        float c = 0.f;
+        auto a = LinearInterp(0.f, 1.f, 100);
+        for (int i = 0; i < 100; i++) {
+            auto b = a.next();
+            M_ASSERT(c - b < 0.1, "should linearly interpolate");
+            c += 0.01;
+        }
+    }
+    // test_file_functionality();
+
+    test_global_commands();
+    test_polygon_hull();
+    test_navmesh();
+    log_info("Finished running all tests successfully");
+}
+
