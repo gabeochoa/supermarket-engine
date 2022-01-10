@@ -1006,14 +1006,34 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
 }
 
 bool commandfield(uuid id, WidgetConfig config, std::wstring& content) {
+    // TODO this could totally throw and you know it
+    auto state = get()->statemanager.get_as<TextfieldState>(id);
+
+    // We do this tab completion here
+    // so that we can eat the character before anyone else can
+    //
+    if (has_kb_focus(id)) {
+        if (get()->pressed(Key::mapping["Widget Next"])) {
+            if (state->buffer.asT().empty()) {
+                // if you press tab and theres nothing in the terminal
+                // just pretend we actually hit tab
+                //
+                // we need to write into key because pressed() ate the key
+                get()->key = Key::mapping["Widget Next"];
+            } else {
+                // TODO: tab completion
+                EDITOR_COMMANDS.triggerCommand("help");
+                state->buffer.asT().clear();
+            }
+        }
+    }
+
     // We dont need a separate ID since we want
     // global state to match and for them to have the
     // same keyboard focus
     textfield(id, config, content);
 
     if (has_kb_focus(id)) {
-        // TODO this could totally throw and you know it
-        auto state = get()->statemanager.get_as<TextfieldState>(id);
         if (get()->pressed(Key::mapping["Command Enter"])) {
             // Any concerned about non english characters?
             EDITOR_COMMANDS.triggerCommand(to_string(state->buffer.asT()));
