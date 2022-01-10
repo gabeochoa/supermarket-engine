@@ -47,6 +47,7 @@ struct App {
 
     App(AppSettings settings) {
         this->settings = settings;
+        isMinimized = false;
         running = true;
         GLOBALS.set<bool>("__engine__app_running", &running);
 
