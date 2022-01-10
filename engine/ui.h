@@ -806,6 +806,20 @@ bool dropdown(const uuid id, WidgetConfig config,
     config.text = configs[state->selected].text;
 
     if (state->on) {
+        // TODO: we CANNOT call any widgets with state
+        // from within a widget in ui.h
+        //
+        // for example this code below is the same as button_list
+        // but if it were replaced it with a call to button_list
+        //
+        //     int si = state->selected;
+        //     if(button_list(MK_UUID(id.owner), config, &si)){
+        //         state->on = false;
+        //     }
+        //     state->selected = si;
+        //
+        //  then any dropdown or button_list would share the same state
+        //  which obv would probably not be good
         float spacing = config.size.y * 1.0f;
         float sign = config.flipTextY ? 1.f : -1.f;
 
