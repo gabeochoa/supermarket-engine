@@ -3,6 +3,7 @@
 
 #include "../engine/external_include.h"
 #include "../engine/thetastar.h"
+#include "../engine/trie.h"
 #include "entities.h"
 #include "entity.h"
 
@@ -84,6 +85,7 @@ void all_tests() {
     test_global_commands();
     test_polygon_hull();
     test_navmesh();
+    test_trie();
     log_info("Finished running all tests successfully");
 }
 
