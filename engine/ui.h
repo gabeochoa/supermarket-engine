@@ -24,7 +24,7 @@ Example :
 {
     uicontext->begin(cameraController);
     if (
-        button(uuid({0, 0, 0}),
+        button(MK_UUID(0),
                WidgetConfig({
                    .position = glm::vec2{0.f, 0.f},
                    .size = glm::vec2{2.f, 1.f}
@@ -56,8 +56,9 @@ end();
 2. UUID
 
 When creating a UI widget, you must pass in a uuid, each widget needs a unique
-id so that state and focus works correctly. Format of uuid is { parent, item,
-index }
+id so that state and focus works correctly. Format of uuid is { parent, item },
+but the item is statically generated so all you need to pass in is the current
+layer
 
 
 
@@ -276,7 +277,7 @@ has_kb_focus(id): Lets you know if during the current frame this id is holding
 keyboard focus. Must be called after the widget code has run.
     Example:
     ```
-            uuid textFieldID = uuid({0, item++, 0});
+            uuid textFieldID = MK_UUID(0);
             if (textfield(textFieldID, WidgetConfig({...}), content)) {
                 log_info("{}", content);
             }
@@ -659,7 +660,7 @@ bool button(uuid id, WidgetConfig config) {
                 config.position + glm::vec2{(-config.size.x / 2.f) + 0.10f,
                                             config.size.y * sign * 0.5f};
             textConfig.size = 0.75f * glm::vec2{config.size.y, config.size.y};
-            text(uuid({id.item, 0, 0}), textConfig);
+            text(MK_UUID(id.owner), textConfig);
         }
 
     }  // end render
@@ -687,12 +688,11 @@ bool button(uuid id, WidgetConfig config) {
 }
 
 bool button_with_label(uuid id, WidgetConfig config) {
-    int item = 0;
     auto pressed = button(id, config);
     if (config.text == "") {
         // apply offset so text is relative to button position
         config.child->position += config.position;
-        text(uuid({id.item, item++, 0}), *config.child);
+        text(MK_UUID(id.owner), *config.child);
     }
     return pressed;
 }
@@ -704,18 +704,15 @@ bool dropdown(uuid id, WidgetConfig config,
     if (dropdownState) state->on.set(*dropdownState);
     if (selectedIndex) state->selected.set(*selectedIndex);
 
-    int item = 0;
-
     config.text = configs[state->selected].text;
 
     if (state->on) {
         float spacing = config.size.y * 1.0f;
         float sign = config.flipTextY ? 1.f : -1.f;
-        int button_item_id = item++;
 
         for (size_t i = 0; i < configs.size(); i++) {
-            uuid button_id({id.item, button_item_id, static_cast<int>(i)});
-            if (*selectedIndex == button_id.index) {
+            uuid button_id = MK_UUID(id.owner);
+            if (*selectedIndex == static_cast<int>(i)) {
                 get()->kbFocusID = button_id;
             }
             if (button_with_label(
@@ -751,7 +748,7 @@ bool dropdown(uuid id, WidgetConfig config,
     // offset the V a little more than ^ in order to make it look nice
     auto offset = glm::vec2{config.size.x - (state->on ? 1.f : 1.6f),
                             config.size.y * -0.25f};
-    text(uuid({id.item, item++, 0}),
+    text(MK_UUID(id.owner),
          WidgetConfig({.rotation = state->on ? 90.f : 270.f,
                        .text = ">",
                        .flipTextY = config.flipTextY,
@@ -774,8 +771,6 @@ bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
     auto state = widget_init<CheckboxState>(id);
     if (cbState) state->checked.set(*cbState);
 
-    int item = 0;
-
     bool changed = false;
     auto textConf = WidgetConfig({
         .color = glm::vec4{0.f, 0.f, 0.f, 1.f},
@@ -787,7 +782,7 @@ bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
         .position = config.position,  //
         .size = config.size,          //
     });
-    if (button_with_label(uuid({id.item, item++, 0}), conf)) {
+    if (button_with_label(MK_UUID(id.owner), conf)) {
         state->checked = !state->checked;
         changed = true;
     }
@@ -912,7 +907,6 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
 
 bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
     auto state = widget_init<TextfieldState>(id);
-    int item = 0;
 
     bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
                                           config.size.x, config.size.y});
@@ -968,15 +962,14 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
         std::wstring focused_content =
             fmt::format(L"{}{}", state->buffer.asT(), focusStr);
 
-        text(uuid({id.item, item++, 0}),
-             WidgetConfig({
-                 .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
-                 .position = tStartLocation,
-                 .size = glm::vec2{tSize},
-                 .text = to_string(focused_content),
-                 .flipTextY = config.flipTextY,
-                 .temporary = true,
-             }));
+        text(MK_UUID(id.owner), WidgetConfig({
+                                    .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+                                    .position = tStartLocation,
+                                    .size = glm::vec2{tSize},
+                                    .text = to_string(focused_content),
+                                    .flipTextY = config.flipTextY,
+                                    .temporary = true,
+                                }));
 
     }  // end render
 
@@ -1071,7 +1064,6 @@ inline bool plusMinusButton(uuid id, WidgetConfig config,
                             float* value = nullptr, float increment = 0.1) {
     auto state = widget_init<PlusMinusButtonState>(id);
     if (value) state->value = *value;
-    int item = 0;
     bool changed = false;
 
     WidgetConfig original(config);
@@ -1080,20 +1072,20 @@ inline bool plusMinusButton(uuid id, WidgetConfig config,
     config.position += glm::vec2{0, +config.size.y};
     config.text = ">";
     config.rotation = 270.f;
-    if (button(uuid({id.owner, id.item, item++}), config)) {
+    if (button(MK_UUID(id.owner), config)) {
         state->value = state->value + increment;
         changed = true;
     }
 
     config.rotation = 90.f;
     config.position.y -= config.size.y * 2;
-    if (button(uuid({id.owner, id.item, item++}), config)) {
+    if (button(MK_UUID(id.owner), config)) {
         state->value = state->value + increment;
         changed = true;
     }
 
     original.position.x += config.size.x;
-    text(uuid({id.owner, id.item, item++}), original);
+    text(MK_UUID(id.owner), original);
 
     // TODO allow support for setting these
     state->value = fmaxf(0, state->value);

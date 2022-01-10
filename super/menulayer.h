@@ -117,7 +117,7 @@ struct MenuLayer : public Layer {
     virtual void onDetach() override {}
 
     bool onCharPressed(CharPressedEvent& event) {
-        IUI::get()->keychar = static_cast<Key::KeyCode>(event.charcode);
+        uicontext->keychar = static_cast<Key::KeyCode>(event.charcode);
         return false;
     }
 
@@ -136,16 +136,16 @@ struct MenuLayer : public Layer {
             return true;
         }
 
-        if (IUI::get()->widgetKeys.count(
+        if (uicontext->widgetKeys.count(
                 static_cast<Key::KeyCode>(event.keycode)) == 1) {
-            IUI::get()->key = static_cast<Key::KeyCode>(event.keycode);
+            uicontext->key = static_cast<Key::KeyCode>(event.keycode);
         }
         if (event.keycode == Key::mapping["Widget Mod"]) {
-            IUI::get()->mod = static_cast<Key::KeyCode>(event.keycode);
+            uicontext->mod = static_cast<Key::KeyCode>(event.keycode);
         }
-        if (IUI::get()->textfieldMod.count(
+        if (uicontext->textfieldMod.count(
                 static_cast<Key::KeyCode>(event.keycode)) == 1) {
-            IUI::get()->modchar = static_cast<Key::KeyCode>(event.keycode);
+            uicontext->modchar = static_cast<Key::KeyCode>(event.keycode);
         }
         return false;
     }
@@ -223,10 +223,9 @@ struct MenuLayer : public Layer {
         Renderer::end();
     }
 
-    void cam_pos_0(int parent) {
+    void cam_pos_0() {
         if (camPosInterp.camPosIndex != 0) return;
 
-        int item = 0;
         auto startPos = glm::vec2{-17.f, -10.f};
         auto textConfig = IUI::WidgetConfig({
             .color = glm::vec4{1.f, 1.0f, 1.0f, 1.f},  //
@@ -242,16 +241,14 @@ struct MenuLayer : public Layer {
             .transparent = true,            //
         });
 
-        if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
-                                   buttonConfig)) {
+        if (IUI::button_with_label(IUI::MK_UUID(id), buttonConfig)) {
             camPosInterp.set(1);
         }
     }
 
-    void cam_pos_1(int parent) {
+    void cam_pos_1() {
         if (camPosInterp.camPosIndex != 1) return;
 
-        int item = 0;
         {
             auto startPos =
                 camPosInterp.camPositions[1] + glm::vec2{-15.f, -8.f};
@@ -270,8 +267,7 @@ struct MenuLayer : public Layer {
                 .transparent = false,                         //
             });
 
-            if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
-                                       buttonConfig)) {
+            if (IUI::button_with_label(IUI::MK_UUID(id), buttonConfig)) {
                 Menu::get().state = Menu::State::Game;
             }
         }
@@ -292,17 +288,15 @@ struct MenuLayer : public Layer {
                 .texture = "white",                           //
             });
 
-            if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
-                                       buttonConfig)) {
+            if (IUI::button_with_label(IUI::MK_UUID(id), buttonConfig)) {
                 camPosInterp.set(2);
             }
         }
     }
 
-    void cam_pos_2(int parent) {
+    void cam_pos_2() {
         if (camPosInterp.camPosIndex != 2) return;
 
-        int item = 0;
         {
             auto startPos =
                 camPosInterp.camPositions[2] + glm::vec2{-15.f, -8.f};
@@ -321,8 +315,7 @@ struct MenuLayer : public Layer {
                 .transparent = false,                         //
             });
 
-            if (IUI::button_with_label(IUI::uuid({parent, item++, 0}),
-                                       buttonConfig)) {
+            if (IUI::button_with_label(IUI::MK_UUID(id), buttonConfig)) {
             }
         }
     }
@@ -333,10 +326,9 @@ struct MenuLayer : public Layer {
                       menuCameraController->camera.position.z};
         {
             uicontext->begin(menuCameraController);
-            int parent = 0;
-            cam_pos_0(parent++);
-            cam_pos_1(parent++);
-            cam_pos_2(parent++);
+            cam_pos_0();
+            cam_pos_1();
+            cam_pos_2();
             uicontext->end();
         }
     }

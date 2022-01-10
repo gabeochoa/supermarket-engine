@@ -103,8 +103,7 @@ struct GameUILayer : public Layer {
         return ig;
     }
 
-    void render_item_row(int& ui_id, int index, int item_id,
-                         int amountInInventory) {
+    void render_item_row(int index, int item_id, int amountInInventory) {
         using namespace IUI;
 
         std::shared_ptr<Item> item = itemManager->get_ptr(item_id);
@@ -125,8 +124,7 @@ struct GameUILayer : public Layer {
             .flipTextY = true,
         });
         float local_price = item->price;
-        if (plusMinusButton(uuid({id, ui_id++, 0}), pmButtonConfig,
-                            &local_price)) {
+        if (plusMinusButton(MK_UUID(id), pmButtonConfig, &local_price)) {
             itemManager->update_price(item_id, local_price);
         }
     }
@@ -136,12 +134,11 @@ struct GameUILayer : public Layer {
         Renderer::begin(gameUICameraController->camera);
         using namespace IUI;
         uicontext->begin(gameUICameraController);
-        int item = 0;
 
         std::vector<std::function<bool(uuid)>> children;
 
         auto window_location = getPositionSizeForUIRect({0, 100, 500, 500});
-        uuid window_id = uuid({id, item++, 0});
+        uuid window_id = MK_UUID(id);
         if (window(window_id, WidgetConfig({
                                   .color = blue,
                                   .position = window_location[0],
@@ -155,12 +152,12 @@ struct GameUILayer : public Layer {
                 .text = "Inventory",
                 .flipTextY = true,
             });
-            text(uuid({id, item++, 0}), textConfig);
+            text(MK_UUID(id), textConfig);
 
             // TODO replace with list view when exists
             int i = 0;
             for (auto kv : getTotalInventory()) {
-                render_item_row(item, i++, kv.first, kv.second);
+                render_item_row(i++, kv.first, kv.second);
             }
         }
         std::vector<WidgetConfig> dropdownConfigs;
@@ -177,8 +174,8 @@ struct GameUILayer : public Layer {
             .flipTextY = true,
         });
 
-        if (dropdown(uuid({id, item++, 0}), dropdownMain, dropdownConfigs,
-                     &dropdownState, &dropdownIndex)) {
+        if (dropdown(MK_UUID(id), dropdownMain, dropdownConfigs, &dropdownState,
+                     &dropdownIndex)) {
         }
 
         uicontext->end();

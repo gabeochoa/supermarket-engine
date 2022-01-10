@@ -12,8 +12,8 @@ struct TerminalLayer : public Layer {
     const glm::vec2 camTopLeft = {35.f, 19.5f};
     const glm::vec2 camBottomRight = {35.f, -18.f};
     glm::vec4 rect = glm::vec4{200.f, 1000.f, 1500.f, 200.f};
-    IUI::uuid drawer_uuid = IUI::uuid({id, -1, 0});
-    IUI::uuid command_field_id = IUI::uuid({id, -2, 0});
+    IUI::uuid drawer_uuid = IUI::MK_UUID(id);
+    IUI::uuid command_field_id = IUI::MK_UUID(id);
     std::wstring commandContent = L"test";
     float drawerPctOpen = 0.f;
     std::shared_ptr<IUI::UIContext> uicontext;
@@ -81,8 +81,6 @@ struct TerminalLayer : public Layer {
                            .size = drawer_location[1],
                        }),
                        &drawerPctOpen)) {
-                int index = 0;
-
                 auto textConfig = WidgetConfig({
                     .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
                     .position = convertUIPos({0, h1_fs + 1.f}),
@@ -90,7 +88,7 @@ struct TerminalLayer : public Layer {
                     .text = "Terminal",
                     .flipTextY = true,
                 });
-                text(uuid({id, drawer_uuid.item, index++}), textConfig);
+                text(MK_UUID(id), textConfig);
 
                 uicontext->kbFocusID = command_field_id;
                 auto cfsize = glm::vec2{drawer_location[1].x, h1_fs};

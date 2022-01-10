@@ -79,33 +79,29 @@ struct UITestLayer : public Layer {
 
     void ui_test(Time dt) {
         using namespace IUI;
-        int item = 0;
         ui_context->begin(uiTestCameraController);
 
-        if (button(uuid({id, item++, 0}),
-                   WidgetConfig({.position = glm::vec2{0.f, 0.f},
-                                 .size = glm::vec2{2.f, 1.f}}))) {
+        if (button(MK_UUID(id), WidgetConfig({.position = glm::vec2{0.f, 0.f},
+                                              .size = glm::vec2{2.f, 1.f}}))) {
             log_info("clicked button");
             Menu::get().state = Menu::State::Root;
         }
-        if (button(uuid({id, item++, 0}),
-                   WidgetConfig({.position = glm::vec2{3.f, -2.f},
-                                 .size = glm::vec2{6.f, 1.f},
-                                 .text = "open file dialog"}))) {
+        if (button(MK_UUID(id), WidgetConfig({.position = glm::vec2{3.f, -2.f},
+                                              .size = glm::vec2{6.f, 1.f},
+                                              .text = "open file dialog"}))) {
             auto files = getFilesFromUser();
             for (auto file : files) log_info("You chose the file: {}", file);
         }
-        if (button(uuid({id, item++, 0}),
-                   WidgetConfig({.position = glm::vec2{2.5f, 0.f},
-                                 .size = glm::vec2{6.f, 1.f},
-                                 .text = "open mesage box"}))) {
+        if (button(MK_UUID(id), WidgetConfig({.position = glm::vec2{2.5f, 0.f},
+                                              .size = glm::vec2{6.f, 1.f},
+                                              .text = "open mesage box"}))) {
             auto result =
                 openMessage("Example", "This is an example message box");
             auto str = (result == 0 ? "cancel" : (result == 1 ? "yes" : "no"));
             log_info("they clicked: {}", str);
         }
 
-        if (slider(uuid({id, item++, 0}),
+        if (slider(MK_UUID(id),
                    WidgetConfig({
                        .position = glm::vec2{9.f, 0.f},
                        .size = glm::vec2{1.f, 3.f},
@@ -115,7 +111,7 @@ struct UITestLayer : public Layer {
             // log_info("idk moved slider? ");
         }
 
-        if (slider(uuid({id, item++, 0}),
+        if (slider(MK_UUID(id),
                    WidgetConfig({
                        .position = glm::vec2{11.f, 3.f},
                        .size = glm::vec2{3.f, 1.f},
@@ -168,14 +164,14 @@ struct UITestLayer : public Layer {
             .text = "Kanji: \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e",
         });
 
-        text(uuid({id, item++, 0}), upperCaseConfig);
-        text(uuid({id, item++, 0}), lowerCaseConfig);
-        text(uuid({id, item++, 0}), numbersConfig);
-        text(uuid({id, item++, 0}), extrasConfig);
-        text(uuid({id, item++, 0}), hiraganaConfig);
-        text(uuid({id, item++, 0}), kanjiConfig);
+        text(MK_UUID(id), upperCaseConfig);
+        text(MK_UUID(id), lowerCaseConfig);
+        text(MK_UUID(id), numbersConfig);
+        text(MK_UUID(id), extrasConfig);
+        text(MK_UUID(id), hiraganaConfig);
+        text(MK_UUID(id), kanjiConfig);
 
-        uuid textFieldID = uuid({id, item++, 0});
+        uuid textFieldID = MK_UUID(id);
         if (textfield(textFieldID,
                       WidgetConfig({.position = glm::vec2{2.f, 2.f},
                                     .size = glm::vec2{6.f, 1.f}}),
@@ -183,7 +179,7 @@ struct UITestLayer : public Layer {
             log_info("{}", to_string(content));
         }
 
-        uuid commandFieldID = uuid({id, item++, 0});
+        uuid commandFieldID = MK_UUID(id);
         if (commandfield(commandFieldID,
                          WidgetConfig({.position = glm::vec2{2.f, 4.f},
                                        .size = glm::vec2{6.f, 1.f}}),
@@ -209,7 +205,7 @@ struct UITestLayer : public Layer {
         });
 
         if (IUI::button_with_label(
-                IUI::uuid({id, item++, 0}),
+                IUI::MK_UUID(id),
                 IUI::WidgetConfig({
                     .child = &tapToContiueText,                 //
                     .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
@@ -221,8 +217,8 @@ struct UITestLayer : public Layer {
             Menu::get().state = Menu::State::UITest;
         }
 
-        if (IUI::checkbox(                   //
-                IUI::uuid({id, item++, 0}),  //
+        if (IUI::checkbox(         //
+                IUI::MK_UUID(id),  //
                 IUI::WidgetConfig({
                     .color = glm::vec4{0.6f, 0.3f, 0.3f, 1.f},  //
                     .position = glm::vec2{16.f, 3.f},           //
@@ -250,9 +246,8 @@ struct UITestLayer : public Layer {
                 .transparent = false,                       //
             });
 
-            if (IUI::dropdown(IUI::uuid({id, item++, 0}), dropdownMain,
-                              dropdownConfigs, &dropdownState,
-                              &dropdownIndex)) {
+            if (IUI::dropdown(IUI::MK_UUID(id), dropdownMain, dropdownConfigs,
+                              &dropdownState, &dropdownIndex)) {
                 log_info("dropdown selected {}",
                          dropdownConfigs[dropdownIndex].text);
             }
