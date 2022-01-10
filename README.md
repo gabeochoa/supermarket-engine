@@ -60,6 +60,8 @@ Weather and day night system
 
 Engine Ideas
 
+- UI screenshot / render tests ... 
+    output rendered UI to json on end during debug or something 
 - theres tons of Ideas in engine/ui.h
     not moving them here, so go look there :) 
 - Setup visual tracing so we can use chrome::tracing to analyze
