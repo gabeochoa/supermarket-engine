@@ -1122,45 +1122,39 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
 bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
     auto state = widget_init<CommandfieldState>(id);
 
-    // We do this tab completion here
-    // so that we can eat the character before anyone else can
-    //
-    if (has_kb_focus(id)) {
-        if (get()->pressed(Key::mapping["Widget Next"])) {
-            if (state->buffer.asT().empty()) {
-                // if you press tab and theres nothing in the terminal
-                // just pretend we actually hit tab
-                //
-                // we need to write into key because pressed() ate the key
-                get()->key = Key::mapping["Widget Next"];
-            } else {
-                state->autocomp =
-                    EDITOR_COMMANDS.tabComplete(to_string(state->buffer));
-                state->selected = -1;
-                for (auto k : state->autocomp.asT()) log_info(" option: {}", k);
-
-                // if theres only one thing in the auto complete
-                // then just choose it as our content
-                // and clear the autocomplete
-                if (state->autocomp.asT().size() == 1) {
-                    state->buffer.asT() =
-                        to_wstring(state->autocomp.asT().front());
-                    state->autocomp.asT().clear();
-                }
-            }
+    if (state->autocomp.asT().size()) {
+        int si = state->selected;
+        std::vector<WidgetConfig> autocompConfigs;
+        for (auto ac : state->autocomp.asT()) {
+            autocompConfigs.push_back(WidgetConfig({.text = ac}));
         }
+
+        if (button_list(MK_UUID(id.owner), config, autocompConfigs, &si)) {
+            state->buffer.asT() = to_wstring(state->autocomp.asT().at(si));
+            state->autocomp.asT().clear();
+        }
+        state->selected = si;
     }
 
     // We dont need a separate ID since we want
     // global state to match and for them to have the
     // same keyboard focus
-    textfield(id, config, content);
+    auto changed = textfield(id, config, content);
+    // TODO should we be passing in content here? or state->buffer?
 
     if (has_kb_focus(id)) {
+        if (state->autocomp.asT().empty() || changed) {
+            // TODO add support for selecting suggestion with keyboard
+            state->autocomp =
+                EDITOR_COMMANDS.tabComplete(to_string(state->buffer));
+            state->selected = 0;
+        }
         if (get()->pressed(Key::mapping["Command Enter"])) {
             // Any concerned about non english characters?
             EDITOR_COMMANDS.triggerCommand(to_string(state->buffer.asT()));
             state->buffer.asT().clear();
+            state->autocomp.asT().clear();
+            state->selected = 0;
             return true;
         }
         // TODO how to do tab completion without tab access ?
@@ -1172,6 +1166,8 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
         if (get()->pressed(Key::mapping["Value Down"])) {
             state->buffer.asT().clear();
         }
+    } else {
+        state->autocomp.asT().clear();
     }
     // TODO what should we return here,
     // changed? or user ran command

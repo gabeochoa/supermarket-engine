@@ -300,6 +300,9 @@ struct UITestLayer : public Layer {
     virtual void onEvent(Event& event) override {
         // log_warn(event.toString().c_str());
         if (Menu::get().state != Menu::State::UITest) return;
+        if (!GLOBALS.get<bool>("terminal_closed")) {
+            return;
+        }
 
         uiTestCameraController->onEvent(event);
         EventDispatcher dispatcher(event);
