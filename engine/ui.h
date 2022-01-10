@@ -355,6 +355,11 @@ struct TextfieldState : public UIState {
     State<std::wstring> buffer;
 };
 
+struct CommandfieldState : public TextfieldState {
+    State<std::vector<std::string>> autocomp;
+    State<int> selected;
+};
+
 struct ToggleState : public UIState {
     State<bool> on;
 };
@@ -1006,8 +1011,7 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
 }
 
 bool commandfield(uuid id, WidgetConfig config, std::wstring& content) {
-    // TODO this could totally throw and you know it
-    auto state = get()->statemanager.get_as<TextfieldState>(id);
+    auto state = widget_init<CommandfieldState>(id);
 
     // We do this tab completion here
     // so that we can eat the character before anyone else can
@@ -1021,9 +1025,19 @@ bool commandfield(uuid id, WidgetConfig config, std::wstring& content) {
                 // we need to write into key because pressed() ate the key
                 get()->key = Key::mapping["Widget Next"];
             } else {
-                // TODO: tab completion
-                EDITOR_COMMANDS.triggerCommand("help");
-                state->buffer.asT().clear();
+                state->autocomp =
+                    EDITOR_COMMANDS.tabComplete(to_string(state->buffer));
+                state->selected = -1;
+                for (auto k : state->autocomp.asT()) log_info(" option: {}", k);
+
+                // if theres only one thing in the auto complete
+                // then just choose it as our content
+                // and clear the autocomplete
+                if (state->autocomp.asT().size() == 1) {
+                    state->buffer.asT() =
+                        to_wstring(state->autocomp.asT().front());
+                    state->autocomp.asT().clear();
+                }
             }
         }
     }

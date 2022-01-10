@@ -9,6 +9,7 @@
 #include "external_include.h"
 #include "log.h"
 #include "strutil.h"
+#include "trie.h"
 
 struct GlobalValueRegister {
     std::map<std::string, void*> globals;
@@ -246,6 +247,7 @@ struct EditorCommands {
     std::deque<std::string> command_history;
     std::map<std::string, ActionFuncType> commands;
     std::map<std::string, std::string> help;
+    Trie commandtrie;
 
     EditorCommands() { init_default_commands(); }
 
@@ -276,6 +278,8 @@ struct EditorCommands {
         // log_info("Adding command \"{}\" to our library", name);
         commands[name] = cmd;
         help[name] = help_str;
+
+        commandtrie.add(name);
     }
 
     void helpCommand() {
@@ -284,6 +288,10 @@ struct EditorCommands {
             addToOutputHistory(fmt::format("{}", kv.first));
             addToOutputHistory(fmt::format("\t{}", kv.second));
         }
+    }
+
+    std::vector<std::string> tabComplete(const std::string& prefix) {
+        return commandtrie.dump(prefix);
     }
 
     void triggerCommand(std::string line) {
