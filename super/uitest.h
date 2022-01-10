@@ -23,6 +23,7 @@ struct UITestLayer : public Layer {
     bool checkbox_state = false;
     int dropdownIndex = 0;
     bool dropdownState = false;
+    int buttonListIndex = 0;
     float upperCaseRotation = 0.f;
     bool camHasMovement = false;
     std::wstring commandContent;
@@ -86,6 +87,7 @@ struct UITestLayer : public Layer {
             log_info("clicked button");
             Menu::get().state = Menu::State::Root;
         }
+
         if (button(MK_UUID(id), WidgetConfig({.position = glm::vec2{3.f, -2.f},
                                               .size = glm::vec2{6.f, 1.f},
                                               .text = "open file dialog"}))) {
@@ -252,6 +254,27 @@ struct UITestLayer : public Layer {
                          dropdownConfigs[dropdownIndex].text);
             }
         }
+
+        {
+            //
+
+            std::vector<WidgetConfig> buttonListConfigs;
+            buttonListConfigs.push_back(IUI::WidgetConfig({.text = "button1"}));
+            buttonListConfigs.push_back(IUI::WidgetConfig({.text = "button2"}));
+            buttonListConfigs.push_back(IUI::WidgetConfig({.text = "button3"}));
+
+            WidgetConfig buttonListConfig = IUI::WidgetConfig({
+                .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
+                .position = glm::vec2{22.f, 3.f},           //
+                .size = glm::vec2{8.5f, 1.f},               //
+                .text = "",                                 //
+                .transparent = false,                       //
+            });
+
+            IUI::button_list(IUI::MK_UUID(id), buttonListConfig,
+                             buttonListConfigs, &buttonListIndex);
+        }
+
         ui_context->end();
     }
 

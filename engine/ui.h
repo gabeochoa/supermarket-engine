@@ -100,6 +100,7 @@ string textures
 
 text
 button (w/ label)
+button_list
 dropdown
 checkbox
 slider
@@ -108,21 +109,30 @@ commandfield
 window
 drawer
 
-bool text(uuid id, WidgetConfig config);
+bool text(const uuid id, WidgetConfig config);
     returns true always
 
-bool button(uuid id, WidgetConfig config)
+bool button(const uuid id, WidgetConfig config)
     returns true if the button was clicked else false
 
 
-bool button_with_label(uuid id, WidgetConfig config)
+bool button_with_label(const uuid id, WidgetConfig config)
     returns true if the button was clicked else false
 
     if config has .text will draw text directly through button() call
     if not then will check config.child for a separate text config
 
 
-bool dropdown(uuid id,
+bool button_list(const uuid id,
+              WidgetConfig config,
+              // List of text configs that should show in the dropdown
+              const std::vector<WidgetConfig>& configs,
+              // which item is selected
+              int* selectedIndex)
+TODO is this what we want?
+    returns true if any button pressed
+
+bool dropdown(const uuid id,
               WidgetConfig config,
               // List of text configs that should show in the dropdown
               const std::vector<WidgetConfig>& configs,
@@ -132,14 +142,14 @@ bool dropdown(uuid id,
               int* selectedIndex)
     returns true if dropdown value was changed
 
-bool checkbox(uuid id,
+bool checkbox(const uuid id,
         WidgetConfig config,
         // whether or not the checkbox is X'd
         bool* cbState = nullptr);
     returns true if the checkbox changed
 
 
-bool slider(uuid id,
+bool slider(const uuid id,
             WidgetConfig config,
             // Current value of the slider
             float* value,
@@ -149,21 +159,20 @@ bool slider(uuid id,
             float mxf);
     returns true if slider moved
 
-
-bool textfield(uuid id,
+bool textfield(const uuid id,
                WidgetConfig config,
                // reference to the content string the person typed in
                std::string& content);
     returns true if textfield changed
 
-bool commandfield(uuid id, WidgetConfig config);
+bool commandfield(const uuid id, WidgetConfig config);
     returns true if command ran
 
-bool window(uuid id, WidgetConfig config, const std::vector<WidgetConfig>&
+bool window(const uuid id, WidgetConfig config, const std::vector<WidgetConfig>&
 children);
     returns true always
 
-bool drawer(uuid id, WidgetConfig config, float* pct_open);
+bool drawer(const uuid id, WidgetConfig config, float* pct_open);
     returns true if fully open;
 
 
@@ -318,7 +327,7 @@ static const glm::vec4 teal = glm::vec4{0.0f, 1.0f, 1.0f, 1.0f};
 template <typename T>
 struct State {
    private:
-    T value;
+    T value = T();
 
    public:
     State() {}
@@ -360,6 +369,10 @@ struct CommandfieldState : public TextfieldState {
     State<int> selected;
 };
 
+struct ButtonListState : public UIState {
+    State<int> selected;
+};
+
 struct ToggleState : public UIState {
     State<bool> on;
 };
@@ -379,22 +392,22 @@ struct PlusMinusButtonState : public UIState {
 struct StateManager {
     std::map<uuid, std::shared_ptr<UIState>> states;
 
-    void addState(uuid id, const std::shared_ptr<UIState>& state) {
+    void addState(const uuid id, const std::shared_ptr<UIState>& state) {
         states[id] = state;
     }
 
     template <typename T>
-    std::shared_ptr<T> getAndCreateIfNone(uuid id) {
+    std::shared_ptr<T> getAndCreateIfNone(const uuid id) {
         if (states.find(id) == states.end()) {
             addState(id, std::make_shared<T>());
         }
         return get_as<T>(id);
     }
 
-    std::shared_ptr<UIState> get(uuid id) { return states[id]; }
+    std::shared_ptr<UIState> get(const uuid id) { return states[id]; }
 
     template <typename T>
-    std::shared_ptr<T> get_as(uuid id) {
+    std::shared_ptr<T> get_as(const uuid id) {
         try {
             return dynamic_pointer_cast<T>(states.at(id));
         } catch (std::exception) {
@@ -412,7 +425,16 @@ inline UIContext* get() {
     return globalContext;
 }
 
+// TODO ifdef on debug ?
+#define SUPERMARKET_HOUSEKEEPING 1
+
 struct UIContext {
+#ifdef SUPERMARKET_HOUSEKEEPING
+    // house keeping :)
+    bool inited = false;
+    bool began_and_not_ended = false;
+#endif
+
     int c_id = 0;
     StateManager statemanager;
 
@@ -470,13 +492,26 @@ struct UIContext {
     }
 
     void init() {
+#ifdef SUPERMARKET_HOUSEKEEPING
+        inited = true;
+        began_and_not_ended = false;
+#endif
         hotID = rootID;
         activeID = rootID;
+        kbFocusID = rootID;
         lmouseDown = false;
         mousePosition = Input::getMousePosition();
     }
 
     void begin(const std::shared_ptr<OrthoCameraController> controller) {
+#ifdef SUPERMARKET_HOUSEKEEPING
+        M_ASSERT(inited, "UIContext must be inited before you begin()");
+        M_ASSERT(
+            !began_and_not_ended,
+            "You should call end every frame before calling begin() again ");
+        began_and_not_ended = true;
+#endif
+
         globalContext = this;
         camController = controller;
         hotID = rootID;
@@ -488,12 +523,15 @@ struct UIContext {
         );
     }
     void end() {
+#ifdef SUPERMARKET_HOUSEKEEPING
+        began_and_not_ended = false;
+#endif
         if (lmouseDown) {
             if (activeID == rootID) {
                 activeID = fakeID;
             }
         } else {
-            activeID = IUI::rootID;
+            activeID = rootID;
         }
         key = Key::KeyCode();
         mod = Key::KeyCode();
@@ -504,15 +542,15 @@ struct UIContext {
     }
 };
 
-inline void try_to_grab_kb(uuid id) {
+inline void try_to_grab_kb(const uuid id) {
     if (get()->kbFocusID == rootID) {
         get()->kbFocusID = id;
     }
 }
 
-inline bool has_kb_focus(uuid id) { return (get()->kbFocusID == id); }
+inline bool has_kb_focus(const uuid& id) { return (get()->kbFocusID == id); }
 
-inline void draw_if_kb_focus(uuid id, std::function<void(void)> cb) {
+inline void draw_if_kb_focus(const uuid& id, std::function<void(void)> cb) {
     if (has_kb_focus(id)) cb();
 }
 
@@ -557,7 +595,7 @@ struct WidgetConfig {
 };
 
 template <typename T>
-std::shared_ptr<T> widget_init(uuid id) {
+std::shared_ptr<T> widget_init(const uuid id) {
     std::shared_ptr<T> state = get()->statemanager.getAndCreateIfNone<T>(id);
     if (state == nullptr) {
         log_error(
@@ -581,7 +619,7 @@ inline void draw_ui_widget(glm::vec2 position, glm::vec2 size, glm::vec4 color,
     Renderer::drawQuad(position, size, color, texturename);
 }
 
-bool text(uuid id, WidgetConfig config) {
+bool text(const uuid id, WidgetConfig config) {
     // NOTE: currently id is only used for focus and hot/active,
     // we could potentially also track "selections"
     // with a range so the user can highlight text
@@ -613,7 +651,7 @@ bool text(uuid id, WidgetConfig config) {
     return true;
 }
 
-bool button(uuid id, WidgetConfig config) {
+bool button(const uuid id, WidgetConfig config) {
     bool inside = isMouseInside(glm::vec4{config.position, config.size});
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
@@ -692,7 +730,7 @@ bool button(uuid id, WidgetConfig config) {
     return false;
 }
 
-bool button_with_label(uuid id, WidgetConfig config) {
+bool button_with_label(const uuid id, WidgetConfig config) {
     auto pressed = button(id, config);
     if (config.text == "") {
         // apply offset so text is relative to button position
@@ -702,7 +740,63 @@ bool button_with_label(uuid id, WidgetConfig config) {
     return pressed;
 }
 
-bool dropdown(uuid id, WidgetConfig config,
+bool button_list(const uuid id, WidgetConfig config,
+                 const std::vector<WidgetConfig>& configs,
+                 int* selectedIndex = nullptr) {
+    auto state = widget_init<ButtonListState>(id);
+    if (selectedIndex) state->selected.set(*selectedIndex);
+
+    auto pressed = false;
+    float spacing = config.size.y * 1.0f;
+    float sign = config.flipTextY ? 1.f : -1.f;
+
+    // Generate all the button ids
+    std::vector<uuid> ids;
+    for (size_t i = 0; i < configs.size(); i++) {
+        ids.push_back(MK_UUID_LOOP(id.owner, i));
+    }
+
+    for (size_t i = 0; i < configs.size(); i++) {
+        uuid button_id = ids[i];
+        WidgetConfig bwlconfig(config);
+        bwlconfig.position =
+            config.position + glm::vec2{0.f, sign * spacing * (i + 1)};
+        bwlconfig.text = configs[i].text;
+
+        if (button_with_label(button_id, bwlconfig)) {
+            state->selected = i;
+            pressed = true;
+        }
+    }
+
+    // if you already have the focus, then select yourself
+    // otherwise if you are selected, grab focus
+    bool children_have_focus = false;
+    for (size_t i = 0; i < configs.size(); i++) {
+        // if you got the kb focus somehow
+        // (ie by clicking or tabbing)
+        // then we will just make you selected
+        if (has_kb_focus(ids[i])) state->selected = i;
+        children_have_focus |= has_kb_focus(ids[i]);
+    }
+
+    if (get()->pressed(Key::mapping["Value Up"])) {
+        state->selected = state->selected - 1;
+        if (state->selected < 0) state->selected = 0;
+    }
+
+    if (get()->pressed(Key::mapping["Value Down"])) {
+        state->selected = state->selected + 1;
+        if (state->selected > (int)configs.size() - 1)
+            state->selected = configs.size() - 1;
+    }
+
+    if (children_have_focus) get()->kbFocusID = ids[state->selected];
+    if (selectedIndex) *selectedIndex = state->selected;
+    return pressed;
+}
+
+bool dropdown(const uuid id, WidgetConfig config,
               const std::vector<WidgetConfig>& configs, bool* dropdownState,
               int* selectedIndex) {
     auto state = widget_init<DropdownState>(id);
@@ -716,7 +810,7 @@ bool dropdown(uuid id, WidgetConfig config,
         float sign = config.flipTextY ? 1.f : -1.f;
 
         for (size_t i = 0; i < configs.size(); i++) {
-            uuid button_id = MK_UUID(id.owner);
+            uuid button_id = MK_UUID_LOOP(id.owner, i);
             if (*selectedIndex == static_cast<int>(i)) {
                 get()->kbFocusID = button_id;
             }
@@ -772,7 +866,7 @@ bool dropdown(uuid id, WidgetConfig config,
     return ret;
 }
 
-bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
+bool checkbox(const uuid id, WidgetConfig config, bool* cbState = nullptr) {
     auto state = widget_init<CheckboxState>(id);
     if (cbState) state->checked.set(*cbState);
 
@@ -797,7 +891,8 @@ bool checkbox(uuid id, WidgetConfig config, bool* cbState = nullptr) {
     return changed;
 }
 
-bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
+bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
+            float mxf) {
     auto state = widget_init<SliderState>(id);
     if (value) state->value.set(*value);
 
@@ -910,7 +1005,7 @@ bool slider(uuid id, WidgetConfig config, float* value, float mnf, float mxf) {
 // TODO add support for max-length textfield
 // this will also help with temporary texture size
 
-bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
+bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     auto state = widget_init<TextfieldState>(id);
 
     bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
@@ -1010,7 +1105,7 @@ bool textfield(uuid id, WidgetConfig config, std::wstring& content) {
     return changed;
 }
 
-bool commandfield(uuid id, WidgetConfig config, std::wstring& content) {
+bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
     auto state = widget_init<CommandfieldState>(id);
 
     // We do this tab completion here
@@ -1075,7 +1170,7 @@ bool window(uuid, WidgetConfig config) {
     return true;
 }
 
-bool drawer(uuid id, WidgetConfig config, float* pct_open = nullptr) {
+bool drawer(const uuid id, WidgetConfig config, float* pct_open = nullptr) {
     auto state = widget_init<DrawerState>(id);
     if (pct_open) state->heightPct = *pct_open;
 
@@ -1094,7 +1189,7 @@ bool drawer(uuid id, WidgetConfig config, float* pct_open = nullptr) {
 
 // TODO not ready for use, need to mess around with the location / scales
 // some more
-inline bool plusMinusButton(uuid id, WidgetConfig config,
+inline bool plusMinusButton(const uuid id, WidgetConfig config,
                             float* value = nullptr, float increment = 0.1) {
     auto state = widget_init<PlusMinusButtonState>(id);
     if (value) state->value = *value;
