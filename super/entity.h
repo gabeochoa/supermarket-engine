@@ -279,7 +279,9 @@ struct EntityHelper {
         auto nav = GLOBALS.get_ptr<NavMesh>("navmesh");
         if (!nav) return true;
 
-        for (auto s : nav->shapes) {
+        for (auto kv : nav->entityShapes) {
+            auto s = kv.second;
+
             if (s.inside(pos)) return false;
             if (s.inside(pos + (size / 2.f))) return false;
             if (s.inside(pos + size)) return false;

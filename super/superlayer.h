@@ -239,6 +239,7 @@ struct SuperLayer : public Layer {
 
         ////////////////////////////////////////////////////////
 
+        // NOTE: Superlayer owns this static so its okay to use directly
         GLOBALS.set("navmesh", &__navmesh___DO_NOT_USE_DIRECTLY);
 
         for (int i = 0; i < 5; i++) {
