@@ -72,6 +72,8 @@ Different kinds of people
 + Old people (move slower) 
 + Kids (place things on wrong shelves) 
 
+Actually have the push a cart around? 
+
 
 
 Middleware 
