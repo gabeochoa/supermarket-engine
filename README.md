@@ -66,6 +66,12 @@ Can you price all your items at $0?
 Can you offer sales when you need to get rid of things? 
 Do items spoil? so you have to sell or eat the cost ... 
 
+Different kinds of people
++ Stoners (buy 10x the amount of food they plan to buy)
++ Shoplifters 
++ Old people (move slower) 
++ Kids (place things on wrong shelves) 
+
 
 
 Middleware 
