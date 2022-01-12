@@ -108,25 +108,55 @@ struct GameUILayer : public Layer {
 
         std::shared_ptr<Item> item = itemManager->get_ptr(item_id);
 
-        // {name:<{length}}: {amountInInventory} {price}
-        auto formatstr = "{0:<{1}} {2} @ ${3:.2f}";
-        auto str = fmt::format(formatstr,                          //
-                               item->name,                         //
-                               (int)itemManager->longestName * 2,  //
-                               amountInInventory,                  //
-                               item->price);
+        // ${price} {name:<{length}}: {amountInInventory}
+        auto formatstr = "${0:.2f} {1}({2})";
+        auto str = fmt::format(formatstr,         //
+                               item->price,       //
+                               item->name,        //
+                               amountInInventory  //
+        );
 
-        auto pmButtonConfig = WidgetConfig({
+        auto plusButtonPosition_raw = glm::vec2{P_FS, 200.f + (P_FS * index)};
+        auto plusButtonConfig = WidgetConfig({
+            .position = convertUIPos(plusButtonPosition_raw),
             .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-            .position = convertUIPos({P_FS, 200.f + (P_FS * index)}),
-            .size = glm::vec2{P_FS, P_FS},
-            .text = str,
             .flipTextY = true,
+            .size = glm::vec2{P_FS, P_FS},
+            .text = "+",
         });
-        float local_price = item->price;
-        if (plusMinusButton(MK_UUID(id), pmButtonConfig, &local_price)) {
-            itemManager->update_price(item_id, local_price);
+
+        if (button_with_label(MK_UUID_LOOP(id, index), plusButtonConfig)) {
+            // TODO should we have a max price
+            float MAX_ITEM_PRICE = 10.f;
+            itemManager->update_price(item_id,
+                                      fmin(item->price + 0.1, MAX_ITEM_PRICE));
         }
+
+        auto minusButtonConfig = WidgetConfig({
+            .position = convertUIPos(plusButtonPosition_raw +
+                                     glm::vec2{P_FS + P_FS / 2, 0.f}),
+            .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+            .flipTextY = true,
+            .size = glm::vec2{P_FS, P_FS},
+            .text = "-",
+        });
+
+        if (button_with_label(MK_UUID_LOOP(id, index), minusButtonConfig)) {
+            // TODO where should this live
+            float MIN_ITEM_PRICE = 0.f;
+            itemManager->update_price(item_id,
+                                      fmax(item->price - 0.1, MIN_ITEM_PRICE));
+        }
+
+        text(MK_UUID_LOOP(id, index),
+             WidgetConfig({
+                 .position = convertUIPos(plusButtonPosition_raw +
+                                          glm::vec2{P_FS * 3, P_FS}),
+                 .color = glm::vec4{0.3, 0.5, 0.2, 1.f},
+                 .flipTextY = true,
+                 .size = glm::vec2{P_FS, P_FS},
+                 .text = str,
+             }));
     }
 
     void render() {
