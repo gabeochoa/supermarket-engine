@@ -34,6 +34,8 @@ static constexpr std::array<std::pair<int, Item>, 4> items_{
 };
 
 struct ItemManager {
+    std::map<int, float> priceEstimateAvg;
+    std::map<int, int> priceEstimateCount;
     std::map<int, std::shared_ptr<Item>> items;
     int longestName = 0;
 
@@ -48,10 +50,26 @@ struct ItemManager {
             items[it.first] = std::make_shared<Item>(it.second);
             int nlen = (int)strlen(it.second.name);
             if (nlen > longestName) longestName = nlen;
+            priceEstimateAvg[it.first] = it.second.price;
+            priceEstimateCount[it.first] = 1;
         }
     }
 
     void update_price(int id, float p) { items[id]->price = p; }
+
+    // Note: Updated on purchase, not setting
+    void update_average(int id, float p) {
+        //                         X(n) - CMA(n)
+        // CMA(n+1) = CMA(n) +  -----------------
+        //                            n+1
+        float CMA = priceEstimateAvg[id];
+        int n = priceEstimateCount[id];
+        priceEstimateAvg[id] = CMA + ((p - CMA) / (n + 1));
+        priceEstimateCount[id] = n + 1;
+    }
+
+    float get_avg_price(int id) { return priceEstimateAvg[id]; }
+
     Item& get(int id) { return *items.at(id); }
     std::shared_ptr<Item> get_ptr(int id) { return items.at(id); }
 };

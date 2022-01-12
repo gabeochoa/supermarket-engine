@@ -306,8 +306,18 @@ struct SuperLayer : public Layer {
             emp.color = gen_rand_vec4(0.3f, 1.0f);
             emp.color.w = 1.f;
             emp.size = {0.6f, 0.6f};
-            emp.textureName = peopleSprites[i % num_people_sprites];
+            emp.textureName = peopleSprites[0];
             EntityHelper::addEntity(std::make_shared<Employee>(emp));
+        }
+
+        for (int i = 0; i < 1; i++) {
+            auto cust = Customer();
+            cust.color = gen_rand_vec4(0.3f, 1.0f);
+            cust.color.w = 1.f;
+            cust.size = {0.6f, 0.6f};
+            cust.textureName =
+                peopleSprites[(i % (num_people_sprites - 1)) + 1];
+            EntityHelper::addEntity(std::make_shared<Customer>(cust));
         }
 
         dragArea.reset(new DragArea(glm::vec2{0.f}, glm::vec2{0.f}, 0.f,
@@ -347,8 +357,6 @@ struct SuperLayer : public Layer {
     }
 
     void fillJobQueue() {
-        return;
-
         if (JobQueue::numOfJobsWithType(JobType::IdleWalk) < 5) {
             JobQueue::addJob(
                 JobType::IdleWalk,
@@ -356,6 +364,16 @@ struct SuperLayer : public Layer {
                     Job({.type = JobType::IdleWalk,
                          .endPosition = glm::circularRand<float>(5.f)})));
         }
+
+        if (JobQueue::numOfJobsWithType(JobType::IdleShop) < 5) {
+            JobQueue::addJob(
+                JobType::IdleShop,
+                std::make_shared<Job>(
+                    Job({.type = JobType::IdleShop,
+                         .endPosition = glm::circularRand<float>(5.f)})));
+        }
+
+        return;
 
         EntityHelper::forEach<Storage>([](auto storage) {
             // TODO for now just keep queue jobs until we are empty

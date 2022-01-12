@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "../engine/maputil.h"
 #include "../engine/pch.hpp"
 #include "../engine/thetastar.h"
 #include "entity.h"
@@ -15,19 +16,20 @@ inline std::vector<glm::vec2> generateWalkablePath(  //
     float movement,                                  //
     const glm::vec2& start,                          //
     const glm::vec2& end,                            //
-    const glm::vec2& size                            //
-) {
+    const glm::vec2& size,                           //
+    bool elideLineOfSight = true) {
     (void)skipID;
     (void)movement;
 
     // TODO @FIX trace actually will still run
     // we gotta do some kind of fancy #if log thing
     log_trace("starting theta");
-    LazyTheta t(
-        start, end,
-        // TODO figure out a better bounds than this
-        glm::vec4{-20.f, -20.f, 20.f, 20.f},
-        std::bind(EntityHelper::isWalkable, std::placeholders::_1, size));
+
+    Theta t(start, end,
+            // TODO figure out a better bounds than this
+            glm::vec4{-20.f, -20.f, 20.f, 20.f},
+            std::bind(EntityHelper::isWalkable, std::placeholders::_1, size),
+            elideLineOfSight);
     auto a = t.go();
     std::reverse(a.begin(), a.end());
     for (auto i : a) {
@@ -48,12 +50,22 @@ struct MovableEntity : public Entity {
 
     bool walkToLocation(const glm::vec2 location, const WorkInput& wi) {
         prof give_me_a_name(__PROFILE_FUNC__);
+
         // Have we reached the position yet?
-        if (path.empty() && glm::distance(position, location) < TRAVEL_DIST) {
-            // our path should be empty but just in case
-            path.clear();
-            return true;
+        // or have we just started ?
+        if (path.empty()) {
+            if (glm::distance(position, location) < TRAVEL_DIST) {
+                return true;
+            }
+            // announce(
+            // fmt::format(" distance to location end {}  (need to be within
+            // {})", glm::distance(position, location), TRAVEL_DIST));
+
+            path = generateWalkablePath(id, moveSpeed, position, location,
+                                        this->size);
+            return false;
         }
+
         // Did we already generate a path?
         if (!path.empty()) {
             // first time we are moving, just set last to our current position
@@ -95,12 +107,6 @@ struct MovableEntity : public Entity {
             }
             return false;
         }
-        // announce(
-        // fmt::format(" distance to location end {}  (need to be within {})",
-        // glm::distance(position, location), TRAVEL_DIST));
-
-        path =
-            generateWalkablePath(id, moveSpeed, position, location, this->size);
         return false;
     }
 
@@ -298,8 +304,35 @@ struct Employee : public Person {
 };
 
 struct Customer : public Person {
+    float totalWallet;
+    float totalSpendToday;
+    // TODO are customers going to be
+    float totalSpendLifetime;
     ItemGroup shoppingCart;
     ItemGroup shoppingList;
+    std::map<int, float> avgPricePaid;
+
+    void init() {
+        // decide what to get
+
+        // decide how much money to bring
+        estimateCartSpend();
+    }
+
+    void estimateCartSpend() {
+        float possibleSpend = 0;
+        auto im = GLOBALS.get<ItemManager>("item_manager");
+        for (auto ig : shoppingList) {
+            float global_price = im.get_avg_price(ig.first);
+            float my_price = map_get_or_default(avgPricePaid, id, global_price);
+            // I believe myself more than the world
+            float price = 0.6 * my_price + 0.4 * global_price;
+            // TODO randomize this a bit (UP?)
+            possibleSpend += (price * ig.second);
+        }
+        // TODO randomize this a bit
+        totalWallet = possibleSpend * 1.5f;
+    }
 
     virtual JobRange getJobRange() override {
         return {JobType::INVALID_Customer_Boundary, JobType::MAX_JOB_TYPE};
@@ -312,12 +345,25 @@ struct Customer : public Person {
         return false;
     }
 
-    Customer() : Person() {}
+    bool idleShop(const std::shared_ptr<Job>& j, WorkInput input) {
+        (void)input;
+        if (walkToLocation(j->endPosition, input)) {
+            j->isComplete = true;
+            return true;
+        }
+        return false;
+    }
+
+    Customer() : Person() { init(); }
 
     virtual void registerJobHandlers() override {
         handler.registerJobHandler(
             JobType::FindItem,
             std::bind(&Customer::workFindItem, this, std::placeholders::_1,
+                      std::placeholders::_2));
+        handler.registerJobHandler(
+            JobType::IdleShop,
+            std::bind(&Customer::idleShop, this, std::placeholders::_1,
                       std::placeholders::_2));
     }
 
