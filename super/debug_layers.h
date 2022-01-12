@@ -53,8 +53,8 @@ struct JobLayer : public Layer {
         for (auto it = jobs.rbegin(); it != jobs.rend(); it++) {
             auto [type, job_list] = *it;
             int num_assigned = 0;
-            for (auto it = job_list.begin(); it != job_list.end(); it++) {
-                if ((*it)->isAssigned) num_assigned++;
+            for (auto itt = job_list.begin(); itt != job_list.end(); itt++) {
+                if ((*itt)->isAssigned) num_assigned++;
             }
             std::string t = fmt::format("{}: {} ({} assigned)",
                                         jobTypeToString((JobType)type),

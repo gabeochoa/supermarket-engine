@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include <cstdlib>
+#include <limits>
+
 template <typename T>
 int sgn(T val) {
     return (T(0) < val) - (val < T(0));
@@ -26,4 +29,8 @@ T round_lower(T val) {
         return ceil(val);
     }
     return floor(val);
+}
+
+inline bool close(float a, float b) {
+    return abs(a - b) < std::numeric_limits<float>::epsilon();
 }

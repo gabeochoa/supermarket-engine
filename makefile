@@ -3,7 +3,8 @@ MAKEFLAGS += --output-sync=target
 
 # FLAGS = -std=c++2a -stdlib=libc++ -Wall -Wextra -g -fsanitize=address
 # FLAGS = -std=c++2a -Wall -Wextra -g -I/usr/local/include -stdlib=libc++ -fsanitize=address -fsanitize=undefined
-FLAGS = -std=c++2a -Wall -Wextra -Wpedantic -g -I/usr/local/include
+# consider adding -Wfloat-equal
+FLAGS = -std=c++2a -Wall -Wextra -Wpedantic -Wuninitialized -Wshadow -Wmost -g -I/usr/local/include
 LIBS = -lglfw -lglew 
 FRAMEWORKS = -Ivendor/ -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon
 

@@ -172,8 +172,8 @@ struct Theta {
         }
 
         prof give_me_a_name(__PROFILE_FUNC__);
-        int i = 0;
-        while (i < LOOP_LIMIT && !openSet.empty()) {
+        int loop_iter = 0;
+        while (loop_iter < LOOP_LIMIT && !openSet.empty()) {
             Qi qi = openSet.top();
             openSet.pop();
             auto s = qi.first;
@@ -202,21 +202,21 @@ struct Theta {
                     update_vertex(s, neighbor);
                 }
             }
-            i++;
+            loop_iter++;
         }
-        if (i >= LOOP_LIMIT) {
+        if (loop_iter >= LOOP_LIMIT) {
             log_trace("hit loop limit and quit early");
         }
         log_trace("no path found to thing");
         return std::vector<glm::vec2>();
     }
 
-    bool line_of_sight(const glm::vec2& parent, const glm::vec2& neighbor) {
+    bool line_of_sight(const glm::vec2& parentNode, const glm::vec2& neighbor) {
         // technically we can see it but cant walk to it its in the wall?
         if (!canVisit(neighbor)) {
             return false;
         }
-        glm::vec2 loc(parent);
+        glm::vec2 loc(parentNode);
         while (distance(loc, neighbor) > 0.5f) {
             loc = lerp(loc, neighbor, 0.25f);
             if (!canVisit(loc)) {
@@ -246,7 +246,7 @@ struct Theta {
                 glm::vec2 neighbor = {s.x + (x[i] * dst), s.y + (y[i] * dst)};
                 if (!canVisit(neighbor)) continue;
                 if (contains(closedSet, neighbor)) {
-                    if (minS == -1 || minS > gScore[neighbor]) {
+                    if (close(minS, -1) || minS > gScore[neighbor]) {
                         minN = neighbor;
                         minS = gScore[neighbor];
                     }

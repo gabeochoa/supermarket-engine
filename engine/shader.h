@@ -174,29 +174,32 @@ struct Shader {
 
     void bind() const { glUseProgram(rendererID); }
     void unbind() const { glUseProgram(0); }
-    void uploadUniformInt(const std::string &name, const int i) {
-        GLint location = glGetUniformLocation(rendererID, name.c_str());
+    void uploadUniformInt(const std::string &fieldName, const int i) {
+        GLint location = glGetUniformLocation(rendererID, fieldName.c_str());
         glUniform1i(location, i);
     }
-    void uploadUniformIntArray(const std::string &name, int *values,
+    void uploadUniformIntArray(const std::string &fieldName, int *values,
                                int count) {
-        GLint location = glGetUniformLocation(rendererID, name.c_str());
+        GLint location = glGetUniformLocation(rendererID, fieldName.c_str());
         glUniform1iv(location, count, values);
     }
-    void uploadUniformFloat(const std::string &name, float value) {
-        GLint location = glGetUniformLocation(rendererID, name.c_str());
+    void uploadUniformFloat(const std::string &fieldName, float value) {
+        GLint location = glGetUniformLocation(rendererID, fieldName.c_str());
         glUniform1f(location, value);
     }
-    void uploadUniformFloat3(const std::string &name, const glm::vec3 &values) {
-        GLint location = glGetUniformLocation(rendererID, name.c_str());
+    void uploadUniformFloat3(const std::string &fieldName,
+                             const glm::vec3 &values) {
+        GLint location = glGetUniformLocation(rendererID, fieldName.c_str());
         glUniform3f(location, values.x, values.y, values.z);
     }
-    void uploadUniformFloat4(const std::string &name, const glm::vec4 &values) {
-        GLint location = glGetUniformLocation(rendererID, name.c_str());
+    void uploadUniformFloat4(const std::string &fieldName,
+                             const glm::vec4 &values) {
+        GLint location = glGetUniformLocation(rendererID, fieldName.c_str());
         glUniform4f(location, values.x, values.y, values.z, values.w);
     }
-    void uploadUniformMat4(const std::string &name, const glm::mat4 &matrix) {
-        GLint location = glGetUniformLocation(rendererID, name.c_str());
+    void uploadUniformMat4(const std::string &fieldName,
+                           const glm::mat4 &matrix) {
+        GLint location = glGetUniformLocation(rendererID, fieldName.c_str());
         glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
     }
 };

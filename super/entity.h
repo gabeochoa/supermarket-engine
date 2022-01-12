@@ -76,9 +76,9 @@ struct Entity {
         return posSizeToRect(this->position, this->size);
     }
 
-    constexpr inline bool entityCollides(const glm::vec2 position,
-                                         const glm::vec2 size) const {
-        return aabb(this->position, this->size, position, size);
+    constexpr inline bool entityCollides(const glm::vec2 pos,
+                                         const glm::vec2 othersize) const {
+        return aabb(this->position, this->size, pos, othersize);
     }
 
     constexpr inline bool entityCollides(
@@ -95,12 +95,15 @@ struct Entity {
     };
 
     virtual void render(const RenderOptions& ro = RenderOptions()) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshadow"
         glm::vec2 position = this->position;
         glm::vec2 size = this->size;
         glm::vec4 color = this->color;
         bool center = this->center;
         float angle = this->angle;
         std::string textureName = this->textureName;
+#pragma clang diagnostic pop
 
         if (ro.position) position = ro.position.value();
         if (ro.size) size = ro.size.value();

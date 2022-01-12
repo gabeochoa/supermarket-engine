@@ -52,7 +52,7 @@ struct Renderer3D {
 
 static const char* DEFAULT_TEX = "white";
 static const int MAX_TEX = 16;
-static const glm::mat4 im(1.f);
+static const glm::mat4 imat(1.f);
 struct Renderer {
     struct QuadVert {
         glm::vec3 position;
@@ -544,8 +544,8 @@ struct Renderer {
     static void drawQuad(const glm::vec3& position, const glm::vec2& size,
                          const glm::vec4& color,
                          const std::string& textureName = DEFAULT_TEX) {
-        auto transform = glm::translate(im, position) *
-                         glm::scale(im, {size.x, size.y, 1.0f});
+        auto transform = glm::translate(imat, position) *
+                         glm::scale(imat, {size.x, size.y, 1.0f});
         Renderer::drawQuad(transform, color, textureName);
     }
 
@@ -563,12 +563,12 @@ struct Renderer {
                                 const std::string& textureName = DEFAULT_TEX) {
         prof p(__PROFILE_FUNC__);
 
-        auto transform = glm::translate(im, position) *
-                         glm::rotate(im, angleInRad, {0.0f, 0.0f, 1.f}) *
+        auto transform = glm::translate(imat, position) *
+                         glm::rotate(imat, angleInRad, {0.0f, 0.0f, 1.f}) *
                          // TODO We need this in order for the rotation to
                          // happen kinda close to the center of the object
-                         glm::translate(im, {size.x / 4, size.y / 4, 0.f}) *
-                         glm::scale(im, {size.x, size.y, 1.0f});
+                         glm::translate(imat, {size.x / 4, size.y / 4, 0.f}) *
+                         glm::scale(imat, {size.x, size.y, 1.0f});
 
         drawQuad(transform, color, textureName);
     }

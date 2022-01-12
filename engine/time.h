@@ -45,7 +45,7 @@ struct Samples {
 
     void setFilename(const std::string& fn) { filename = fn; }
 
-    float& operator[](int index) { return samples[index]; }
+    float& operator[](int i) { return samples[i]; }
 
     float average() const { return sum / std::min(numItems, size); }
 

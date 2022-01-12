@@ -276,9 +276,9 @@ static void test_polygon_hull() {
         glm::vec2{3.f, 1.f},
     };
     int found = 0;
-    for (auto a : ans) {
+    for (auto i : ans) {
         for (auto e : polygon.hull) {
-            if (a == e) {
+            if (i == e) {
                 found++;
                 break;
             }
@@ -340,9 +340,9 @@ static void test_navmesh_shape_merge_same() {
         glm::vec2{1.f, 0.f},
     };
     int found = 0;
-    for (auto a : ans) {
+    for (auto i : ans) {
         for (auto e : nm.shapes[0].hull) {
-            if (a == e) {
+            if (i == e) {
                 found++;
                 break;
             }
@@ -415,9 +415,9 @@ static void test_navmesh_shape_merge_overlap() {
         glm::vec2{3.f, 3.f}, glm::vec2{1.f, 3.f}, glm::vec2{0.f, 2.f},
     };
     int found = 0;
-    for (auto a : ans) {
+    for (auto i : ans) {
         for (auto e : nm.shapes[0].hull) {
-            if (a == e) {
+            if (i == e) {
                 found++;
                 break;
             }

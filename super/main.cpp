@@ -47,9 +47,9 @@ struct SetMenuCommand : Command<Menu> {
     std::string operator()(const std::vector<std::string>& params) {
         auto values = this->convert(params);
         if (!values.empty()) {
-            Menu* menu = std::any_cast<Menu*>(values[0]);
+            Menu* m = std::any_cast<Menu*>(values[0]);
             Menu::State val = std::any_cast<Menu::State>(values[1]);
-            menu->state = val;
+            m->state = val;
             this->msg = fmt::format("{} is now {}", params[0], val);
         }
         return this->msg;
@@ -98,8 +98,8 @@ int main(int argc, char** argv) {
     Layer* entityDebug = new EntityDebugLayer();
     App::get().pushLayer(entityDebug);
 
-    Layer* menu = new MenuLayer();
-    App::get().pushLayer(menu);
+    Layer* menuLayer = new MenuLayer();
+    App::get().pushLayer(menuLayer);
 
     Layer* game_ui = new GameUILayer();
     App::get().pushLayer(game_ui);
