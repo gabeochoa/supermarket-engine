@@ -1,7 +1,7 @@
 #pragma once
 #ifdef __APPLE__
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wall"
+#pragma clang diagnostic ignored "-Weverything"
 #pragma clang diagnostic ignored "-Wdeprecated-volatile"
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
 #endif
