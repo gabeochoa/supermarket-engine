@@ -56,7 +56,22 @@ Stealing items
 Weather and day night system
 + Different desires based on these (less ice cream in winter) 
 
+Highlight text in inventory manager when not ideal? 
++ Maybe an upgrade if you buy a "Buyer" manager or something
++ Red means too expensive etc 
 
+Can you price all your items at $0? 
++ Whats the min price / Whats the max price? 
+
+Can you offer sales when you need to get rid of things? 
+Do items spoil? so you have to sell or eat the cost ... 
+
+
+
+Middleware 
+
+- keybindings on the layer level 
+    without giving away what each layer does? 
 
 Engine Ideas
 

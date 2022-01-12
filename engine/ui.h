@@ -176,6 +176,16 @@ bool drawer(const uuid id, WidgetConfig config, float* pct_open);
     returns true if fully open;
 
 
+TODO add TextGroups
+    - where it draws the second after the first
+    - hspacing / v spacing
+    - meta? header? body?
+
+TODO add popup / hover / tooltip
+
+TODO add button on press visual difference
+    - we kinda have this on uitest but not for normal buttons
+
 TODO add support for max-length textfield
     this will also help with temporary texture size
 TODO support typing in unicode ...
