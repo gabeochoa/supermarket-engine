@@ -8,7 +8,9 @@
 //
 #include "global.h"
 //
+#include "customer.h"
 #include "drag_area.h"
+#include "employee.h"
 #include "entities.h"
 #include "job.h"
 #include "menu.h"
@@ -372,8 +374,6 @@ struct SuperLayer : public Layer {
                     Job({.type = JobType::IdleShop,
                          .endPosition = glm::circularRand<float>(5.f)})));
         }
-
-        return;
 
         EntityHelper::forEach<Storage>([](auto storage) {
             // TODO for now just keep queue jobs until we are empty

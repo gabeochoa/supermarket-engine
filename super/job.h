@@ -18,6 +18,8 @@ enum JobType {
     // Customer job types
     LeaveStore,
     GotoRegister,
+    // TODO make these the same so they have the same probability of being
+    // chosen?
     IdleShop,
     FindItem,
 
@@ -59,6 +61,7 @@ struct Job {
     JobType type;
     bool isComplete;
     bool isAssigned;
+    int reserved = -1;
     glm::vec2 startPosition;
     glm::vec2 endPosition;
     int seconds;
@@ -113,7 +116,7 @@ struct JobQueue {
         return jobs[(int)t].end();
     }
 
-    static std::shared_ptr<Job> getNextInRange(JobRange jr) {
+    static std::shared_ptr<Job> getNextInRange(int e_id, JobRange jr) {
         // note that we iterate backwards so that higher pri
         // gets chosen first
         // TODO - do we need to set a timer so that some jobs eventually
@@ -122,6 +125,7 @@ struct JobQueue {
             auto js = jobs[i];
             for (auto it = js.begin(); it != js.end(); it++) {
                 if ((*it)->isAssigned || (*it)->isComplete) continue;
+                if ((*it)->reserved != -1 && (*it)->reserved != e_id) continue;
                 if ((*it)->type <= jr.end && (*it)->type >= jr.start)
                     return *it;
             }

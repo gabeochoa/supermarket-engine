@@ -253,7 +253,7 @@ struct EntityHelper {
         for (auto& e : entities_DO_NOT_USE) {
             auto s = dynamic_pointer_cast<T>(e);
             if (!s) continue;
-            if (glm::distance(pos, e->position) > range) continue;
+            if (range > 0 && glm::distance(pos, e->position) > range) continue;
             if (s->contents.find(itemID) != s->contents.end()) {
                 matching.push_back(s);
             }

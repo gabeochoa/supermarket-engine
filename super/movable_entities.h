@@ -50,6 +50,15 @@ struct MovableEntity : public Entity {
 
     bool walkToLocation(const glm::vec2 location, const WorkInput& wi) {
         prof give_me_a_name(__PROFILE_FUNC__);
+        if (glm::distance(position, location) > 1000.f) {
+            // TODO why is this happening
+            position = glm::vec2{0.f, 0.f};
+            log_warn(
+                "We dont support any maps over 1k distances so something is "
+                "wrong (trying to walk from {} to {})",
+                position, location);
+            return true;
+        }
 
         // Have we reached the position yet?
         // or have we just started ?
@@ -75,7 +84,8 @@ struct MovableEntity : public Entity {
             if (target == path.end()) return true;
 
             if (!EntityHelper::isWalkable(*target, this->size)) {
-                announce("my next target isnt walkable....");
+                announce(fmt::format("my next target isnt walkable.... {}",
+                                     *target));
             }
 
             // reached our local target, erase this
@@ -133,7 +143,7 @@ struct Person : public MovableEntity {
         if (!assignedJob) {
             // announce("finding new job");
             auto range = getJobRange();
-            auto ptr = JobQueue::getNextInRange(range);
+            auto ptr = JobQueue::getNextInRange(id, range);
             startJob(ptr);
             return;
         }
@@ -167,210 +177,3 @@ struct Person : public MovableEntity {
     virtual const char* typeString() const = 0;
 };
 
-struct Employee : public Person {
-    ItemGroup inventory;
-
-    JobRange getJobRange() override {
-        return {JobType::None, JobType::INVALID_Customer_Boundary};
-    }
-
-    bool workFill(const std::shared_ptr<Job>& j, const WorkInput& input) {
-        (void)input;
-
-        if (j->reg.find("amount") != j->reg.end()) {
-            j->reg["amount"] = 0;
-        }
-
-        switch (j->jobStatus) {
-            case 0:  // Just started the job
-            {
-                // walk to start...
-                bool isAtStartLocation =
-                    walkToLocation(j->startPosition, input);
-                if (isAtStartLocation) {
-                    // announce("got to start Location");
-                    j->jobStatus = 1;  // grab something...
-                }
-            } break;
-            case 1:  // Reached start
-            {
-                // announce("grab something");
-                auto shelves = EntityHelper::getEntityInRangeWithItem<Storage>(
-                    position, j->itemID, REACH_DIST);
-                if (shelves.empty()) {
-                    announce("no matching shelf");
-                    // log_warn("no matching shelf, so uh what can we do");
-                    j->jobStatus = 5;
-                    return false;
-                }
-                // announce(fmt::format("trying to grab {} item{} from {}",
-                // j->itemAmount, j->itemID,
-                // (*shelves.begin())->contents));
-
-                int handSize = 5;
-                int amt = (*shelves.begin())
-                              ->contents.removeItem(j->itemID, handSize);
-                inventory.addItem(j->itemID, amt);
-                j->jobStatus = 2;
-            } break;
-            case 2:  // Grabbed item
-            {
-                // walk to end...
-                bool isAtEndLocation = walkToLocation(j->endPosition, input);
-                if (isAtEndLocation) {
-                    // announce("got to end Location");
-                    j->jobStatus = 3;  // drop it off something...
-                }
-            } break;
-            case 3:  // Got to End
-            {
-                // announce("drop it off ");
-                auto shelves = EntityHelper::getEntitiesInRange<Shelf>(
-                    position, REACH_DIST);
-                // TODO need to support finding a shelf instead of
-                // setting the start and end manually
-                if (shelves.empty()) {
-                    // log_warn("no matching shelf, so uh what can we do");
-                    j->jobStatus = 5;
-                    return false;
-                }
-                (*shelves.begin())
-                    ->contents.addItem(j->itemID, inventory[j->itemID]);
-                inventory.removeItem(j->itemID, inventory[j->itemID]);
-                j->jobStatus = 4;
-            } break;
-            case 4:  // Dropped off Item
-            {
-                j->isComplete = true;
-                return true;
-            } break;
-
-            case 5:  // Something bad happened...
-            {
-                // log_warn("Something bad happened and i couldnt finish");
-                j->isComplete = true;
-                return true;
-            } break;
-        }
-        return false;
-    }
-
-    bool idleWalk(const std::shared_ptr<Job>& j, WorkInput input) {
-        (void)input;
-        if (walkToLocation(j->endPosition, input)) {
-            j->isComplete = true;
-            return true;
-        }
-        return false;
-    }
-
-    bool directedWalk(const std::shared_ptr<Job>& j, WorkInput input) {
-        (void)input;
-        if (walkToLocation(j->endPosition, input)) {
-            j->isComplete = true;
-            return true;
-        }
-        return false;
-    }
-
-    Employee() : Person() {}
-
-    virtual void registerJobHandlers() override {
-        handler.registerJobHandler(
-            JobType::Fill,
-            std::bind(&Employee::workFill, this, std::placeholders::_1,
-                      std::placeholders::_2));
-
-        handler.registerJobHandler(
-            JobType::IdleWalk,
-            std::bind(&Employee::idleWalk, this, std::placeholders::_1,
-                      std::placeholders::_2));
-
-        handler.registerJobHandler(
-            JobType::DirectedWalk,
-            std::bind(&Employee::directedWalk, this, std::placeholders::_1,
-                      std::placeholders::_2));
-
-        handler.registerJobHandler(
-            JobType::None, std::bind(&Person::none, this, std::placeholders::_1,
-                                     std::placeholders::_2));
-    }
-
-    virtual void onUpdate(Time dt) override {
-        //
-        Person::onUpdate(dt);
-    }
-    virtual const char* typeString() const override { return "Employee"; }
-};
-
-struct Customer : public Person {
-    float totalWallet;
-    float totalSpendToday;
-    // TODO are customers going to be
-    float totalSpendLifetime;
-    ItemGroup shoppingCart;
-    ItemGroup shoppingList;
-    std::map<int, float> avgPricePaid;
-
-    void init() {
-        // decide what to get
-
-        // decide how much money to bring
-        estimateCartSpend();
-    }
-
-    void estimateCartSpend() {
-        float possibleSpend = 0;
-        auto im = GLOBALS.get<ItemManager>("item_manager");
-        for (auto ig : shoppingList) {
-            float global_price = im.get_avg_price(ig.first);
-            float my_price = map_get_or_default(avgPricePaid, id, global_price);
-            // I believe myself more than the world
-            float price = 0.6 * my_price + 0.4 * global_price;
-            // TODO randomize this a bit (UP?)
-            possibleSpend += (price * ig.second);
-        }
-        // TODO randomize this a bit
-        totalWallet = possibleSpend * 1.5f;
-    }
-
-    virtual JobRange getJobRange() override {
-        return {JobType::INVALID_Customer_Boundary, JobType::MAX_JOB_TYPE};
-    }
-
-    bool workFindItem(const std::shared_ptr<Job>& j, WorkInput input) {
-        (void)j;
-        (void)input;
-        log_trace("workFindItem, ");
-        return false;
-    }
-
-    bool idleShop(const std::shared_ptr<Job>& j, WorkInput input) {
-        (void)input;
-        if (walkToLocation(j->endPosition, input)) {
-            j->isComplete = true;
-            return true;
-        }
-        return false;
-    }
-
-    Customer() : Person() { init(); }
-
-    virtual void registerJobHandlers() override {
-        handler.registerJobHandler(
-            JobType::FindItem,
-            std::bind(&Customer::workFindItem, this, std::placeholders::_1,
-                      std::placeholders::_2));
-        handler.registerJobHandler(
-            JobType::IdleShop,
-            std::bind(&Customer::idleShop, this, std::placeholders::_1,
-                      std::placeholders::_2));
-    }
-
-    virtual void onUpdate(Time dt) override {
-        //
-        Person::onUpdate(dt);
-    }
-
-    virtual const char* typeString() const override { return "Customer"; }
-};
