@@ -7,6 +7,9 @@
 #include "entities.h"
 #include "entity.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 void theta_test() {
     // Walk straight through
     //  - i expect it to just walk around
@@ -89,3 +92,4 @@ void all_tests() {
     log_info("Finished running all tests successfully");
 }
 
+#pragma clang diagnostic pop

@@ -150,10 +150,14 @@ struct fmt::formatter<Entity> {
     }
 };
 
-static std::vector<std::shared_ptr<Entity>> entities_DO_NOT_USE;
+[[deprecated("You should use EntityHelper:: instead")]] static std::vector<
+    std::shared_ptr<Entity>>
+    entities_DO_NOT_USE;
 
 struct EntityHelper {
-    //
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
     static void addEntity(std::shared_ptr<Entity> e) {
         entities_DO_NOT_USE.push_back(e);
 
@@ -288,5 +292,7 @@ struct EntityHelper {
         }
         return true;
     }
+
+#pragma clang diagnostic pop
 };
 

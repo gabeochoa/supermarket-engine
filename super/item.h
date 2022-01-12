@@ -73,7 +73,8 @@ struct ItemManager {
     Item& get(int id) { return *items.at(id); }
     std::shared_ptr<Item> get_ptr(int id) { return items.at(id); }
 };
-static ItemManager itemManager_DO_NOT_USE_DIRECTLY;
+
+[[deprecated]] static ItemManager itemManager_DO_NOT_USE_DIRECTLY;
 
 struct ItemGroup {
     std::map<int, int> group;
