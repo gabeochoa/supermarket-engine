@@ -28,27 +28,27 @@ void OrthoCameraController::onUpdate(Time dt) {
     prof give_me_a_name(__PROFILE_FUNC__);
     if (movementEnabled) {
         if (Input::isKeyPressed(Key::mapping["Left"])) {
-            camera.position.x -= camSpeed * dt;
+            this->camera.position.x -= camSpeed * dt;
         }
         if (Input::isKeyPressed(Key::mapping["Right"])) {
-            camera.position.x += camSpeed * dt;
+            this->camera.position.x += camSpeed * dt;
         }
         if (Input::isKeyPressed(Key::mapping["Down"])) {
-            camera.position.y -= camSpeed * dt;
+            this->camera.position.y -= camSpeed * dt;
         }
         if (Input::isKeyPressed(Key::mapping["Up"])) {
-            camera.position.y += camSpeed * dt;
+            this->camera.position.y += camSpeed * dt;
         }
     }
     if (rotationEnabled) {
         if (Input::isKeyPressed(Key::mapping["Rotate Clockwise"])) {
-            camera.rotation += rotSpeed * dt;
+            this->camera.rotation += rotSpeed * dt;
         }
         if (Input::isKeyPressed(Key::mapping["Rotate Counterclockwise"])) {
-            camera.rotation -= rotSpeed * dt;
+            this->camera.rotation -= rotSpeed * dt;
         }
     }
-    camera.updateViewMat();
+    this->camera.updateViewMat();
 }
 
 void OrthoCameraController::setZoomLevel(float zm) {

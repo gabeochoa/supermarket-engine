@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include "external_include.h"
 #include "pch.hpp"
 #include "strutil.h"

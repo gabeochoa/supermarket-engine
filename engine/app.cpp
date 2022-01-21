@@ -60,7 +60,6 @@ bool App::onWindowResized(WindowResizeEvent& event) {
 }
 
 void App::onEvent(Event& e) {
-    log_trace(e.toString().c_str());
     EventDispatcher dispatcher(e);
     dispatcher.dispatch<WindowCloseEvent>(M_BIND(onWindowClose));
     dispatcher.dispatch<KeyPressedEvent>(M_BIND(onKeyPressed));

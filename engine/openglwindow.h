@@ -1,9 +1,9 @@
 
 #pragma once
+
 #include "app.h"
 #include "event.h"
 #include "graphicscontext.h"
-#include "input.h"
 #include "keycodes.h"
 #include "log.h"
 #include "pch.hpp"
@@ -36,7 +36,7 @@ struct OpenGLWindow : public Window {
     }
 
     virtual void update() override {
-        prof(__PROFILE_FUNC__);
+        prof give_me_a_name(__PROFILE_FUNC__);
         glfwPollEvents();
         context->swapBuffers();
     }
