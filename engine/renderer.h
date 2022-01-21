@@ -154,10 +154,10 @@ struct Renderer {
     }
 
     static void init_default_shaders() {
-        sceneData->shaderLibrary.load("./engine/shaders/flat.glsl");
-        sceneData->shaderLibrary.load("./engine/shaders/texture.glsl");
-        sceneData->shaderLibrary.load("./engine/shaders/line.glsl");
-        sceneData->shaderLibrary.load("./engine/shaders/poly.glsl");
+        sceneData->shaderLibrary.load("./shaders/flat.glsl");
+        sceneData->shaderLibrary.load("./shaders/texture.glsl");
+        sceneData->shaderLibrary.load("./shaders/line.glsl");
+        sceneData->shaderLibrary.load("./shaders/poly.glsl");
     }
 
     static void init_default_textures() {
