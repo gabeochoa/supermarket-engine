@@ -7,6 +7,7 @@
 #include "buffer.h"
 #include "camera.h"
 #include "shader.h"
+#include "texture.h" 
 
 // TODO if there are ever any other renderers (directx vulcan metal)
 // then have to subclass this for each one

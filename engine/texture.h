@@ -18,24 +18,15 @@ struct Texture {
     float tilingFactor;
     bool temporary = false;
 
-    Texture()
-        : name("TEXTURE_HAS_NO_NAME"), width(0), height(0), tilingFactor(1.f) {}
-    Texture(const std::string &n, int w, int h)
-        : name(n), width(w), height(h), tilingFactor(1.f) {}
-
-    Texture(const Texture &tex)
-        : name(tex.name),
-          width(tex.width),
-          height(tex.height),
-          tilingFactor(tex.tilingFactor) {}
+    Texture();
+    Texture(const std::string &n, int w, int h);
+    Texture(const Texture &tex);
     virtual void setData(void *data) { (void)data; }
     virtual void setBitmapData(void *data) { (void)data; }
-
     virtual ~Texture() {}
     // its const from a C++ pov but
     // its not really const if you know what i mean
     virtual void bind(int i) const = 0;
-
     bool operator==(const Texture &other) const {
         return other.name == this->name;
     }
@@ -44,104 +35,15 @@ struct Texture {
 struct Texture2D : public Texture {
     unsigned int rendererID;
 
-    Texture2D(const std::string &name, int w, int h) : Texture(name, w, h) {
-        glGenTextures(1, &rendererID);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, rendererID);
+    Texture2D(const std::string &name, int w, int h);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    }
-
-    virtual void setData(void *data) override {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA,
-                     GL_UNSIGNED_BYTE, data);
-    }
-
-    virtual void setBitmapData(void *data) override {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_RED);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A, GL_RED);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED,
-                     GL_UNSIGNED_BYTE, data);
-    }
-
-    Texture2D(const Texture2D &other) {
-        this->rendererID = other.rendererID;
-        this->name = other.name;
-        this->width = other.width;
-        this->height = other.height;
-        this->tilingFactor = other.tilingFactor;
-    }
-
-    Texture2D &operator=(Texture2D &other) {
-        if (this != &other) {
-            this->rendererID = other.rendererID;
-            this->name = other.name;
-            this->width = other.width;
-            this->height = other.height;
-            this->tilingFactor = other.tilingFactor;
-        }
-        return *this;
-    }
-
-    Texture2D(const std::string &path) : Texture() {
-        log_trace("Loading texture: {}", path);
-
-        name = nameFromFilePath(path);
-
-        int w, h, channels;
-        stbi_set_flip_vertically_on_load(1);
-        stbi_uc *data = stbi_load(path.c_str(), &w, &h, &channels, 0);
-        M_ASSERT(data, fmt::format("Failed to load texture2d: {}", path));
-
-        GLenum internalFormat = 0, dataFormat = 0;
-        if (channels == 4) {
-            internalFormat = GL_RGBA8;
-            dataFormat = GL_RGBA;
-        } else if (channels == 3) {
-            internalFormat = GL_RGB8;
-            dataFormat = GL_RGB;
-        } else if (channels == 1) {
-            internalFormat = GL_RED;
-            dataFormat = GL_RED;
-        }
-        log_trace("texture {} has {} channels", path, channels);
-        M_ASSERT(internalFormat, "image format not supported: {}", channels);
-
-        this->width = w;
-        this->height = h;
-
-        glGenTextures(1, &rendererID);
-        glBindTexture(GL_TEXTURE_2D, rendererID);
-
-        if (channels == 1) {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_RED);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A, GL_RED);
-        }
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0,
-                     dataFormat, GL_UNSIGNED_BYTE, data);
-
-        stbi_image_free(data);
-    }
-
-    virtual ~Texture2D() { glDeleteTextures(1, &rendererID); }
-    virtual void bind(int i) const override {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, rendererID);
-    }
-
+    virtual void setData(void *data) override;
+    virtual void setBitmapData(void *data) override;
+    Texture2D(const Texture2D &other);
+    Texture2D &operator=(Texture2D &other);
+    Texture2D(const std::string &path);
+    virtual ~Texture2D();
+    virtual void bind(int i) const override;
     bool operator==(const Texture2D &other) const {
         return other.rendererID == this->rendererID;
     }
