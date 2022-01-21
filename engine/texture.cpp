@@ -2,7 +2,6 @@
 
 #include "texture.h"
 
-
 Texture::Texture()
     : name("TEXTURE_HAS_NO_NAME"), width(0), height(0), tilingFactor(1.f) {}
 
@@ -114,3 +113,9 @@ void Texture2D::bind(int i) const {
     glBindTexture(GL_TEXTURE_2D, rendererID);
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
+TextureLibrary &TextureLibrary::get() { return textureLibrary__DO_NOT_USE; }
+
+#pragma clang diagnostic pop

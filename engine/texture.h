@@ -223,6 +223,12 @@ struct TextureLibrary {
     std::shared_ptr<Subtexture> &getSubtexture(const std::string &name) {
         return subtextures[name];
     }
+
+    static TextureLibrary &get();
+    static std::shared_ptr<Texture> get_tex(const std::string &name) {
+        return TextureLibrary::get().get(name);
+    }
 };
 
-static TextureLibrary textureLibrary;
+[[deprecated("You should use TextureLibrary::get()")]] static TextureLibrary
+    textureLibrary__DO_NOT_USE;

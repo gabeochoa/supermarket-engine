@@ -7,7 +7,7 @@
 #include "buffer.h"
 #include "camera.h"
 #include "shader.h"
-#include "texture.h" 
+#include "texture.h"
 
 // TODO if there are ever any other renderers (directx vulcan metal)
 // then have to subclass this for each one
@@ -143,15 +143,15 @@ struct Renderer {
 
     // TODO lets add something similar for shaders
     static void addTexture(const std::string& filepath) {
-        auto texName = textureLibrary.load(filepath);
-        textureLibrary.get(texName)->tilingFactor = 1.f;
+        auto texName = TextureLibrary::get().load(filepath);
+        TextureLibrary::get().get(texName)->tilingFactor = 1.f;
     }
 
     static void addSubtexture(const std::string& textureName,
                               const std::string& name, float x, float y,
                               float spriteWidth, float spriteHeight) {
-        textureLibrary.addSubtexture(textureName, name, x, y, spriteWidth,
-                                     spriteHeight);
+        TextureLibrary::get().addSubtexture(textureName, name, x, y,
+                                            spriteWidth, spriteHeight);
     }
 
     static void init_default_shaders() {
@@ -166,7 +166,11 @@ struct Renderer {
             std::make_shared<Texture2D>("white", 1, 1);
         unsigned int data = 0xffffffff;
         whiteTexture->setData(&data);
-        textureLibrary.add(whiteTexture);
+        TextureLibrary::get().add(whiteTexture);
+
+        M_ASSERT(
+            TextureLibrary::get().get("white"),
+            "white texture is default and MUST exist for rendering to work");
     }
 
     static void init_line_buffers() {
@@ -197,7 +201,6 @@ struct Renderer {
             {"i_color", BufferType::Float4},
             {"i_texcoord", BufferType::Float2},
             {"i_texindex", BufferType::Float},
-            // {"i_tilingfactor", BufferType::Float},
         });
         sceneData->quadVA->addVertexBuffer(sceneData->quadVB);
 
@@ -329,11 +332,6 @@ struct Renderer {
         prof drlns(__PROFILE_FUNC__);
         vertexArray->bind();
         glDrawArrays(GL_LINES, 0, vertexCount);
-        // glDrawArrays(GL_LINE_STRIP, 0, vertexCount);
-        // glDrawArrays(GL_LINE_LOOP, 0, vertexCount);
-        // glDrawElements(GL_LINES, vertexCount, GL_UNSIGNED_INT, nullptr);
-        // glDrawElements(GL_LINE_STRIP, vertexCount, GL_UNSIGNED_INT, nullptr);
-        // glDrawElements(GL_LINE_LOOP, vertexCount, GL_UNSIGNED_INT, nullptr);
     }
 
     static void begin(OrthoCamera& cam) {
@@ -360,7 +358,8 @@ struct Renderer {
 
     static void start_batch() {
         sceneData->textureSlots[0] =
-            dynamic_pointer_cast<Texture2D>(textureLibrary.get("white"));
+            dynamic_pointer_cast<Texture2D>(TextureLibrary::get().get("white"));
+
         sceneData->quadIndexCount = 0;
         sceneData->qvbufferptr = sceneData->qvbufferstart;
         sceneData->nextTexSlot = 1;
@@ -383,8 +382,9 @@ struct Renderer {
                                            (uint8_t*)sceneData->qvbufferstart);
             sceneData->quadVB->setData(sceneData->qvbufferstart, dataSize);
 
-            for (int i = 0; i < sceneData->nextTexSlot; i++)
+            for (int i = 0; i < sceneData->nextTexSlot; i++) {
                 sceneData->textureSlots[i]->bind(i);
+            }
 
             sceneData->shaderLibrary.get("texture")->bind();
 
@@ -426,15 +426,16 @@ struct Renderer {
             next_batch();
         }
 
-        auto textureStatus = textureLibrary.isTextureOrSubtexture(textureName);
+        auto textureStatus =
+            TextureLibrary::get().isTextureOrSubtexture(textureName);
 
         std::shared_ptr<Texture> texture;
         std::shared_ptr<Subtexture> subtexture;
 
         if (textureStatus == -1 || textureStatus == 0) {
-            texture = textureLibrary.get(textureName);
+            texture = TextureLibrary::get_tex(textureName);
         } else {
-            subtexture = textureLibrary.getSubtexture(textureName);
+            subtexture = TextureLibrary::get().getSubtexture(textureName);
             // only do this -> when valid, to avoid segfault
             // we check for validity later so this is fine
             if (subtexture) texture = subtexture->texture;
@@ -464,7 +465,7 @@ struct Renderer {
                 stats.textureCount++;
             }
         } else {
-            texture = textureLibrary.get(DEFAULT_TEX);
+            texture = TextureLibrary::get_tex(DEFAULT_TEX);
             // if we fall into this case,
             // either textureName didnt exist at all
             // or textureName was a texture and is invalid

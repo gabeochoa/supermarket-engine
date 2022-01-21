@@ -26,8 +26,8 @@ static std::shared_ptr<Texture> fetch_texture_for_phrase(
     // if we ever decide to split then be careful
     auto textureName = fmt::format("{}_{}", fontname, to_string(phrase));
 
-    if (textureLibrary.hasMatchingTexture(textureName)) {
-        auto ptr = textureLibrary.get(textureName);
+    if (TextureLibrary::get().hasMatchingTexture(textureName)) {
+        auto ptr = TextureLibrary::get_tex(textureName);
         if (ptr) {
             return ptr;
         }
@@ -138,7 +138,7 @@ static std::shared_ptr<Texture> fetch_texture_for_phrase(
         fontTexture->setBitmapData(bitmap);
         fontTexture->tilingFactor = 1.f;
         fontTexture->temporary = temporary;
-        textureLibrary.add(fontTexture);
+        TextureLibrary::get().add(fontTexture);
 
         free(fontBuffer);
         free(bitmap);
