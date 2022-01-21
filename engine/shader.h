@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "file.h"
 #include "pch.hpp"
 
 // https://www.khronos.org/opengl/wiki/Shader_Compilation
@@ -219,7 +220,8 @@ struct ShaderLibrary {
         shaders[shader->name] = shader;
     }
     std::shared_ptr<Shader> load(const std::string &path) {
-        auto shader = std::make_shared<Shader>(path);
+        const auto abs_path = get_absolute_path_to(".", path);
+        auto shader = std::make_shared<Shader>(abs_path);
         add(shader);
         return shader;
     }

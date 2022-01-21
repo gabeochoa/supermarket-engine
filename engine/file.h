@@ -1,5 +1,7 @@
 
 #pragma once
+#include <filesystem>
+
 #include "pch.hpp"
 
 #if _WIN32
@@ -7,6 +9,39 @@
 #else
 #define DEFAULT_PATH "/tmp"
 #endif
+
+// Searches recursively to try to find filename matching
+inline std::string find_absolute_path_recursively(
+    const std::string& starting_folder, const std::string& filename) {
+    if (!std::__fs::filesystem::exists(starting_folder)) return "";
+    for (auto const& entry :
+         std::__fs::filesystem::recursive_directory_iterator{starting_folder}) {
+        if (entry.path().filename() == filename) {
+            return entry.path().string();
+        }
+    }
+    return "";
+}
+
+inline std::string get_absolute_path_to(const std::string& starting_folder,
+                                        const std::string& path) {
+    const auto p = std::__fs::filesystem::path(path);
+    const std::string abs_path =
+        find_absolute_path_recursively(starting_folder, p.filename().string());
+    if (abs_path.empty()) {
+        log_warn("Failed to find file {}", path);
+        return "";
+    }
+
+    M_ASSERT(
+        p.parent_path().filename().string() ==
+            std::__fs::filesystem::path(abs_path)
+                .parent_path()
+                .filename()
+                .string(),
+        "Parent of path passed in, should match the parent of the found file");
+    return abs_path;
+}
 
 __attribute__((unused))  // TODO use this or remove it
 static void
