@@ -53,6 +53,7 @@ openNotification() {
 }
 
 // -1 error, 0 cancel, 1 yes, 2 no
+__attribute__((unused))  // TODO use this or remove it
 static int openMessage(const char* title, const char* msg,
                        pfd::choice choice_type = pfd::choice::yes_no_cancel,
                        pfd::icon icon_type = pfd::icon::info) {

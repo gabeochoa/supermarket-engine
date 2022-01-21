@@ -1,9 +1,19 @@
 
 #include "app.h"
 
-static std::shared_ptr<App> app;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
-App& App::get() { return *app; }
+App& App::get() { 
+    return *GLOBALS.get_ptr<App>("app"); 
+}
+
+void App::create(AppSettings settings) {
+    App* app = new App(settings);
+    app__DO_NOT_USE.reset(app);
+    GLOBALS.set<App>("app", app);
+}
+
 
 App::App(AppSettings settings) {
     this->settings = settings;
@@ -97,3 +107,5 @@ int App::run() {
     }
     return 0;
 }
+
+#pragma clang diagnostic pop

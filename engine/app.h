@@ -36,10 +36,7 @@ struct App {
     bool running;
     LayerStack layerstack;
 
-    inline static App* create(AppSettings settings) {
-        return new App(settings);
-    }
-
+    static void create(AppSettings settings) ;
     static App& get();
 
     App(AppSettings settings);
@@ -54,4 +51,8 @@ struct App {
     Window& getWindow();
     int run();
 };
+
+
+[[deprecated("You should use App::get()")]] 
+static std::shared_ptr<App> app__DO_NOT_USE;
 

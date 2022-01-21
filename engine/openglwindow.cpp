@@ -35,61 +35,61 @@ void OpenGLWindow::init(const WindowConfig& config) {
     M_ASSERT(err == GLEW_OK, "Failed to init glew");
 
     glfwSetWindowSizeCallback(window, [](GLFWwindow* w, int width, int height) {
-        WindowInfo& info = *(WindowInfo*)glfwGetWindowUserPointer(w);
-        info.width = width;
-        info.height = height;
+        WindowInfo& loc_info = *(WindowInfo*)glfwGetWindowUserPointer(w);
+        loc_info.width = width;
+        loc_info.height = height;
 
         WindowResizeEvent event(width, height);
-        info.callback(event);
+        loc_info.callback(event);
     });
 
     glfwSetWindowCloseCallback(window, [](GLFWwindow* w) {
-        WindowInfo& info = *(WindowInfo*)glfwGetWindowUserPointer(w);
+        WindowInfo& loc_info = *(WindowInfo*)glfwGetWindowUserPointer(w);
         WindowCloseEvent event;
-        info.callback(event);
+        loc_info.callback(event);
     });
 
     glfwSetKeyCallback(
         window, [](GLFWwindow* w, int key, int scancode, int action, int mods) {
             (void)scancode;
             (void)mods;
-            WindowInfo& info = *(WindowInfo*)glfwGetWindowUserPointer(w);
+            WindowInfo& loc_info = *(WindowInfo*)glfwGetWindowUserPointer(w);
             switch (action) {
                 case GLFW_PRESS: {
                     KeyPressedEvent event(key, 0);
-                    info.callback(event);
+                    loc_info.callback(event);
                 } break;
                 case GLFW_RELEASE: {
                     KeyReleasedEvent event(key);
-                    info.callback(event);
+                    loc_info.callback(event);
                 } break;
                 case GLFW_REPEAT: {
                     KeyPressedEvent event(key, 1);
-                    info.callback(event);
+                    loc_info.callback(event);
                 } break;
             }
         });
 
     glfwSetCharCallback(window, [](GLFWwindow* w, unsigned int codepoint) {
-        WindowInfo& info = *(WindowInfo*)glfwGetWindowUserPointer(w);
+        WindowInfo& loc_info = *(WindowInfo*)glfwGetWindowUserPointer(w);
         CharPressedEvent event(codepoint, 0);
-        info.callback(event);
+        loc_info.callback(event);
     });
 
     glfwSetMouseButtonCallback(
         window, [](GLFWwindow* w, int button, int action, int mods) {
             (void)mods;
-            WindowInfo& info = *(WindowInfo*)glfwGetWindowUserPointer(w);
+            WindowInfo& loc_info = *(WindowInfo*)glfwGetWindowUserPointer(w);
 
             switch (action) {
                 case GLFW_PRESS: {
                     MouseButtonPressedEvent event(button);
-                    info.callback(event);
+                    loc_info.callback(event);
                     break;
                 }
                 case GLFW_RELEASE: {
                     MouseButtonReleasedEvent event(button);
-                    info.callback(event);
+                    loc_info.callback(event);
                     break;
                 }
             }
@@ -97,18 +97,18 @@ void OpenGLWindow::init(const WindowConfig& config) {
 
     glfwSetScrollCallback(
         window, [](GLFWwindow* w, double xOffset, double yOffset) {
-            WindowInfo& info = *(WindowInfo*)glfwGetWindowUserPointer(w);
+            WindowInfo& loc_info = *(WindowInfo*)glfwGetWindowUserPointer(w);
 
             MouseScrolledEvent event((float)xOffset, (float)yOffset);
-            info.callback(event);
+            loc_info.callback(event);
         });
 
     glfwSetCursorPosCallback(
         window, [](GLFWwindow* w, double xPos, double yPos) {
-            WindowInfo& info = *(WindowInfo*)glfwGetWindowUserPointer(w);
+            WindowInfo& loc_info = *(WindowInfo*)glfwGetWindowUserPointer(w);
 
             MouseMovedEvent event((float)xPos, (float)yPos);
-            info.callback(event);
+            loc_info.callback(event);
         });
 }
 
