@@ -1,6 +1,8 @@
 
 #include "app.h"
 
+#include "edit.h"
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
@@ -25,16 +27,16 @@ App::App(AppSettings settings) {
 
     window = std::unique_ptr<Window>(Window::create(config));
 
-    M_ASSERT(window, "failed to grab window");
+    Key::initMapping();
 
-    Key::load_keys();
+    M_ASSERT(window, "failed to grab window");
 
     window->setEventCallback(M_BIND(onEvent));
 
     Renderer::init();
 }
 
-App::~App() { Key::export_keys(); }
+App::~App() {}
 
 bool App::onWindowClose(WindowCloseEvent& event) {
     (void)event;
@@ -43,7 +45,7 @@ bool App::onWindowClose(WindowCloseEvent& event) {
 }
 
 bool App::onKeyPressed(KeyPressedEvent& event) {
-    if (event.keycode == Key::mapping["Esc"] && settings.escClosesWindow) {
+    if (event.keycode == Key::getMapping("Esc") && settings.escClosesWindow) {
         running = false;
         return true;
     }

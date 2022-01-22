@@ -4,6 +4,7 @@
 #include <fstream>
 #include <map>
 
+#include "log.h"
 #include "pch.hpp"
 
 namespace Key {
@@ -148,81 +149,81 @@ enum KeyCode : uint16_t {
     Menu = 348
 };
 
-static std::map<std::string, KeyCode> mapping;
+struct Mapping {
+    std::map<std::string, KeyCode> mapping;
 
-static inline void default_keys() {
-    mapping["Up"] = KeyCode::W;
-    mapping["Down"] = KeyCode::S;
-    mapping["Left"] = KeyCode::A;
-    mapping["Right"] = KeyCode::D;
+    Mapping() { load_keys(); }
 
-    mapping["Rotate Clockwise"] = KeyCode::E;
-    mapping["Rotate Counterclockwise"] = KeyCode::Q;
+    void default_keys() {
+        mapping["Up"] = KeyCode::W;
+        mapping["Down"] = KeyCode::S;
+        mapping["Left"] = KeyCode::A;
+        mapping["Right"] = KeyCode::D;
 
-    mapping["1"] = KeyCode::D1;
-    mapping["2"] = KeyCode::D2;
+        mapping["Rotate Clockwise"] = KeyCode::E;
+        mapping["Rotate Counterclockwise"] = KeyCode::Q;
 
-    // widget control things
-    mapping["Widget Next"] = KeyCode::Tab;
-    mapping["Widget Mod"] = KeyCode::LeftShift;
-    mapping["Widget Press"] = KeyCode::Enter;
-    mapping["Value Up"] = KeyCode::Up;
-    mapping["Value Down"] = KeyCode::Down;
+        mapping["1"] = KeyCode::D1;
+        mapping["2"] = KeyCode::D2;
 
-    mapping["Command Enter"] = KeyCode::Enter;
-    mapping["Toggle Debugger"] = KeyCode::GraveAccent;  // tilde
-    mapping["Exit Debugger"] = KeyCode::Escape;
+        // widget control things
+        mapping["Widget Next"] = KeyCode::Tab;
+        mapping["Widget Mod"] = KeyCode::LeftShift;
+        mapping["Widget Press"] = KeyCode::Enter;
+        mapping["Value Up"] = KeyCode::Up;
+        mapping["Value Down"] = KeyCode::Down;
 
-    mapping["Text Backspace"] = KeyCode::Backspace;
-    mapping["Text Space"] = KeyCode::Space;
+        mapping["Command Enter"] = KeyCode::Enter;
+        mapping["Toggle Debugger"] = KeyCode::GraveAccent;  // tilde
+        mapping["Exit Debugger"] = KeyCode::Escape;
 
-    mapping["Open Profiler"] = KeyCode::P;
-    mapping["Show Entity Overlay"] = KeyCode::Insert;
-    mapping["Profiler Hide Filenames"] = KeyCode::Delete;
-    mapping["Profiler Clear Stats"] = KeyCode::LeftControl;
+        mapping["Text Backspace"] = KeyCode::Backspace;
+        mapping["Text Space"] = KeyCode::Space;
 
-    mapping["Esc"] = KeyCode::Escape;
-    mapping["Enter"] = KeyCode::Enter;
-    // TODO support keybindings that are multiple keys pressed at once?
-}
+        mapping["Open Profiler"] = KeyCode::P;
+        mapping["Show Entity Overlay"] = KeyCode::Insert;
+        mapping["Profiler Hide Filenames"] = KeyCode::Delete;
+        mapping["Profiler Clear Stats"] = KeyCode::LeftControl;
 
-// This is actually being used in App.h
-// but Coc::Clang doesnt seem to care :)
-__attribute__((unused))  //
-static void
-load_keys() {
-    // load default keys
-    default_keys();
-    // load keybindings from file
-    std::ifstream ifs("./resources/keybindings.ini");
-    if (!ifs.is_open()) {
-        log_warn("failed to find keybindings file");
-        return;
-    }
-    std::string line;
-    while (getline(ifs, line)) {
-        auto tokens = split(line, ",");
-        mapping[tokens[0]] = static_cast<KeyCode>(std::stoi(tokens[1]));
-    }
-    ifs.close();
-}
-
-// This is actually being used in App.h
-// but Coc::Clang doesnt seem to care :)
-__attribute__((unused))  //
-static void
-export_keys() {
-    std::ofstream ofs("./resources/keybindings.ini");
-    if (!ofs.is_open()) {
-        log_warn("failed to write to keybindings file");
-        return;
+        mapping["Esc"] = KeyCode::Escape;
+        mapping["Enter"] = KeyCode::Enter;
+        // TODO support keybindings that are multiple keys pressed at once?
     }
 
-    for (auto const& kv : mapping) {
-        ofs << kv.first << "," << kv.second << std::endl;
+    void load_keys() {
+        // load default keys
+        default_keys();
+        // load keybindings from file
+        std::ifstream ifs("./resources/keybindings.ini");
+        if (!ifs.is_open()) {
+            log_warn("failed to find keybindings file");
+            return;
+        }
+        std::string line;
+
+        while (getline(ifs, line)) {
+            auto tokens = split(line, ",");
+            mapping[tokens[0]] = static_cast<KeyCode>(std::stoi(tokens[1]));
+        }
+        ifs.close();
     }
 
-    ofs.close();
-}
+    void export_keys() {
+        std::ofstream ofs("./resources/keybindings.ini");
+        if (!ofs.is_open()) {
+            log_warn("failed to write to keybindings file");
+            return;
+        }
+
+        for (auto const& kv : mapping) {
+            ofs << kv.first << "," << kv.second << std::endl;
+        }
+
+        ofs.close();
+    }
+};
+
+void initMapping();
+KeyCode getMapping(const char* keyname);
 
 }  // namespace Key

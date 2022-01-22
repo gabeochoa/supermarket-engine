@@ -27,24 +27,24 @@ void OrthoCamera::updateViewMat() {
 void OrthoCameraController::onUpdate(Time dt) {
     prof give_me_a_name(__PROFILE_FUNC__);
     if (movementEnabled) {
-        if (Input::isKeyPressed(Key::mapping["Left"])) {
+        if (Input::isKeyPressed(Key::getMapping("Left"))) {
             this->camera.position.x -= camSpeed * dt;
         }
-        if (Input::isKeyPressed(Key::mapping["Right"])) {
+        if (Input::isKeyPressed(Key::getMapping("Right"))) {
             this->camera.position.x += camSpeed * dt;
         }
-        if (Input::isKeyPressed(Key::mapping["Down"])) {
+        if (Input::isKeyPressed(Key::getMapping("Down"))) {
             this->camera.position.y -= camSpeed * dt;
         }
-        if (Input::isKeyPressed(Key::mapping["Up"])) {
+        if (Input::isKeyPressed(Key::getMapping("Up"))) {
             this->camera.position.y += camSpeed * dt;
         }
     }
     if (rotationEnabled) {
-        if (Input::isKeyPressed(Key::mapping["Rotate Clockwise"])) {
+        if (Input::isKeyPressed(Key::getMapping("Rotate Clockwise"))) {
             this->camera.rotation += rotSpeed * dt;
         }
-        if (Input::isKeyPressed(Key::mapping["Rotate Counterclockwise"])) {
+        if (Input::isKeyPressed(Key::getMapping("Rotate Counterclockwise"))) {
             this->camera.rotation -= rotSpeed * dt;
         }
     }

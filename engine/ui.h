@@ -456,10 +456,10 @@ struct UIContext {
     bool lmouseDown;
 
     const std::set<Key::KeyCode> widgetKeys = {{
-        Key::mapping["Widget Next"],
-        Key::mapping["Widget Press"],
-        Key::mapping["Value Up"],
-        Key::mapping["Value Down"],
+        Key::getMapping("Widget Next"),
+        Key::getMapping("Widget Press"),
+        Key::getMapping("Value Up"),
+        Key::getMapping("Value Down"),
     }};
     uuid kbFocusID;
     Key::KeyCode key;
@@ -467,7 +467,7 @@ struct UIContext {
     uuid lastProcessed;
 
     const std::set<Key::KeyCode> textfieldMod = std::set<Key::KeyCode>({
-        Key::mapping["Text Backspace"],
+        Key::getMapping("Text Backspace"),
     });
     Key::KeyCode keychar;
     Key::KeyCode modchar;
@@ -487,7 +487,7 @@ struct UIContext {
         if (widgetKeys.count(static_cast<Key::KeyCode>(event.keycode)) == 1) {
             key = static_cast<Key::KeyCode>(event.keycode);
         }
-        if (event.keycode == Key::mapping["Widget Mod"]) {
+        if (event.keycode == Key::getMapping("Widget Mod")) {
             mod = static_cast<Key::KeyCode>(event.keycode);
         }
         if (textfieldMod.count(static_cast<Key::KeyCode>(event.keycode)) == 1) {
@@ -718,9 +718,9 @@ bool button(const uuid id, WidgetConfig config) {
 
     }  // end render
     if (has_kb_focus(id)) {
-        if (get()->pressed(Key::mapping["Widget Next"])) {
+        if (get()->pressed(Key::getMapping("Widget Next"))) {
             get()->kbFocusID = rootID;
-            if (Input::isKeyPressed(Key::mapping["Widget Mod"])) {
+            if (Input::isKeyPressed(Key::getMapping("Widget Mod"))) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
@@ -729,7 +729,7 @@ bool button(const uuid id, WidgetConfig config) {
     get()->lastProcessed = id;
     // check click
     if (has_kb_focus(id)) {
-        if (get()->pressed(Key::mapping["Widget Press"])) {
+        if (get()->pressed(Key::getMapping("Widget Press"))) {
             return true;
         }
     }
@@ -790,12 +790,12 @@ bool button_list(const uuid id, WidgetConfig config,
         children_have_focus |= has_kb_focus(ids[i]);
     }
 
-    if (get()->pressed(Key::mapping["Value Up"])) {
+    if (get()->pressed(Key::getMapping("Value Up"))) {
         state->selected = state->selected - 1;
         if (state->selected < 0) state->selected = 0;
     }
 
-    if (get()->pressed(Key::mapping["Value Down"])) {
+    if (get()->pressed(Key::getMapping("Value Down"))) {
         state->selected = state->selected + 1;
         if (state->selected > (int)configs.size() - 1)
             state->selected = configs.size() - 1;
@@ -854,12 +854,12 @@ bool dropdown(const uuid id, WidgetConfig config,
             }
         }
 
-        if (get()->pressed(Key::mapping["Value Up"])) {
+        if (get()->pressed(Key::getMapping("Value Up"))) {
             state->selected = state->selected - 1;
             if (state->selected < 0) state->selected = 0;
         }
 
-        if (get()->pressed(Key::mapping["Value Down"])) {
+        if (get()->pressed(Key::getMapping("Value Down"))) {
             state->selected = state->selected + 1;
             if (state->selected > (int)configs.size() - 1)
                 state->selected = configs.size() - 1;
@@ -981,24 +981,24 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
 
     // all drawing has to happen before this ///
     if (has_kb_focus(id)) {
-        if (get()->pressed(Key::mapping["Widget Next"])) {
+        if (get()->pressed(Key::getMapping("Widget Next"))) {
             get()->kbFocusID = rootID;
-            if (Input::isKeyPressed(Key::mapping["Widget Mod"])) {
+            if (Input::isKeyPressed(Key::getMapping("Widget Mod"))) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
-        if (get()->pressed(Key::mapping["Widget Press"])) {
+        if (get()->pressed(Key::getMapping("Widget Press"))) {
             (*value) = state->value;
             return true;
         }
-        if (Input::isKeyPressed(Key::mapping["Value Up"])) {
+        if (Input::isKeyPressed(Key::getMapping("Value Up"))) {
             state->value = state->value + 0.005;
             if (state->value > mxf) state->value = mxf;
 
             (*value) = state->value;
             return true;
         }
-        if (Input::isKeyPressed(Key::mapping["Value Down"])) {
+        if (Input::isKeyPressed(Key::getMapping("Value Down"))) {
             state->value = state->value - 0.005;
             if (state->value < mnf) state->value = mnf;
             (*value) = state->value;
@@ -1100,9 +1100,9 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     bool changed = false;
 
     if (has_kb_focus(id)) {
-        if (get()->pressed(Key::mapping["Widget Next"])) {
+        if (get()->pressed(Key::getMapping("Widget Next"))) {
             get()->kbFocusID = rootID;
-            if (Input::isKeyPressed(Key::mapping["Widget Mod"])) {
+            if (Input::isKeyPressed(Key::getMapping("Widget Mod"))) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
@@ -1110,7 +1110,7 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
             state->buffer.asT().append(std::wstring(1, get()->keychar));
             changed = true;
         }
-        if (get()->modchar == Key::mapping["Text Backspace"]) {
+        if (get()->modchar == Key::getMapping("Text Backspace")) {
             if (state->buffer.asT().size() > 0) {
                 state->buffer.asT().pop_back();
             }
@@ -1159,7 +1159,7 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
                 EDITOR_COMMANDS.tabComplete(to_string(state->buffer));
             state->selected = 0;
         }
-        if (get()->pressed(Key::mapping["Command Enter"])) {
+        if (get()->pressed(Key::getMapping("Command Enter"))) {
             // Any concerned about non english characters?
             EDITOR_COMMANDS.triggerCommand(to_string(state->buffer.asT()));
             state->buffer.asT().clear();
@@ -1169,11 +1169,11 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
         }
         // TODO how to do tab completion without tab access ?
         // TODO probably make a separate mapping for this
-        if (get()->pressed(Key::mapping["Value Up"])) {
+        if (get()->pressed(Key::getMapping("Value Up"))) {
             state->buffer.asT() =
                 to_wstring(EDITOR_COMMANDS.command_history.back());
         }
-        if (get()->pressed(Key::mapping["Value Down"])) {
+        if (get()->pressed(Key::getMapping("Value Down"))) {
             state->buffer.asT().clear();
         }
     } else {
