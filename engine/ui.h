@@ -395,6 +395,10 @@ struct DrawerState : public ToggleState {
     State<float> heightPct;
 };
 
+struct ScrollViewState : public UIState {
+    State<float> yoffset;
+};
+
 struct PlusMinusButtonState : public UIState {
     State<float> value;
 };
@@ -501,6 +505,18 @@ struct UIContext {
                          std::placeholders::_1);
     }
 
+    float yscrolled;
+    bool processMouseScrolled(Mouse::MouseScrolledEvent& event) {
+        yscrolled = event.GetYOffset();
+        return true;
+    }
+
+    std::function<bool(Mouse::MouseScrolledEvent&)>
+    getOnMouseScrolledHandler() {
+        return std::bind(&UIContext::processMouseScrolled, this,
+                         std::placeholders::_1);
+    }
+
     void init() {
 #ifdef SUPERMARKET_HOUSEKEEPING
         inited = true;
@@ -604,6 +620,8 @@ struct WidgetConfig {
     bool temporary = false;
 };
 
+typedef std::function<void(WidgetConfig)> Child;
+
 template <typename T>
 std::shared_ptr<T> widget_init(const uuid id) {
     std::shared_ptr<T> state = get()->statemanager.getAndCreateIfNone<T>(id);
@@ -690,6 +708,7 @@ bool button(const uuid id, WidgetConfig config) {
                 draw_ui_widget(config.position, config.size, red,
                                config.texture, config.rotation);
             } else {
+                // Hovered
                 draw_ui_widget(config.position, config.size, green,
                                config.texture, config.rotation);
             }
@@ -1204,6 +1223,60 @@ bool drawer(const uuid id, WidgetConfig config, float* pct_open = nullptr) {
     if (pct_open) *pct_open = state->heightPct;
     // return if drawer should render children
     if (state->heightPct > 0.9) return true;
+    return false;
+}
+
+bool scroll_view(const uuid id, WidgetConfig config,
+                 std::vector<Child> children, float itemHeight,
+                 int* startingIndex = nullptr) {
+    auto state = widget_init<ScrollViewState>(id);
+    if (startingIndex) state->yoffset = (*startingIndex) * itemHeight;
+
+    bool inside = isMouseInside(glm::vec4{config.position, config.size});
+    // everything is drawn from the center so move it so its not the center that
+    // way the mouse collision works
+    config.position.x += config.size.x / 2.f;
+    config.position.y += config.size.y / 2.f;
+    if (inside) {
+        get()->hotID = id;
+    }
+
+    // TODO add scrollbar
+    int itemsInFrame = ceil(config.size.y / itemHeight);
+    int numItems = children.size() - itemsInFrame;
+
+    if (get()->hotID == id) {
+        // mouse over our window
+        state->yoffset = state->yoffset - get()->yscrolled;
+        state->yoffset = fmin(state->yoffset, numItems * itemHeight);
+        state->yoffset = fmax(state->yoffset, 0);
+        get()->yscrolled = 0.f;
+    }
+
+    draw_ui_widget(config.position, config.size, config.color, config.texture,
+                   config.rotation);
+
+    int startIndex = ceil(state->yoffset / itemHeight);
+    int endIndex = startIndex + itemsInFrame;
+
+    for (int i = startIndex; i < endIndex; i++) {
+        if (i < 0) continue;
+        if (i >= (int)children.size()) break;
+
+        float ypos =                           //
+            config.position.y                  // global alignment with box
+            + (itemHeight)                     // align with top of box
+            - (itemHeight * (i - startIndex))  // move into box
+            ;
+
+        children[i](WidgetConfig({
+            .position =
+                glm::vec2{config.position.x - config.size.x / 2.f, ypos},
+            .size = glm::vec2{0.f, itemHeight},
+        }));
+    }
+
+    if (startingIndex) *startingIndex = ceil(state->yoffset / itemHeight);
     return false;
 }
 
