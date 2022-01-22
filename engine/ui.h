@@ -1232,6 +1232,9 @@ bool scroll_view(const uuid id, WidgetConfig config,
     // TODO is there a way for us to render all of this to a separate texture?
     // then we can just hide part of it on the gpu based on y position or
     // something
+
+    // TODO smooth scrolling
+
     auto state = widget_init<ScrollViewState>(id);
     if (startingIndex) state->yoffset = (*startingIndex) * itemHeight;
 
