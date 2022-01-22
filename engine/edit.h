@@ -34,7 +34,8 @@ struct EditorCommands {
         addToOutputHistory("Help:");
         for (auto kv : help) {
             addToOutputHistory(fmt::format("{}", kv.first));
-            addToOutputHistory(fmt::format("\t{}", kv.second));
+            addToOutputHistory(
+                fmt::format("{0}{0}{0}{1}", "\t\t\t", kv.second));
         }
     }
 
@@ -42,7 +43,7 @@ struct EditorCommands {
     void globalsCommand() {
         addToOutputHistory("Globals:");
         for (auto kv : GLOBALS.globals) {
-            addToOutputHistory(fmt::format("{}", kv.first));
+            addToOutputHistory(fmt::format("{0}{0}{0}{1}", "\t\t\t", kv.first));
         }
     }
 
@@ -58,6 +59,14 @@ struct EditorCommands {
         }
         if (command == "globals") {
             globalsCommand();
+            return true;
+        }
+        if (command == "clear") {
+            // TODO this relies on knowing how tall the terminal is
+            // and probably the resolution...
+            // can we just do like \033[2J or something somehow
+
+            for (int i = 0; i < 12; i++) addToOutputHistory(" ");
             return true;
         }
 
@@ -79,8 +88,8 @@ struct EditorCommands {
                 return;
             }
             addToOutputHistory(fmt::format(
-                "command run was not valid: {} (came from input {})", command,
-                line));
+                "command run was not valid: \"{}\" (came from input \"{}\")",
+                command, line));
             return;
         }
         ActionFuncType aft = it->second;
@@ -96,9 +105,7 @@ struct EditorCommands {
     }
 
     void addToOutputHistory(std::string msg) {
-        // TODO output to terminal
         if (msg.size() == 0) return;
-        log_info("TERMINAL OUTPUT......{}", msg);
         for (auto line : split(msg, "\n")) {
             output_history.push_back(line);
         }

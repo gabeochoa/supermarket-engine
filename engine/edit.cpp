@@ -31,6 +31,8 @@ void EditorCommands::init_default_commands() {
     help["help"] = "<3";
     commandtrie.add("globals");
     help["globals"] = "Prints all registered globals";
+    commandtrie.add("clear");
+    help["clear"] = "Clears screen";
 }
 
 void EditorCommands::registerCommand(std::string name, ActionFuncType cmd,
