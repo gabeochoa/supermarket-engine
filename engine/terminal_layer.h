@@ -60,7 +60,7 @@ struct TerminalLayer : public Layer {
     std::array<glm::vec2, 2> getPositionSizeForUIRect(glm::vec4 uirect) {
         glm::vec2 position = convertUIPos(glm::vec2{uirect.x, uirect.y});
         glm::vec2 size = convertUIPos(glm::vec2{uirect.z, uirect.w});
-        return std::array{
+        return std::array<glm::vec2, 2>{
             position + (size * 0.5f),
             size,
         };

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <atomic>
+#include <optional>
 
 #include "pch.hpp"
 #include "renderer.h"
