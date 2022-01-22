@@ -8,6 +8,10 @@ inline glm::vec2 lerp(const glm::vec2& x, const glm::vec2& y, float t) {
     return x * (1.f - t) + y * t;
 }
 
+inline glm::vec4 lerp(const glm::vec4& x, const glm::vec4& y, float t) {
+    return x * (1.f - t) + y * t;
+}
+
 inline glm::vec2 gen_rand_vec2(float min, float max) {
     return {
         glm::linearRand(min, max),

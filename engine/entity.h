@@ -4,10 +4,10 @@
 #include <atomic>
 #include <optional>
 
-#include "pch.hpp"
-#include "renderer.h"
 #include "globals.h"
 #include "navmesh.h"
+#include "pch.hpp"
+#include "renderer.h"
 
 struct Storable;
 

@@ -34,3 +34,5 @@ T round_lower(T val) {
 inline bool close(float a, float b) {
     return abs(a - b) < std::numeric_limits<float>::epsilon();
 }
+
+inline float lerp(float x, float y, float t) { return x * (1.f - t) + y * t; }
