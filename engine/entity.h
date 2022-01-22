@@ -201,6 +201,7 @@ struct EntityHelper {
 
     static void forEachEntity(std::function<void(std::shared_ptr<Entity>)> cb) {
         for (auto e : entities_DO_NOT_USE) {
+            if (!e) continue;
             cb(e);
         }
     }
