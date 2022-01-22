@@ -7,11 +7,16 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 App& App::get() { return *GLOBALS.get_ptr<App>("app"); }
+AppSettings& App::getSettings() {
+    return *GLOBALS.get_ptr<AppSettings>("__engine__app_settings");
+}
 
 void App::create(AppSettings settings) {
     App* app = new App(settings);
     app__DO_NOT_USE.reset(app);
     GLOBALS.set<App>("app", app);
+    GLOBALS.set<AppSettings>("__engine__app_settings",
+                             &app__DO_NOT_USE->settings);
 }
 
 App::App(AppSettings settings) {
@@ -19,6 +24,8 @@ App::App(AppSettings settings) {
     isMinimized = false;
     running = true;
     GLOBALS.set<bool>("__engine__app_running", &running);
+
+    this->settings.ratio = 1.f * settings.width / settings.height;
 
     WindowConfig config;
     config.width = settings.width;
@@ -58,6 +65,9 @@ bool App::onWindowResized(WindowResizeEvent& event) {
     }
     isMinimized = false;
     Renderer::resize(event.width(), event.height());
+    this->settings.width = event.width();
+    this->settings.height = event.height();
+    this->settings.ratio = 1.f * this->settings.width / this->settings.height;
     return false;
 }
 

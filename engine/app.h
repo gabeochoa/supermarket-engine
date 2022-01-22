@@ -20,6 +20,7 @@
 struct AppSettings {
     int width;
     int height;
+    float ratio = 0.f;
     const char* title;
     // should the app manager clear before drawing layers?
     bool clearEnabled = false;
@@ -36,8 +37,9 @@ struct App {
     bool running;
     LayerStack layerstack;
 
-    static void create(AppSettings settings) ;
+    static void create(AppSettings settings);
     static App& get();
+    static AppSettings& getSettings();
 
     App(AppSettings settings);
     ~App();
@@ -52,7 +54,6 @@ struct App {
     int run();
 };
 
-
-[[deprecated("You should use App::get()")]] 
-static std::shared_ptr<App> app__DO_NOT_USE;
+[[deprecated("You should use App::get()")]] static std::shared_ptr<App>
+    app__DO_NOT_USE;
 
