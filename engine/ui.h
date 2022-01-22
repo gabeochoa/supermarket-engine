@@ -1229,6 +1229,9 @@ bool drawer(const uuid id, WidgetConfig config, float* pct_open = nullptr) {
 bool scroll_view(const uuid id, WidgetConfig config,
                  std::vector<Child> children, float itemHeight,
                  int* startingIndex = nullptr) {
+    // TODO is there a way for us to render all of this to a separate texture?
+    // then we can just hide part of it on the gpu based on y position or
+    // something
     auto state = widget_init<ScrollViewState>(id);
     if (startingIndex) state->yoffset = (*startingIndex) * itemHeight;
 
@@ -1247,26 +1250,35 @@ bool scroll_view(const uuid id, WidgetConfig config,
 
     if (get()->hotID == id) {
         // mouse over our window
-        state->yoffset = state->yoffset - get()->yscrolled;
+        float newoff =                    //
+            (config.flipTextY ? -1 : -1)  //
+            * (config.size.y * 0.5f)      //
+            * get()->yscrolled;
+        state->yoffset = state->yoffset + newoff;
         state->yoffset = fmin(state->yoffset, numItems * itemHeight);
         state->yoffset = fmax(state->yoffset, 0);
         get()->yscrolled = 0.f;
     }
 
-    draw_ui_widget(config.position, config.size, config.color, config.texture,
-                   config.rotation);
-
+    if (!config.transparent) {
+        draw_ui_widget(config.position, config.size, config.color,
+                       config.texture, config.rotation);
+    }
     int startIndex = ceil(state->yoffset / itemHeight);
     int endIndex = startIndex + itemsInFrame;
+
+    float dir = config.flipTextY ? -1 : 1;
+    float startPos = config.position.y;
+    if (config.flipTextY) startPos -= 3.5f * itemHeight;
+    startPos += (dir * itemHeight);  // align with top of box
 
     for (int i = startIndex; i < endIndex; i++) {
         if (i < 0) continue;
         if (i >= (int)children.size()) break;
 
-        float ypos =                           //
-            config.position.y                  // global alignment with box
-            + (itemHeight)                     // align with top of box
-            - (itemHeight * (i - startIndex))  // move into box
+        float ypos =  //
+            startPos  // global alignment with box
+            - (dir * itemHeight * (i - startIndex))  // move into box
             ;
 
         children[i](WidgetConfig({
