@@ -199,19 +199,31 @@ struct EntityHelper {
         }
     }
 
-    static void forEachEntity(std::function<void(std::shared_ptr<Entity>)> cb) {
+    enum ForEachFlow {
+        None = 0,
+        Continue = 1,
+        Break = 2,
+    };
+
+    static void forEachEntity(
+        std::function<ForEachFlow(std::shared_ptr<Entity>)> cb) {
         for (auto e : entities_DO_NOT_USE) {
             if (!e) continue;
-            cb(e);
+            auto fef = cb(e);
+            if (fef == 1) continue;
+            if (fef == 2) break;
         }
     }
 
+    // TODO add support for break / continue with cb return value
     template <typename T>
-    static void forEach(std::function<void(std::shared_ptr<T>)> cb) {
+    static void forEach(std::function<ForEachFlow(std::shared_ptr<T>)> cb) {
         for (auto e : entities_DO_NOT_USE) {
             auto t = dynamic_pointer_cast<T>(e);
             if (!t) continue;
-            cb(t);
+            auto fef = cb(t);
+            if (fef == 1) continue;
+            if (fef == 2) break;
         }
     }
 
