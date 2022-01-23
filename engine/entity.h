@@ -239,6 +239,17 @@ struct EntityHelper {
     }
 
     template <typename T>
+    static int numEntitiesOfType() {
+        int count = 0;
+        for (auto e : entities_DO_NOT_USE) {
+            auto t = dynamic_pointer_cast<T>(e);
+            if (!t) continue;
+            count++;
+        }
+        return count;
+    }
+
+    template <typename T>
     static constexpr std::shared_ptr<T> getRandomEntity(
         const glm::vec2& notpos = {-99.f, -99.f}) {
         std::vector<std::shared_ptr<T>> matching;
