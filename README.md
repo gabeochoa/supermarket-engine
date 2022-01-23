@@ -78,6 +78,8 @@ Engine Ideas
      https://github.com/caryll/otfcc
 - add a default texture that isnt just white
      make it obvious that the texture you are trying to draw doesnt exist
+- smoke / water 
+    https://www.dgp.toronto.edu/public_user/stam/reality/Research/pdf/GDC03.pdf
 ```
 
 
