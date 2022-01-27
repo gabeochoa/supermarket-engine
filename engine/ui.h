@@ -14,10 +14,11 @@ needs to happen once on startup, dont call it every frame.
 
 // TODO: if you have two functions
 // render(){ ui1(); ui2();}
-// calling begin()/end() in both ui1 and ui2 breaks active/hot since its a shared context 
+// calling begin()/end() in both ui1 and ui2 breaks active/hot since its a
+shared context
 // so instead you have to render(){ begin(); ui1(); ui2(); end();}
 //
-// Is this what we want? 
+// Is this what we want?
 //
 
 To create a UI widget:
@@ -637,7 +638,7 @@ std::shared_ptr<T> widget_init(const uuid id) {
         log_error(
             "State for id ({}) of wrong type, expected {}. Check to "
             "make sure your id's are globally unique",
-            id, type_name<T>());
+            std::string(id), type_name<T>());
     }
     return state;
 }
@@ -740,7 +741,7 @@ bool button(const uuid id, WidgetConfig config) {
                 config.position + glm::vec2{(-config.size.x / 2.f) + 0.10f,
                                             config.size.y * sign * 0.5f};
             textConfig.size = 0.75f * glm::vec2{config.size.y, config.size.y};
-            text(MK_UUID(id.owner), textConfig);
+            text(MK_UUID(id.ownerLayer, 0), textConfig);
         }
 
     }  // end render
@@ -772,7 +773,7 @@ bool button_with_label(const uuid id, WidgetConfig config) {
     if (config.text == "") {
         // apply offset so text is relative to button position
         config.child->position += config.position;
-        text(MK_UUID(id.owner), *config.child);
+        text(MK_UUID(id.ownerLayer, 0), *config.child);
     }
     return pressed;
 }
@@ -790,7 +791,7 @@ bool button_list(const uuid id, WidgetConfig config,
     // Generate all the button ids
     std::vector<uuid> ids;
     for (size_t i = 0; i < configs.size(); i++) {
-        ids.push_back(MK_UUID_LOOP(id.owner, i));
+        ids.push_back(MK_UUID_LOOP(id.ownerLayer, 0, i));
     }
 
     for (size_t i = 0; i < configs.size(); i++) {
@@ -861,7 +862,7 @@ bool dropdown(const uuid id, WidgetConfig config,
         float sign = config.flipTextY ? 1.f : -1.f;
 
         for (size_t i = 0; i < configs.size(); i++) {
-            uuid button_id = MK_UUID_LOOP(id.owner, i);
+            uuid button_id = MK_UUID_LOOP(id.ownerLayer, id.hash, i);
             if (*selectedIndex == static_cast<int>(i)) {
                 get()->kbFocusID = button_id;
             }
@@ -898,7 +899,7 @@ bool dropdown(const uuid id, WidgetConfig config,
     // offset the V a little more than ^ in order to make it look nice
     auto offset = glm::vec2{config.size.x - (state->on ? 1.f : 1.6f),
                             config.size.y * -0.25f};
-    text(MK_UUID(id.owner),
+    text(MK_UUID(id.ownerLayer, id.hash),
          WidgetConfig({.rotation = state->on ? 90.f : 270.f,
                        .text = ">",
                        .flipTextY = config.flipTextY,
@@ -932,7 +933,7 @@ bool checkbox(const uuid id, WidgetConfig config, bool* cbState = nullptr) {
         .position = config.position,  //
         .size = config.size,          //
     });
-    if (button_with_label(MK_UUID(id.owner), conf)) {
+    if (button_with_label(MK_UUID(id.ownerLayer, id.hash), conf)) {
         state->checked = !state->checked;
         changed = true;
     }
@@ -1113,14 +1114,15 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
         std::wstring focused_content =
             fmt::format(L"{}{}", state->buffer.asT(), focusStr);
 
-        text(MK_UUID(id.owner), WidgetConfig({
-                                    .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
-                                    .position = tStartLocation,
-                                    .size = glm::vec2{tSize},
-                                    .text = to_string(focused_content),
-                                    .flipTextY = config.flipTextY,
-                                    .temporary = true,
-                                }));
+        text(MK_UUID(id.ownerLayer, id.hash),
+             WidgetConfig({
+                 .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+                 .position = tStartLocation,
+                 .size = glm::vec2{tSize},
+                 .text = to_string(focused_content),
+                 .flipTextY = config.flipTextY,
+                 .temporary = true,
+             }));
 
     }  // end render
 
@@ -1166,7 +1168,8 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
             autocompConfigs.push_back(WidgetConfig({.text = ac}));
         }
 
-        if (button_list(MK_UUID(id.owner), config, autocompConfigs, &si)) {
+        if (button_list(MK_UUID(id.ownerLayer, id.hash), config,
+                        autocompConfigs, &si)) {
             state->buffer.asT() = to_wstring(state->autocomp.asT().at(si));
             state->autocomp.asT().clear();
         }
@@ -1317,20 +1320,20 @@ inline bool plusMinusButton(const uuid id, WidgetConfig config,
     config.position += glm::vec2{0, +config.size.y};
     config.text = ">";
     config.rotation = 270.f;
-    if (button(MK_UUID(id.owner), config)) {
+    if (button(MK_UUID(id.ownerLayer, id.hash), config)) {
         state->value = state->value + increment;
         changed = true;
     }
 
     config.rotation = 90.f;
     config.position.y -= config.size.y * 2;
-    if (button(MK_UUID(id.owner), config)) {
+    if (button(MK_UUID(id.ownerLayer, id.hash), config)) {
         state->value = state->value + increment;
         changed = true;
     }
 
     original.position.x += config.size.x;
-    text(MK_UUID(id.owner), original);
+    text(MK_UUID(id.ownerLayer, id.hash), original);
 
     // TODO allow support for setting these
     state->value = fmaxf(0, state->value);

@@ -18,58 +18,69 @@ namespace IUI {
 // thx
 
 struct uuid {
-    int owner;
+    int ownerLayer;
     std::size_t hash;
 
-    uuid() : uuid(-99, "__MAGIC__STRING__", -1) {}
-    uuid(const std::string& s1, int i1) : uuid(-1, s1, i1) {}
+    uuid() : uuid(-99, 0, "__MAGIC__STRING__", -1) {}
+    uuid(const std::string& s1, int i1) : uuid(-1, 0, s1, i1) {}
 
-    uuid(int o, const std::string& s1, int i1) {
-        owner = o;
+    uuid(int layer, std::size_t ownerHash, const std::string& s1, int i1) {
+        ownerLayer = layer;
+        auto h0 = std::hash<int>{}(ownerHash);
         auto h1 = std::hash<std::string>{}(s1);
         auto h2 = std::hash<int>{}(i1);
-        hash = h1 ^ (h2 << 1);
+        hash = h0 ^ (h1 << 1) ^ (h2 << 2);
     }
 
-    uuid(int o, const std::string& s1, int i1, int index) {
-        owner = o;
+    uuid(int o, std::size_t ownerHash, const std::string& s1, int i1, int index) {
+        ownerLayer = o;
+        auto h0 = std::hash<int>{}(ownerHash);
         auto h1 = std::hash<std::string>{}(s1);
         auto h2 = std::hash<int>{}(i1);
         auto h3 = std::hash<int>{}(index);
-        hash = h1 ^ (h2 << 1) ^ (h3 << 2);
+        hash = h0 ^ (h1 << 1) ^ (h2 << 2) ^ (h3 << 3);
     }
 
     uuid(const uuid& other) { this->operator=(other); }
 
     uuid& operator=(const uuid& other) {
-        this->owner = other.owner;
+        this->ownerLayer= other.ownerLayer;
         this->hash = other.hash;
         return *this;
     }
 
     bool operator==(const uuid& other) const {
-        return owner == other.owner && hash == other.hash;
+        return ownerLayer== other.ownerLayer && hash == other.hash;
     }
 
     bool operator<(const uuid& other) const {
-        if (owner < other.owner) return true;
-        if (owner > other.owner) return false;
+        if (ownerLayer < other.ownerLayer) return true;
+        if (ownerLayer > other.ownerLayer) return false;
         if (hash < other.hash) return true;
         if (hash > other.hash) return false;
         return false;
     }
+
+    operator std::size_t() const{
+        return this->hash;
+    }
+
+    operator std::string() const{
+        return fmt::format("layer: {} hash: {}", this->ownerLayer, this->hash);
+    }
+
 };
 
 std::ostream& operator<<(std::ostream& os, const uuid& obj) {
-    os << fmt::format("owner: {} hash: {}", obj.owner, obj.hash);
+    os << fmt::format("layer: {} hash: {}", obj.ownerLayer, obj.hash);
     return os;
 }
 
-#define MK_UUID(x) uuid(x, __FILE__, __LINE__)
-#define MK_UUID_LOOP(x, index) uuid(x, __FILE__, __LINE__, index)
+#define MK_UUID(x, parent) uuid(x, parent, __FILE__, __LINE__)
+#define MK_UUID_LOOP(x, parent, index) uuid(x, parent, __FILE__, __LINE__, index)
 
-static uuid rootID = MK_UUID(-1);
-static uuid fakeID = MK_UUID(-2);
+static uuid rootID = MK_UUID(-1, -1);
+static uuid fakeID = MK_UUID(-2, -1);
 
 }  // namespace IUI
 

@@ -16,8 +16,8 @@ struct TerminalLayer : public Layer {
     const glm::vec2 camBottomRight = {35.f, -18.f};
     glm::vec4 rect = glm::vec4{200.f, 1000.f, 1500.f, 200.f};
 
-    IUI::uuid drawer_uuid = IUI::MK_UUID(id);
-    IUI::uuid command_field_id = IUI::MK_UUID(id);
+    IUI::uuid drawer_uuid = IUI::MK_UUID(id, IUI::rootID);
+    IUI::uuid command_field_id = IUI::MK_UUID(id, IUI::rootID);
     std::wstring commandContent = L"test";
     float drawerPctOpen = 0.f;
     std::shared_ptr<IUI::UIContext> uicontext;
@@ -112,11 +112,11 @@ struct TerminalLayer : public Layer {
                         config.size.x = p_fs;
                         config.text = content;
                         config.flipTextY = true;
-                        text(MK_UUID_LOOP(0, i), config);
+                        text(MK_UUID_LOOP(0, 0, i), config);
                     });
                 }
 
-                IUI::scroll_view(MK_UUID(id), scrollViewConfig, rows, p_fs,
+                IUI::scroll_view(MK_UUID(id, IUI::rootID), scrollViewConfig, rows, p_fs,
                                  &startingHistoryIndex);
 
                 uicontext->kbFocusID = command_field_id;
