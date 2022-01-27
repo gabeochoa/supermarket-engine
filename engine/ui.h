@@ -791,7 +791,7 @@ bool button_list(const uuid id, WidgetConfig config,
     // Generate all the button ids
     std::vector<uuid> ids;
     for (size_t i = 0; i < configs.size(); i++) {
-        ids.push_back(MK_UUID_LOOP(id.ownerLayer, 0, i));
+        ids.push_back(MK_UUID_LOOP(id.ownerLayer, id.hash, i));
     }
 
     for (size_t i = 0; i < configs.size(); i++) {
@@ -844,54 +844,12 @@ bool dropdown(const uuid id, WidgetConfig config,
     config.text = configs[state->selected].text;
 
     if (state->on) {
-        // TODO: we CANNOT call any widgets with state
-        // from within a widget in ui.h
-        //
-        // for example this code below is the same as button_list
-        // but if it were replaced it with a call to button_list
-        //
-        //     int si = state->selected;
-        //     if(button_list(MK_UUID(id.owner), config, &si)){
-        //         state->on = false;
-        //     }
-        //     state->selected = si;
-        //
-        //  then any dropdown or button_list would share the same state
-        //  which obv would probably not be good
-        float spacing = config.size.y * 1.0f;
-        float sign = config.flipTextY ? 1.f : -1.f;
-
-        for (size_t i = 0; i < configs.size(); i++) {
-            uuid button_id = MK_UUID_LOOP(id.ownerLayer, id.hash, i);
-            if (*selectedIndex == static_cast<int>(i)) {
-                get()->kbFocusID = button_id;
-            }
-            if (button_with_label(
-                    button_id,
-                    WidgetConfig({
-                        .color = config.color,
-                        .position = config.position +
-                                    glm::vec2{0.f, sign * spacing * (i + 1)},
-                        .size = config.size,
-                        .text = configs[i].text,
-                        .flipTextY = config.flipTextY,
-                    }))) {
-                state->selected = i;
-                state->on = false;
-                get()->kbFocusID = id;
-            }
+        int si = state->selected;
+        if (button_list(MK_UUID(id.ownerLayer, id.hash), config, configs,
+                        &si)) {
+            state->on = false;
         }
-
-        if (get()->pressed(Key::getMapping("Value Up"))) {
-            state->selected = state->selected - 1;
-            if (state->selected < 0) state->selected = 0;
-        }
-
-        if (get()->pressed(Key::getMapping("Value Down"))) {
-            state->selected = state->selected + 1;
-            if (state->selected > (int)configs.size() - 1)
-                state->selected = configs.size() - 1;
-        }
+        state->selected = si;
     }
     auto pressed = button(id, config);
 
