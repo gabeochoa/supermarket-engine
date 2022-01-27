@@ -12,6 +12,14 @@ needs to happen once on startup, dont call it every frame.
     uicontext->init();
 ```
 
+// TODO: if you have two functions
+// render(){ ui1(); ui2();}
+// calling begin()/end() in both ui1 and ui2 breaks active/hot since its a shared context 
+// so instead you have to render(){ begin(); ui1(); ui2(); end();}
+//
+// Is this what we want? 
+//
+
 To create a UI widget:
   1. call uicontext->begin to handle set for the frame
   2. create a unique uuid
