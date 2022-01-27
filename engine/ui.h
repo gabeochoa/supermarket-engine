@@ -795,7 +795,7 @@ bool button_list(const uuid id, WidgetConfig config,
     }
 
     for (size_t i = 0; i < configs.size(); i++) {
-        uuid button_id = ids[i];
+        const uuid button_id = ids[i];
         WidgetConfig bwlconfig(config);
         bwlconfig.position =
             config.position + glm::vec2{0.f, sign * spacing * (i + 1)};
@@ -821,12 +821,14 @@ bool button_list(const uuid id, WidgetConfig config,
     if (get()->pressed(Key::getMapping("Value Up"))) {
         state->selected = state->selected - 1;
         if (state->selected < 0) state->selected = 0;
+        get()->kbFocusID = ids[state->selected];
     }
 
     if (get()->pressed(Key::getMapping("Value Down"))) {
         state->selected = state->selected + 1;
         if (state->selected > (int)configs.size() - 1)
             state->selected = configs.size() - 1;
+        get()->kbFocusID = ids[state->selected];
     }
 
     if (children_have_focus) get()->kbFocusID = ids[state->selected];
@@ -843,15 +845,17 @@ bool dropdown(const uuid id, WidgetConfig config,
 
     config.text = configs[state->selected].text;
 
+    auto pressed = button(id, config);
+
     if (state->on) {
         int si = state->selected;
         if (button_list(MK_UUID(id.ownerLayer, id.hash), config, configs,
                         &si)) {
             state->on = false;
+            get()->kbFocusID = id;
         }
         state->selected = si;
     }
-    auto pressed = button(id, config);
 
     // TODO rotation is not really working correctly and so we have to
     // offset the V a little more than ^ in order to make it look nice
@@ -866,10 +870,8 @@ bool dropdown(const uuid id, WidgetConfig config,
     auto ret = *dropdownState != state->on.asT() ||
                *selectedIndex != state->selected.asT() ||
                (pressed && state->on.asT());
-    if (pressed) {
-        state->on = !state->on;
-    }
 
+    if (pressed) state->on = !state->on;
     if (dropdownState) *dropdownState = state->on;
     if (selectedIndex) *selectedIndex = state->selected;
 
