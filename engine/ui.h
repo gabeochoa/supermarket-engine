@@ -390,6 +390,7 @@ struct CommandfieldState : public TextfieldState {
 
 struct ButtonListState : public UIState {
     State<int> selected;
+    State<bool> hasFocus;
 };
 
 struct ToggleState : public UIState {
@@ -780,9 +781,14 @@ bool button_with_label(const uuid id, WidgetConfig config) {
 
 bool button_list(const uuid id, WidgetConfig config,
                  const std::vector<WidgetConfig>& configs,
-                 int* selectedIndex = nullptr) {
+                 int* selectedIndex = nullptr, bool* hasFocus = nullptr) {
     auto state = widget_init<ButtonListState>(id);
     if (selectedIndex) state->selected.set(*selectedIndex);
+
+    // TODO do we ever want to read the value
+    // or do we want to reset focus each frame
+    // if (hasFocus) state->hasFocus.set(*hasFocus);
+    state->hasFocus.set(false);
 
     auto pressed = false;
     float spacing = config.size.y * 1.0f;
@@ -807,15 +813,13 @@ bool button_list(const uuid id, WidgetConfig config,
         }
     }
 
-    // if you already have the focus, then select yourself
-    // otherwise if you are selected, grab focus
-    bool children_have_focus = false;
+    // TODO why are we looping twice im sure there was a reason
     for (size_t i = 0; i < configs.size(); i++) {
         // if you got the kb focus somehow
         // (ie by clicking or tabbing)
         // then we will just make you selected
         if (has_kb_focus(ids[i])) state->selected = i;
-        children_have_focus |= has_kb_focus(ids[i]);
+        state->hasFocus = state->hasFocus | has_kb_focus(ids[i]);
     }
 
     if (get()->pressed(Key::getMapping("Value Up"))) {
@@ -831,7 +835,8 @@ bool button_list(const uuid id, WidgetConfig config,
         get()->kbFocusID = ids[state->selected];
     }
 
-    if (children_have_focus) get()->kbFocusID = ids[state->selected];
+    if (state->hasFocus) get()->kbFocusID = ids[state->selected];
+    if (hasFocus) *hasFocus = state->hasFocus;
     if (selectedIndex) *selectedIndex = state->selected;
     return pressed;
 }
@@ -846,6 +851,10 @@ bool dropdown(const uuid id, WidgetConfig config,
     config.text = configs[state->selected].text;
 
     auto pressed = button(id, config);
+
+    if (has_kb_focus(id)) {
+        state->on = true;
+    }
 
     if (state->on) {
         int si = state->selected;
