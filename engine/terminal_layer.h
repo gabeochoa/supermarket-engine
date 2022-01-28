@@ -104,6 +104,8 @@ struct TerminalLayer : public Layer {
                     .transparent = true,                                   //
                 });
 
+                // TODO how come this doesnt render correctly
+                // until i mouse over it
                 std::vector<IUI::Child> rows;
                 for (size_t i = 0; i < EDITOR_COMMANDS.output_history.size();
                      i++) {
@@ -116,8 +118,8 @@ struct TerminalLayer : public Layer {
                     });
                 }
 
-                IUI::scroll_view(MK_UUID(id, IUI::rootID), scrollViewConfig, rows, p_fs,
-                                 &startingHistoryIndex);
+                IUI::scroll_view(MK_UUID(id, IUI::rootID), scrollViewConfig,
+                                 rows, p_fs, &startingHistoryIndex);
 
                 uicontext->kbFocusID = command_field_id;
                 auto cfsize = glm::vec2{drawer_location[1].x, h1_fs};
