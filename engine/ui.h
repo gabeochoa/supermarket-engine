@@ -486,9 +486,11 @@ struct UIContext {
 
     bool pressed(Key::KeyCode code) {
         bool a = pressedWithoutEat(code);
-        if (a) key = Key::KeyCode();
+        if (a) eatKey();
         return a;
     }
+
+    void eatKey() { key = Key::KeyCode(); }
 
     bool pressedWithoutEat(Key::KeyCode code) const {
         return key == code || mod == code;
@@ -1189,27 +1191,13 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
 
 bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
     auto state = widget_init<CommandfieldState>(id);
+    // TODO can we bold the letters that match in the trie?
 
-    if (state->autocomp.asT().size()) {
-        int si = state->selected;
-        std::vector<WidgetConfig> autocompConfigs;
-        for (auto ac : state->autocomp.asT()) {
-            autocompConfigs.push_back(WidgetConfig({.text = ac}));
-        }
-
-        if (button_list(MK_UUID(id.ownerLayer, id.hash), config,
-                        autocompConfigs, &si)) {
-            state->buffer.asT() = to_wstring(state->autocomp.asT().at(si));
-            state->autocomp.asT().clear();
-        }
-        state->selected = si;
-    }
-
-    // We dont need a separate ID since we want
+    // NOTE: We dont need a separate ID since we want
     // global state to match and for them to have the
     // same keyboard focus
-    auto changed = textfield(id, config, content);
     // TODO should we be passing in content here? or state->buffer?
+    auto changed = textfield(id, config, content);
 
     if (has_kb_focus(id)) {
         if (state->autocomp.asT().empty() || changed) {
@@ -1235,11 +1223,29 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
             }
         }
         if (get()->pressed(Key::getMapping("Value Down"))) {
-            state->buffer.asT().clear();
+            if (state->autocomp.asT().empty()) {
+                state->buffer.asT().clear();
+            }
         }
     } else {
         state->autocomp.asT().clear();
     }
+
+    if (state->autocomp.asT().size()) {
+        int si = state->selected;
+        std::vector<WidgetConfig> autocompConfigs;
+        for (auto ac : state->autocomp.asT()) {
+            autocompConfigs.push_back(WidgetConfig({.text = ac}));
+        }
+
+        if (button_list(MK_UUID(id.ownerLayer, id.hash), config,
+                        autocompConfigs, &si)) {
+            state->buffer.asT() = to_wstring(state->autocomp.asT().at(si));
+            state->autocomp.asT().clear();
+        }
+        state->selected = si;
+    }
+
     // TODO what should we return here,
     // changed? or user ran command
     return false;
