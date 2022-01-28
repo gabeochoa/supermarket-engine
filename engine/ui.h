@@ -815,17 +815,33 @@ bool button_list(const uuid id, WidgetConfig config,
         }
     }
 
-    if (get()->pressed(Key::getMapping("Value Up"))) {
-        state->selected = state->selected - 1;
-        if (state->selected < 0) state->selected = 0;
-        get()->kbFocusID = ids[state->selected];
+    // NOTE: this exists because we only to be able to move
+    // up and down if we are messing with the button list directly
+    // It would be annoying to be focused on the textfield (e.g.)
+    // and pressing up accidentally would unfocus that and bring you to some
+    // random button list somewhere**
+    //
+    // ** in this situation they have to be visible, so no worries about arrow
+    // keying your way into a dropdown
+    //
+    bool somethingFocused = false;
+    for (size_t i = 0; i < configs.size(); i++) {
+        somethingFocused |= has_kb_focus(ids[i]);
     }
 
-    if (get()->pressed(Key::getMapping("Value Down"))) {
-        state->selected = state->selected + 1;
-        if (state->selected > (int)configs.size() - 1)
-            state->selected = configs.size() - 1;
-        get()->kbFocusID = ids[state->selected];
+    if (somethingFocused) {
+        if (get()->pressed(Key::getMapping("Value Up"))) {
+            state->selected = state->selected - 1;
+            if (state->selected < 0) state->selected = 0;
+            get()->kbFocusID = ids[state->selected];
+        }
+
+        if (get()->pressed(Key::getMapping("Value Down"))) {
+            state->selected = state->selected + 1;
+            if (state->selected > (int)configs.size() - 1)
+                state->selected = configs.size() - 1;
+            get()->kbFocusID = ids[state->selected];
+        }
     }
 
     // NOTE: This has to be after value changes so that
