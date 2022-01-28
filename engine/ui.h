@@ -206,8 +206,6 @@ a specific kind of dropdown that allows you to type
 and it filters down to matching items
 
 TODO ButtonGroup
-TODO Do we want to add a dropdown button group?
-TODO Vertical button group?
 
 TODO Radio Buttons
 TODO Toggle Button Group
