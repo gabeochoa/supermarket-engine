@@ -152,7 +152,10 @@ enum KeyCode : uint16_t {
 struct Mapping {
     std::map<std::string, KeyCode> mapping;
 
-    Mapping() { load_keys(); }
+    Mapping() {
+        load_keys();
+        export_keys();
+    }
 
     void default_keys() {
         mapping["Up"] = KeyCode::W;
@@ -176,6 +179,7 @@ struct Mapping {
         mapping["Command Enter"] = KeyCode::Enter;
         mapping["Toggle Debugger"] = KeyCode::GraveAccent;  // tilde
         mapping["Exit Debugger"] = KeyCode::Escape;
+        mapping["Clear Command Line"] = KeyCode::Delete;
 
         mapping["Text Backspace"] = KeyCode::Backspace;
         mapping["Text Space"] = KeyCode::Space;
@@ -209,6 +213,7 @@ struct Mapping {
     }
 
     void export_keys() {
+        log_info("writing out keybindings");
         std::ofstream ofs("./resources/keybindings.ini");
         if (!ofs.is_open()) {
             log_warn("failed to write to keybindings file");
