@@ -1229,8 +1229,10 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
         // TODO how to do tab completion without tab access ?
         // TODO probably make a separate mapping for this
         if (get()->pressed(Key::getMapping("Value Up"))) {
-            state->buffer.asT() =
-                to_wstring(EDITOR_COMMANDS.command_history.back());
+            if (!EDITOR_COMMANDS.command_history.empty()) {
+                state->buffer.asT() =
+                    to_wstring(EDITOR_COMMANDS.command_history.back());
+            }
         }
         if (get()->pressed(Key::getMapping("Value Down"))) {
             state->buffer.asT().clear();
