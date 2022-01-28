@@ -811,6 +811,7 @@ bool button_list(const uuid id, WidgetConfig config,
         bwlconfig.position =
             config.position + glm::vec2{0.f, sign * spacing * (i + 1)};
         bwlconfig.text = configs[i].text;
+        bwlconfig.color = configs[i].color;
 
         if (button_with_label(button_id, bwlconfig)) {
             state->selected = i;
@@ -1202,30 +1203,37 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
 
     // TODO add support for selecting suggestion with keyboard
 
+    // TODO animate cursor blinking
     if (has_kb_focus(id)) {
-        if (get()->pressed(Key::getMapping("Command Enter"))) {
-            // TODO: Any concerns about non english characters?
-            EDITOR_COMMANDS.triggerCommand(to_string(state->buffer.asT()));
+        // TODO is this obvious to the user?
+        //      whats a better way to do this?
+        if (Input::isKeyPressed(Key::getMapping("Clear Command Line"))) {
             state->buffer.asT().clear();
-            state->autocomp.asT().clear();
-            state->selected = 0;
-            // TODO: should we instead have a singular return?
-            return true;
+            state->selected = -1;
+            changed = true;
         }
-        // if its empty or we recently typed something
+
+        if (state->selected == -1 &&
+            get()->pressed(Key::getMapping("Value Down"))) {
+            state->selected = state->selected + 1;
+        }
+
+        // if autocomplete is empty or we recently typed something
         // regerate the autocomplete and selected the first item
         if (state->autocomp.asT().empty() || changed) {
             state->autocomp =
                 EDITOR_COMMANDS.tabComplete(to_string(state->buffer));
-            state->selected = 0;
+            state->selected = -1;
         }
         // TODO how to do tab completion without tab access ?
         // TODO probably make a separate mapping for this
 
+        // TODO when you are at selection 0 and hit up it should do the normal
+        // up thing
         // TODO: make sure this short circuit works and doesnt eat tokesn
         // when should is false
         bool shouldBeAbleToLoadLastCMD =
-            state->autocomp.asT().empty() || state->selected == 0;
+            state->autocomp.asT().empty() || state->selected == -1;
         if (shouldBeAbleToLoadLastCMD &&
             get()->pressed(Key::getMapping("Value Up"))) {
             if (!EDITOR_COMMANDS.command_history.empty()) {
@@ -1233,29 +1241,51 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
                     to_wstring(EDITOR_COMMANDS.command_history.back());
             }
         }
-
-        // TODO is this obvious to the user?
-        //      whats a better way to do this?
-        if (Input::isKeyPressed(Key::getMapping("Clear Command Line"))) {
-            state->buffer.asT().clear();
-        }
     } else {
+        // This ends up being kinda clear-on-exit in a way
+        // but also for clear-on-tab (this hides the button_list)
         state->autocomp.asT().clear();
     }
 
     if (state->autocomp.asT().size()) {
         int si = state->selected;
         std::vector<WidgetConfig> autocompConfigs;
-        for (auto ac : state->autocomp.asT()) {
-            autocompConfigs.push_back(WidgetConfig({.text = ac}));
+        glm::vec4 hoverColor = green;
+        for (int i = 0; i < (int)state->autocomp.asT().size(); i++) {
+            autocompConfigs.push_back(WidgetConfig({
+                .text = state->autocomp.asT()[i],
+                .color = i == si ? hoverColor : config.color,
+            }));
         }
 
+        bool childrenHaveFocus = true;
         if (button_list(MK_UUID(id.ownerLayer, id.hash), config,
-                        autocompConfigs, &si)) {
+                        autocompConfigs, &si, &childrenHaveFocus)) {
             state->buffer.asT() = to_wstring(state->autocomp.asT().at(si));
             state->autocomp.asT().clear();
         }
+        if (si != state->selected) {
+            state->buffer.asT().clear();
+        }
         state->selected = si;
+    }
+
+    try_to_grab_kb(id);
+    if (has_kb_focus(id)) {
+        if (get()->pressed(Key::getMapping("Command Enter"))) {
+            if (state->selected != -1) {
+                state->buffer.asT() =
+                    to_wstring(state->autocomp.asT().at(state->selected));
+                state->autocomp.asT().clear();
+            }
+            // TODO: Any concerns about non english characters?
+            EDITOR_COMMANDS.triggerCommand(to_string(state->buffer.asT()));
+            state->buffer.asT().clear();
+            state->autocomp.asT().clear();
+            state->selected = -1;
+            // TODO: should we instead have a singular return?
+            return true;
+        }
     }
 
     // TODO what should we return here,
