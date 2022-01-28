@@ -325,6 +325,7 @@ keyboard focus. Must be called after the widget code has run.
 //
 #include "edit.h"
 #include "event.h"
+#include "keycodes.h"
 #include "pch.hpp"
 #include "typeutil.h"
 #include "uuid.h"
@@ -1199,33 +1200,44 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
     // TODO should we be passing in content here? or state->buffer?
     auto changed = textfield(id, config, content);
 
+    // TODO add support for selecting suggestion with keyboard
+
     if (has_kb_focus(id)) {
-        if (state->autocomp.asT().empty() || changed) {
-            // TODO add support for selecting suggestion with keyboard
-            state->autocomp =
-                EDITOR_COMMANDS.tabComplete(to_string(state->buffer));
-            state->selected = 0;
-        }
         if (get()->pressed(Key::getMapping("Command Enter"))) {
-            // Any concerned about non english characters?
+            // TODO: Any concerns about non english characters?
             EDITOR_COMMANDS.triggerCommand(to_string(state->buffer.asT()));
             state->buffer.asT().clear();
             state->autocomp.asT().clear();
             state->selected = 0;
+            // TODO: should we instead have a singular return?
             return true;
+        }
+        // if its empty or we recently typed something
+        // regerate the autocomplete and selected the first item
+        if (state->autocomp.asT().empty() || changed) {
+            state->autocomp =
+                EDITOR_COMMANDS.tabComplete(to_string(state->buffer));
+            state->selected = 0;
         }
         // TODO how to do tab completion without tab access ?
         // TODO probably make a separate mapping for this
-        if (get()->pressed(Key::getMapping("Value Up"))) {
+
+        // TODO: make sure this short circuit works and doesnt eat tokesn
+        // when should is false
+        bool shouldBeAbleToLoadLastCMD =
+            state->autocomp.asT().empty() || state->selected == 0;
+        if (shouldBeAbleToLoadLastCMD &&
+            get()->pressed(Key::getMapping("Value Up"))) {
             if (!EDITOR_COMMANDS.command_history.empty()) {
                 state->buffer.asT() =
                     to_wstring(EDITOR_COMMANDS.command_history.back());
             }
         }
-        if (get()->pressed(Key::getMapping("Value Down"))) {
-            if (state->autocomp.asT().empty()) {
-                state->buffer.asT().clear();
-            }
+
+        // TODO is this obvious to the user?
+        //      whats a better way to do this?
+        if (Input::isKeyPressed(Key::getMapping("Clear Command Line"))) {
+            state->buffer.asT().clear();
         }
     } else {
         state->autocomp.asT().clear();
