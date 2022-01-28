@@ -899,12 +899,15 @@ bool dropdown(const uuid id, WidgetConfig config,
         }
     }
 
+    auto ret =
+        *dropdownState != state->on.asT() || (pressed && state->on.asT());
+
+    // NOTE: this has to happen after ret
+    // because its not a real selection, just
+    // a tab out
     if (!childrenHaveFocus && !has_kb_focus(id)) {
         state->on = false;
     }
-
-    auto ret =
-        *dropdownState != state->on.asT() || (pressed && state->on.asT());
 
     if (pressed) state->on = !state->on;
     if (dropdownState) *dropdownState = state->on;
