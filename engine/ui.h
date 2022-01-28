@@ -487,9 +487,13 @@ struct UIContext {
     Key::KeyCode modchar;
 
     bool pressed(Key::KeyCode code) {
-        bool a = key == code || mod == code;
+        bool a = pressedWithoutEat(code);
         if (a) key = Key::KeyCode();
         return a;
+    }
+
+    bool pressedWithoutEat(Key::KeyCode code) const {
+        return key == code || mod == code;
     }
 
     bool processCharPressEvent(CharPressedEvent& event) {
@@ -852,14 +856,11 @@ bool dropdown(const uuid id, WidgetConfig config,
 
     auto pressed = button(id, config);
 
-    if (has_kb_focus(id)) {
-        state->on = true;
-    }
-
     if (state->on) {
+        bool childrenHaveFocus = false;
         int si = state->selected;
-        if (button_list(MK_UUID(id.ownerLayer, id.hash), config, configs,
-                        &si)) {
+        if (button_list(MK_UUID(id.ownerLayer, id.hash), config, configs, &si,
+                        &childrenHaveFocus)) {
             state->on = false;
             get()->kbFocusID = id;
         }
