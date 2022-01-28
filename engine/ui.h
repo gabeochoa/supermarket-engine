@@ -397,9 +397,7 @@ struct ToggleState : public UIState {
     State<bool> on;
 };
 
-struct DropdownState : public ToggleState {
-    State<int> selected;
-};
+struct DropdownState : public ToggleState {};
 
 struct DrawerState : public ToggleState {
     State<float> heightPct;
@@ -850,23 +848,15 @@ bool dropdown(const uuid id, WidgetConfig config,
               int* selectedIndex) {
     auto state = widget_init<DropdownState>(id);
     if (dropdownState) state->on.set(*dropdownState);
-    if (selectedIndex) state->selected.set(*selectedIndex);
 
-    config.text = configs[state->selected].text;
+    config.text = configs[selectedIndex ? *selectedIndex : 0].text;
 
+    // Draw the main body of the dropdown
+    // pressed
     auto pressed = button(id, config);
 
-    if (state->on) {
-        bool childrenHaveFocus = false;
-        int si = state->selected;
-        if (button_list(MK_UUID(id.ownerLayer, id.hash), config, configs, &si,
-                        &childrenHaveFocus)) {
-            state->on = false;
-            get()->kbFocusID = id;
-        }
-        state->selected = si;
-    }
-
+    // Text drawn after button so it shows up on top...
+    //
     // TODO rotation is not really working correctly and so we have to
     // offset the V a little more than ^ in order to make it look nice
     auto offset = glm::vec2{config.size.x - (state->on ? 1.f : 1.6f),
@@ -877,14 +867,20 @@ bool dropdown(const uuid id, WidgetConfig config,
                        .flipTextY = config.flipTextY,
                        .position = config.position + offset}));
 
-    auto ret = *dropdownState != state->on.asT() ||
-               *selectedIndex != state->selected.asT() ||
-               (pressed && state->on.asT());
+    if (state->on) {
+        bool childrenHaveFocus = false;
+        if (button_list(MK_UUID(id.ownerLayer, id.hash), config, configs,
+                        selectedIndex, &childrenHaveFocus)) {
+            state->on = false;
+            get()->kbFocusID = id;
+        }
+    }
+
+    auto ret =
+        *dropdownState != state->on.asT() || (pressed && state->on.asT());
 
     if (pressed) state->on = !state->on;
     if (dropdownState) *dropdownState = state->on;
-    if (selectedIndex) *selectedIndex = state->selected;
-
     return ret;
 }
 
