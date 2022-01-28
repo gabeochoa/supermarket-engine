@@ -787,7 +787,7 @@ bool button_list(const uuid id, WidgetConfig config,
     auto state = widget_init<ButtonListState>(id);
     if (selectedIndex) state->selected.set(*selectedIndex);
 
-    // TODO do we ever want to read the value
+    // TODO :HASFOCUS do we ever want to read the value
     // or do we want to reset focus each frame
     // if (hasFocus) state->hasFocus.set(*hasFocus);
     state->hasFocus.set(false);
@@ -815,6 +815,14 @@ bool button_list(const uuid id, WidgetConfig config,
         }
     }
 
+    // NOTE: hasFocus is generally a readonly variable because
+    // we dont insert it into state on button_list start see :HASFOCUS
+    //
+    // We use it here because we know that if its true, the caller
+    // is trying to force this to have focus OR we had focus
+    // last frame.
+    //
+    bool somethingFocused = hasFocus ? *hasFocus : false;
     // NOTE: this exists because we only to be able to move
     // up and down if we are messing with the button list directly
     // It would be annoying to be focused on the textfield (e.g.)
@@ -824,7 +832,6 @@ bool button_list(const uuid id, WidgetConfig config,
     // ** in this situation they have to be visible, so no worries about arrow
     // keying your way into a dropdown
     //
-    bool somethingFocused = false;
     for (size_t i = 0; i < configs.size(); i++) {
         somethingFocused |= has_kb_focus(ids[i]);
     }
@@ -885,6 +892,10 @@ bool dropdown(const uuid id, WidgetConfig config,
     // state->on = true;
     // }
 
+    // TODO right now you can change values through tab or through
+    // arrow keys, maybe we should only allow arrows
+    // and then tab just switches to the next non dropdown widget
+
     // Text drawn after button so it shows up on top...
     //
     // TODO rotation is not really working correctly and so we have to
@@ -899,7 +910,13 @@ bool dropdown(const uuid id, WidgetConfig config,
 
     bool childrenHaveFocus = false;
 
-    if (!state->on && has_kb_focus(id)) {
+    // NOTE: originally we only did this when the dropdown wasnt already open
+    // but we should be safe to always do this
+    // 1. doesnt toggle on, sets on directly
+    // 2. open should have children focused anyway
+    // 3. we dont eat the input, so it doesnt break the button_list value
+    // up/down
+    if (has_kb_focus(id)) {
         if (get()->pressedWithoutEat(Key::getMapping("Value Up")) ||
             get()->pressedWithoutEat(Key::getMapping("Value Down"))) {
             state->on = true;
