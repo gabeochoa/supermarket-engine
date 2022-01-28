@@ -815,15 +815,6 @@ bool button_list(const uuid id, WidgetConfig config,
         }
     }
 
-    // TODO why are we looping twice im sure there was a reason
-    for (size_t i = 0; i < configs.size(); i++) {
-        // if you got the kb focus somehow
-        // (ie by clicking or tabbing)
-        // then we will just make you selected
-        if (has_kb_focus(ids[i])) state->selected = i;
-        state->hasFocus = state->hasFocus | has_kb_focus(ids[i]);
-    }
-
     if (get()->pressed(Key::getMapping("Value Up"))) {
         state->selected = state->selected - 1;
         if (state->selected < 0) state->selected = 0;
@@ -835,6 +826,22 @@ bool button_list(const uuid id, WidgetConfig config,
         if (state->selected > (int)configs.size() - 1)
             state->selected = configs.size() - 1;
         get()->kbFocusID = ids[state->selected];
+    }
+
+    // NOTE: This has to be after value changes so that
+    // hasFocus is handed back up to its parent correctly
+    // this allows the dropdown to know when none of its children have focus
+    // --
+    // doing this above the keypress, allows a single frame
+    // where neither the dropdown parent nor its children are in focus
+    // and that causes the dropdown to close on selection change which isnt what
+    // we want
+    for (size_t i = 0; i < configs.size(); i++) {
+        // if you got the kb focus somehow
+        // (ie by clicking or tabbing)
+        // then we will just make you selected
+        if (has_kb_focus(ids[i])) state->selected = i;
+        state->hasFocus = state->hasFocus | has_kb_focus(ids[i]);
     }
 
     if (state->hasFocus) get()->kbFocusID = ids[state->selected];
@@ -855,6 +862,13 @@ bool dropdown(const uuid id, WidgetConfig config,
     // pressed
     auto pressed = button(id, config);
 
+    // TODO when you tab to the dropdown
+    // it would be nice if it opened
+    // try_to_grab_kb(id);
+    // if (has_kb_focus(id)) {
+    // state->on = true;
+    // }
+
     // Text drawn after button so it shows up on top...
     //
     // TODO rotation is not really working correctly and so we have to
@@ -867,13 +881,26 @@ bool dropdown(const uuid id, WidgetConfig config,
                        .flipTextY = config.flipTextY,
                        .position = config.position + offset}));
 
+    bool childrenHaveFocus = false;
+
+    if (!state->on && has_kb_focus(id)) {
+        if (get()->pressedWithoutEat(Key::getMapping("Value Up")) ||
+            get()->pressedWithoutEat(Key::getMapping("Value Down"))) {
+            state->on = true;
+            childrenHaveFocus = true;
+        }
+    }
+
     if (state->on) {
-        bool childrenHaveFocus = false;
         if (button_list(MK_UUID(id.ownerLayer, id.hash), config, configs,
                         selectedIndex, &childrenHaveFocus)) {
             state->on = false;
             get()->kbFocusID = id;
         }
+    }
+
+    if (!childrenHaveFocus && !has_kb_focus(id)) {
+        state->on = false;
     }
 
     auto ret =
