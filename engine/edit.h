@@ -92,6 +92,11 @@ struct EditorCommands {
                 command, line));
             return;
         }
+        // TODO if theres an error in parsing,
+        // we should probably let the person know what we saw them run
+        // similar to above ^^
+        // Right now theres no way to know if the command was successful or not
+        // because all we return is output string
         ActionFuncType aft = it->second;
         std::string msg = aft(tokens);
         addToOutputHistory(msg);
