@@ -322,7 +322,6 @@ keyboard focus. Must be called after the widget code has run.
 
 //
 #include "edit.h"
-#include "event.h"
 #include "log.h"
 #include "texture.h"
 #include "typeutil.h"
@@ -507,15 +506,9 @@ struct UIContext {
     }
 
     float yscrolled;
-    bool processMouseScrolled(Mouse::MouseScrolledEvent& event) {
-        yscrolled = event.GetYOffset();
+    bool processMouseScrolled(float yoffset) {
+        yscrolled = yoffset;
         return true;
-    }
-
-    std::function<bool(Mouse::MouseScrolledEvent&)>
-    getOnMouseScrolledHandler() {
-        return std::bind(&UIContext::processMouseScrolled, this,
-                         std::placeholders::_1);
     }
 
     std::function<bool(glm::vec4)> isMouseInside;

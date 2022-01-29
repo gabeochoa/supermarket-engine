@@ -3,6 +3,7 @@
 
 #include "app.h"
 #include "camera.h"
+#include "event.h"
 #include "globals.h"
 #include "layer.h"
 #include "pch.hpp"
@@ -194,7 +195,10 @@ struct TerminalLayer : public Layer {
                 return true;
             });
         dispatcher.dispatch<Mouse::MouseScrolledEvent>(
-            uicontext->getOnMouseScrolledHandler());
+            [this](Mouse::MouseScrolledEvent& event) -> bool {
+                uicontext->processMouseScrolled(event.GetYOffset());
+                return true;
+            });
     }
 };
 

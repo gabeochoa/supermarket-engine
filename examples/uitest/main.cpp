@@ -353,7 +353,10 @@ struct UITestLayer : public Layer {
                 return true;
             });
         dispatcher.dispatch<Mouse::MouseScrolledEvent>(
-            ui_context->getOnMouseScrolledHandler());
+            [this](Mouse::MouseScrolledEvent& event) -> bool {
+                ui_context->processMouseScrolled(event.GetYOffset());
+                return true;
+            });
     }
 };
 
