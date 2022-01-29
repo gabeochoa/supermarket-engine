@@ -5,6 +5,8 @@ SFML/*
 windows_build/*
 *.o
 *.exe
+*.exe.dSYM
+*.plist
 *.zip
 *.gch
 *.d
