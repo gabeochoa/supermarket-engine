@@ -41,9 +41,9 @@ struct TerminalLayer : public Layer {
         terminalCameraController->resizeEnabled = false;
 
         uicontext.reset(new IUI::UIContext());
-        uicontext->init(std::bind(&isMouseInside, terminalCameraController,
+        uicontext->init(std::bind(&IUI::isMouseInside, terminalCameraController,
                                   std::placeholders::_1),
-                        &Input::isKeyPressed, &drawForUI);
+                        &IUI::isKeyPressed, &IUI::drawForUI);
 
         startingHistoryIndex = EDITOR_COMMANDS.output_history.size() - 1;
     }
@@ -175,7 +175,7 @@ struct TerminalLayer : public Layer {
 
         // TODO is there a way for us to not have to do this?
         // or make it required so you cant even start without it accidentally
-        if (uicontext->processKeyPressEvent(event)) {
+        if (uicontext->processKeyPressEvent(event.keycode)) {
             return true;
         }
         return false;

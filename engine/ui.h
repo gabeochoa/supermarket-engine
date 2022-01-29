@@ -461,49 +461,49 @@ struct UIContext {
     glm::vec2 mousePosition;
     bool lmouseDown;
 
-    const std::set<Key::KeyCode> widgetKeys = {{
+    const std::set<int> widgetKeys = {{
         Key::getMapping("Widget Next"),
         Key::getMapping("Widget Press"),
         Key::getMapping("Value Up"),
         Key::getMapping("Value Down"),
     }};
     uuid kbFocusID;
-    Key::KeyCode key;
-    Key::KeyCode mod;
+    int key;
+    int mod;
     uuid lastProcessed;
 
-    const std::set<Key::KeyCode> textfieldMod = std::set<Key::KeyCode>({
+    const std::set<int> textfieldMod = std::set<int>({
         Key::getMapping("Text Backspace"),
     });
-    Key::KeyCode keychar;
-    Key::KeyCode modchar;
+    int keychar;
+    int modchar;
 
-    bool pressed(Key::KeyCode code) {
+    bool pressed(int code) {
         bool a = pressedWithoutEat(code);
         if (a) eatKey();
         return a;
     }
 
-    void eatKey() { key = Key::KeyCode(); }
+    void eatKey() { key = int(); }
 
-    bool pressedWithoutEat(Key::KeyCode code) const {
+    bool pressedWithoutEat(int code) const {
         return key == code || mod == code;
     }
 
     bool processCharPressEvent(CharPressedEvent& event) {
-        keychar = static_cast<Key::KeyCode>(event.charcode);
+        keychar = static_cast<int>(event.charcode);
         return true;
     }
 
-    bool processKeyPressEvent(KeyPressedEvent& event) {
-        if (widgetKeys.count(static_cast<Key::KeyCode>(event.keycode)) == 1) {
-            key = static_cast<Key::KeyCode>(event.keycode);
+    bool processKeyPressEvent(int keycode) {
+        if (widgetKeys.count(keycode) == 1) {
+            key = keycode;
         }
-        if (event.keycode == Key::getMapping("Widget Mod")) {
-            mod = static_cast<Key::KeyCode>(event.keycode);
+        if (keycode == Key::getMapping("Widget Mod")) {
+            mod = keycode;
         }
-        if (textfieldMod.count(static_cast<Key::KeyCode>(event.keycode)) == 1) {
-            modchar = static_cast<Key::KeyCode>(event.keycode);
+        if (textfieldMod.count(keycode) == 1) {
+            modchar = keycode;
         }
         return false;
     }
@@ -526,13 +526,13 @@ struct UIContext {
     }
 
     std::function<bool(glm::vec4)> isMouseInside;
-    std::function<bool(Key::KeyCode)> isKeyPressed;
+    std::function<bool(int)> isKeyPressed;
     std::function<void(glm::vec2, glm::vec2, float, glm::vec4, std::string)>
         drawWidget;
 
     void init(
         std::function<bool(glm::vec4)> mouseInsideFn,
-        std::function<bool(Key::KeyCode)> isKeyPressedFn,
+        std::function<bool(int)> isKeyPressedFn,
         std::function<void(glm::vec2, glm::vec2, float, glm::vec4, std::string)>
             drawFn) {
 #ifdef SUPERMARKET_HOUSEKEEPING
@@ -575,11 +575,11 @@ struct UIContext {
         } else {
             activeID = rootID;
         }
-        key = Key::KeyCode();
-        mod = Key::KeyCode();
+        key = int();
+        mod = int();
 
-        keychar = Key::KeyCode();
-        modchar = Key::KeyCode();
+        keychar = int();
+        modchar = int();
         globalContext = nullptr;
     }
 };
@@ -608,8 +608,6 @@ struct WidgetConfig;
 struct WidgetConfig {
     WidgetConfig* child;
     glm::vec4 color = white;
-    // const char* font = "constan";
-    // const char* font = "Roboto-Regular";
     const char* font = "Karmina-Regular";
     glm::vec2 position = glm::vec2{0.f};
     float rotation = 0;
@@ -1142,7 +1140,7 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
-        if (get()->keychar != Key::KeyCode()) {
+        if (get()->keychar != int()) {
             state->buffer.asT().append(std::wstring(1, get()->keychar));
             changed = true;
         }

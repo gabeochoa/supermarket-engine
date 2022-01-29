@@ -2,8 +2,15 @@
 #pragma once
 
 #include "camera.h"
+#include "input.h"
 #include "pch.hpp"
 #include "renderer.h"
+
+namespace IUI {
+
+inline bool isKeyPressed(int keycode) {
+    return Input::isKeyPressed(static_cast<Key::KeyCode>(keycode));
+}
 
 inline bool isMouseInside(
     std::shared_ptr<OrthoCameraController> cameraController, glm::vec4 rect) {
@@ -33,3 +40,4 @@ inline void drawForUI(glm::vec2 position, glm::vec2 size, float rotation,
     }
     Renderer::drawQuad(position, size, color, texturename);
 }
+}  // namespace IUI

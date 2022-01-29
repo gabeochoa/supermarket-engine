@@ -42,9 +42,9 @@ struct UITestLayer : public Layer {
             glm::vec4{0, 0, WIN_W, WIN_H});
 
         ui_context.reset(new IUI::UIContext());
-        ui_context->init(std::bind(&isMouseInside, uiTestCameraController,
+        ui_context->init(std::bind(&IUI::isMouseInside, uiTestCameraController,
                                    std::placeholders::_1),
-                         &Input::isKeyPressed, &drawForUI);
+                         &IUI::isKeyPressed, &IUI::drawForUI);
         ui_context->c_id = 1;
 
         GLOBALS.set<float>("slider_val", &value);
@@ -324,7 +324,7 @@ struct UITestLayer : public Layer {
             App::get().running = false;
             return true;
         }
-        if (ui_context->processKeyPressEvent(event)) {
+        if (ui_context->processKeyPressEvent(event.keycode)) {
             return true;
         }
         return false;
