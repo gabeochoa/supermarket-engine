@@ -321,7 +321,6 @@ keyboard focus. Must be called after the widget code has run.
 #include <string_view>
 
 //
-#include "edit.h"
 #include "event.h"
 #include "keycodes.h"
 #include "pch.hpp"
@@ -331,7 +330,6 @@ keyboard focus. Must be called after the widget code has run.
 //
 #include "camera.h"
 #include "font.h"
-#include "renderer.h"
 
 namespace IUI {
 
