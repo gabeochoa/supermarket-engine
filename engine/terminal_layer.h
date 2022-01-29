@@ -188,7 +188,11 @@ struct TerminalLayer : public Layer {
         dispatcher.dispatch<KeyPressedEvent>(std::bind(
             &TerminalLayer::onKeyPressed, this, std::placeholders::_1));
         if (isMinimized) return;
-        dispatcher.dispatch<CharPressedEvent>(uicontext->getCharPressHandler());
+        dispatcher.dispatch<CharPressedEvent>(
+            [this](CharPressedEvent& event) -> bool {
+                uicontext->processCharPressEvent(event.charcode);
+                return true;
+            });
         dispatcher.dispatch<Mouse::MouseScrolledEvent>(
             uicontext->getOnMouseScrolledHandler());
     }

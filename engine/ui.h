@@ -488,8 +488,8 @@ struct UIContext {
         return key == code || mod == code;
     }
 
-    bool processCharPressEvent(CharPressedEvent& event) {
-        keychar = static_cast<int>(event.charcode);
+    bool processCharPressEvent(int charcode) {
+        keychar = charcode;
         return true;
     }
 
@@ -504,11 +504,6 @@ struct UIContext {
             modchar = keycode;
         }
         return false;
-    }
-
-    std::function<bool(CharPressedEvent&)> getCharPressHandler() {
-        return std::bind(&UIContext::processCharPressEvent, this,
-                         std::placeholders::_1);
     }
 
     float yscrolled;

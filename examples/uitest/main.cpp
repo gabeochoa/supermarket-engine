@@ -346,9 +346,12 @@ struct UITestLayer : public Layer {
             &UITestLayer::onMouseButtonPressed, this, std::placeholders::_1));
         dispatcher.dispatch<KeyPressedEvent>(
             std::bind(&UITestLayer::onKeyPressed, this, std::placeholders::_1));
-        dispatcher.dispatch<CharPressedEvent>(
-            ui_context->getCharPressHandler());
 
+        dispatcher.dispatch<CharPressedEvent>(
+            [this](CharPressedEvent& event) -> bool {
+                ui_context->processCharPressEvent(event.charcode);
+                return true;
+            });
         dispatcher.dispatch<Mouse::MouseScrolledEvent>(
             ui_context->getOnMouseScrolledHandler());
     }
