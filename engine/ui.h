@@ -321,6 +321,7 @@ keyboard focus. Must be called after the widget code has run.
 #include <string_view>
 
 //
+#include "edit.h"
 #include "event.h"
 #include "keycodes.h"
 #include "pch.hpp"
@@ -450,6 +451,7 @@ struct UIContext {
     // house keeping :)
     bool inited = false;
     bool began_and_not_ended = false;
+    bool inited_keys = false;
 #endif
 
     int c_id = 0;
@@ -461,20 +463,16 @@ struct UIContext {
     glm::vec2 mousePosition;
     bool lmouseDown;
 
-    const std::set<int> widgetKeys = {{
-        Key::getMapping("Widget Next"),
-        Key::getMapping("Widget Press"),
-        Key::getMapping("Value Up"),
-        Key::getMapping("Value Down"),
-    }};
+    std::map<std::string, int> keyMapping;
+
+    std::set<int> widgetKeys;
     uuid kbFocusID;
     int key;
     int mod;
     uuid lastProcessed;
 
-    const std::set<int> textfieldMod = std::set<int>({
-        Key::getMapping("Text Backspace"),
-    });
+    std::set<int> textfieldMods;
+    std::set<int> widgetMods;
     int keychar;
     int modchar;
 
@@ -499,10 +497,10 @@ struct UIContext {
         if (widgetKeys.count(keycode) == 1) {
             key = keycode;
         }
-        if (keycode == Key::getMapping("Widget Mod")) {
+        if (widgetMods.count(keycode) == 1) {
             mod = keycode;
         }
-        if (textfieldMod.count(keycode) == 1) {
+        if (textfieldMods.count(keycode) == 1) {
             modchar = keycode;
         }
         return false;
@@ -530,6 +528,40 @@ struct UIContext {
     std::function<void(glm::vec2, glm::vec2, float, glm::vec4, std::string)>
         drawWidget;
 
+    void init_keys(int widgetNext,       // tab
+                   int widgetPress,      // enter
+                   int widgetMod,        // shift
+                   int valueUp,          // up arrow
+                   int valueDown,        // down arrow
+                   int textBackspace,    // backspace
+                   int commandEnter,     // enter
+                   int clearCommandLine  // delete
+    ) {
+        keyMapping["Widget Next"] = widgetNext;
+        keyMapping["Widget Press"] = widgetPress;
+        keyMapping["Widget Mod"] = widgetMod;
+        keyMapping["Value Up"] = valueUp;
+        keyMapping["Value Down"] = valueDown;
+        keyMapping["Text Backspace"] = textBackspace;
+        keyMapping["Command Enter"] = commandEnter;
+        keyMapping["Clear Command Line"] = clearCommandLine;
+
+        widgetMods.insert(widgetMod);
+
+        widgetKeys.insert(widgetNext);
+        widgetKeys.insert(widgetPress);
+        widgetKeys.insert(valueUp);
+        widgetKeys.insert(valueDown);
+        widgetKeys.insert(commandEnter);
+        widgetKeys.insert(clearCommandLine);
+
+        textfieldMods.insert(textBackspace);
+
+#ifdef SUPERMARKET_HOUSEKEEPING
+        inited_keys = true;
+#endif
+    }
+
     void init(
         std::function<bool(glm::vec4)> mouseInsideFn,
         std::function<bool(int)> isKeyPressedFn,
@@ -556,6 +588,8 @@ struct UIContext {
             !began_and_not_ended,
             "You should call end every frame before calling begin() again ");
         began_and_not_ended = true;
+        M_ASSERT(inited_keys,
+                 "UIContext init_keys() must be inited before you begin()");
 #endif
 
         globalContext = this;
@@ -724,9 +758,9 @@ bool button(const uuid id, WidgetConfig config) {
 
     }  // end render
     if (has_kb_focus(id)) {
-        if (get()->pressed(Key::getMapping("Widget Next"))) {
+        if (get()->pressed(get()->keyMapping["Widget Next"])) {
             get()->kbFocusID = rootID;
-            if (get()->isKeyPressed(Key::getMapping("Widget Mod"))) {
+            if (get()->isKeyPressed(get()->keyMapping["Widget Mod"])) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
@@ -735,7 +769,7 @@ bool button(const uuid id, WidgetConfig config) {
     get()->lastProcessed = id;
     // check click
     if (has_kb_focus(id)) {
-        if (get()->pressed(Key::getMapping("Widget Press"))) {
+        if (get()->pressed(get()->keyMapping["Widget Press"])) {
             return true;
         }
     }
@@ -813,13 +847,13 @@ bool button_list(const uuid id, WidgetConfig config,
     }
 
     if (somethingFocused) {
-        if (get()->pressed(Key::getMapping("Value Up"))) {
+        if (get()->pressed(get()->keyMapping["Value Up"])) {
             state->selected = state->selected - 1;
             if (state->selected < 0) state->selected = 0;
             get()->kbFocusID = ids[state->selected];
         }
 
-        if (get()->pressed(Key::getMapping("Value Down"))) {
+        if (get()->pressed(get()->keyMapping["Value Down"])) {
             state->selected = state->selected + 1;
             if (state->selected > (int)configs.size() - 1)
                 state->selected = configs.size() - 1;
@@ -893,8 +927,8 @@ bool dropdown(const uuid id, WidgetConfig config,
     // 3. we dont eat the input, so it doesnt break the button_list value
     // up/down
     if (has_kb_focus(id)) {
-        if (get()->pressedWithoutEat(Key::getMapping("Value Up")) ||
-            get()->pressedWithoutEat(Key::getMapping("Value Down"))) {
+        if (get()->pressedWithoutEat(get()->keyMapping["Value Up"]) ||
+            get()->pressedWithoutEat(get()->keyMapping["Value Down"])) {
             state->on = true;
             childrenHaveFocus = true;
         }
@@ -1014,24 +1048,24 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
 
     // all drawing has to happen before this ///
     if (has_kb_focus(id)) {
-        if (get()->pressed(Key::getMapping("Widget Next"))) {
+        if (get()->pressed(get()->keyMapping["Widget Next"])) {
             get()->kbFocusID = rootID;
-            if (get()->isKeyPressed(Key::getMapping("Widget Mod"))) {
+            if (get()->isKeyPressed(get()->keyMapping["Widget Mod"])) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
-        if (get()->pressed(Key::getMapping("Widget Press"))) {
+        if (get()->pressed(get()->keyMapping["Widget Press"])) {
             (*value) = state->value;
             return true;
         }
-        if (get()->isKeyPressed(Key::getMapping("Value Up"))) {
+        if (get()->isKeyPressed(get()->keyMapping["Value Up"])) {
             state->value = state->value + 0.005;
             if (state->value > mxf) state->value = mxf;
 
             (*value) = state->value;
             return true;
         }
-        if (get()->isKeyPressed(Key::getMapping("Value Down"))) {
+        if (get()->isKeyPressed(get()->keyMapping["Value Down"])) {
             state->value = state->value - 0.005;
             if (state->value < mnf) state->value = mnf;
             (*value) = state->value;
@@ -1134,9 +1168,9 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     bool changed = false;
 
     if (has_kb_focus(id)) {
-        if (get()->pressed(Key::getMapping("Widget Next"))) {
+        if (get()->pressed(get()->keyMapping["Widget Next"])) {
             get()->kbFocusID = rootID;
-            if (get()->isKeyPressed(Key::getMapping("Widget Mod"))) {
+            if (get()->isKeyPressed(get()->keyMapping["Widget Mod"])) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
@@ -1144,7 +1178,7 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
             state->buffer.asT().append(std::wstring(1, get()->keychar));
             changed = true;
         }
-        if (get()->modchar == Key::getMapping("Text Backspace")) {
+        if (get()->modchar == get()->keyMapping["Text Backspace"]) {
             if (state->buffer.asT().size() > 0) {
                 state->buffer.asT().pop_back();
             }
@@ -1179,14 +1213,14 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
     if (has_kb_focus(id)) {
         // TODO is this obvious to the user?
         //      whats a better way to do this?
-        if (get()->isKeyPressed(Key::getMapping("Clear Command Line"))) {
+        if (get()->isKeyPressed(get()->keyMapping["Clear Command Line"])) {
             state->buffer.asT().clear();
             state->selected = -1;
             changed = true;
         }
 
         if (state->selected == -1 &&
-            get()->pressed(Key::getMapping("Value Down"))) {
+            get()->pressed(get()->keyMapping["Value Down"])) {
             state->selected = state->selected + 1;
         }
 
@@ -1207,7 +1241,7 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
         bool shouldBeAbleToLoadLastCMD =
             state->autocomp.asT().empty() || state->selected == -1;
         if (shouldBeAbleToLoadLastCMD &&
-            get()->pressed(Key::getMapping("Value Up"))) {
+            get()->pressed(get()->keyMapping["Value Up"])) {
             if (!EDITOR_COMMANDS.command_history.empty()) {
                 state->buffer.asT() =
                     to_wstring(EDITOR_COMMANDS.command_history.back());
@@ -1243,7 +1277,7 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
 
     try_to_grab_kb(id);
     if (has_kb_focus(id)) {
-        if (get()->pressed(Key::getMapping("Command Enter"))) {
+        if (get()->pressed(get()->keyMapping["Command Enter"])) {
             if (state->selected != -1) {
                 state->buffer.asT() =
                     to_wstring(state->autocomp.asT().at(state->selected));

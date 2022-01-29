@@ -5,6 +5,7 @@
 #include "input.h"
 #include "pch.hpp"
 #include "renderer.h"
+#include "ui.h"
 
 namespace IUI {
 
@@ -39,5 +40,17 @@ inline void drawForUI(glm::vec2 position, glm::vec2 size, float rotation,
         return;
     }
     Renderer::drawQuad(position, size, color, texturename);
+}
+
+inline void init_keys(UIContext* uicontext) {
+    uicontext->init_keys(Key::getMapping("Widget Next"),        //
+                         Key::getMapping("Widget Mod"),         //
+                         Key::getMapping("Widget Press"),       //
+                         Key::getMapping("Value Up"),           //
+                         Key::getMapping("Value Down"),         //
+                         Key::getMapping("Text Backspace"),     //
+                         Key::getMapping("Command Enter"),      //
+                         Key::getMapping("Clear Command Line")  //
+    );
 }
 }  // namespace IUI
