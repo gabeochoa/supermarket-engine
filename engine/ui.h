@@ -322,12 +322,9 @@ keyboard focus. Must be called after the widget code has run.
 
 //
 #include "log.h"
-#include "texture.h"
+#include "strutil.h"
 #include "typeutil.h"
 #include "uuid.h"
-
-//
-#include "font.h"
 
 namespace IUI {
 
@@ -515,6 +512,22 @@ struct UIContext {
     std::function<void(glm::vec2, glm::vec2, float, glm::vec4, std::string)>
         drawWidget;
 
+    struct FontPhraseTexInfo {
+        std::string textureName;
+        int width;
+        int height;
+        int fontSize;
+
+        bool valid() {
+            return fontSize != 0 && width != 0 && height != 0 &&
+                   !textureName.empty();
+        }
+    };
+    typedef std::function<FontPhraseTexInfo(std::string, std::wstring, bool)>
+        GenFontPhraseTexture;
+
+    GenFontPhraseTexture generateFontPhraseTexture;
+
     struct KeyCodes {
         int widgetNext = 258;        // tab
         int widgetPress = 257;       // enter
@@ -556,7 +569,8 @@ struct UIContext {
         std::function<bool(glm::vec4)> mouseInsideFn,
         std::function<bool(int)> isKeyPressedFn,
         std::function<void(glm::vec2, glm::vec2, float, glm::vec4, std::string)>
-            drawFn) {
+            drawFn,
+        GenFontPhraseTexture fetchTexForPhraseFn) {
 #ifdef SUPERMARKET_HOUSEKEEPING
         inited = true;
         began_and_not_ended = false;
@@ -569,6 +583,7 @@ struct UIContext {
         isMouseInside = mouseInsideFn;
         isKeyPressed = isKeyPressedFn;
         drawWidget = drawFn;
+        generateFontPhraseTexture = fetchTexForPhraseFn;
     }
 
     void begin(bool mouseDown, glm::vec2 mousePos) {
@@ -665,16 +680,17 @@ bool text(const uuid id, WidgetConfig config) {
     // not needed for supermarket but could be in the future?
     (void)id;
 
-    std::shared_ptr<Texture> texture;
-    texture = fetch_texture_for_phrase(config.font, to_wstring(config.text),
-                                       config.temporary);
-    if (!texture) {
+    if (config.text.empty()) return false;
+
+    UIContext::FontPhraseTexInfo texInfo = get()->generateFontPhraseTexture(
+        config.font, to_wstring(config.text), config.temporary);
+    if (!texInfo.valid()) {
         log_error("failed to fetch texture for text {} with font {}",
                   config.text, config.font);
     }
 
-    auto scaled_width = (1.f * texture->width / FONT_SIZE);
-    auto scaled_height = (1.f * texture->height / FONT_SIZE);
+    auto scaled_width = (1.f * texInfo.width / texInfo.fontSize);
+    auto scaled_height = (1.f * texInfo.height / texInfo.fontSize);
     auto size =
         glm::vec2{config.size.x * scaled_width,
                   (config.flipTextY ? -1 : 1) * config.size.y * scaled_height};
@@ -686,7 +702,7 @@ bool text(const uuid id, WidgetConfig config) {
         glm::vec2{size.x / 2.f, size.y / 2.f};
 
     get()->drawWidget(position, size, config.rotation, config.color,
-                      texture->name);
+                      texInfo.textureName);
     return true;
 }
 

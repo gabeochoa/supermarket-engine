@@ -44,10 +44,7 @@ struct UITestLayer : public Layer {
             glm::vec4{0, 0, WIN_W, WIN_H});
 
         ui_context.reset(new IUI::UIContext());
-        ui_context->init(std::bind(&IUI::isMouseInside, uiTestCameraController,
-                                   std::placeholders::_1),
-                         &IUI::isKeyPressed, &IUI::drawForUI);
-        IUI::init_keys(ui_context.get());
+        IUI::init_uicontext(ui_context.get(), uiTestCameraController);
         ui_context->c_id = 1;
 
         GLOBALS.set<float>("slider_val", &value);
