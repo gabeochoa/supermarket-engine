@@ -328,7 +328,6 @@ keyboard focus. Must be called after the widget code has run.
 #include "uuid.h"
 
 //
-#include "camera.h"
 #include "font.h"
 
 namespace IUI {
