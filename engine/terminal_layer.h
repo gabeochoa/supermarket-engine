@@ -43,7 +43,7 @@ struct TerminalLayer : public Layer {
         uicontext.reset(new IUI::UIContext());
         uicontext->init(std::bind(&isMouseInside, terminalCameraController,
                                   std::placeholders::_1),
-                        &Input::isKeyPressed);
+                        &Input::isKeyPressed, &drawForUI);
 
         startingHistoryIndex = EDITOR_COMMANDS.output_history.size() - 1;
     }

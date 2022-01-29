@@ -530,9 +530,14 @@ struct UIContext {
 
     std::function<bool(glm::vec4)> isMouseInside;
     std::function<bool(Key::KeyCode)> isKeyPressed;
+    std::function<void(glm::vec2, glm::vec2, float, glm::vec4, std::string)>
+        drawWidget;
 
-    void init(std::function<bool(glm::vec4)> mouseInsideFn,
-              std::function<bool(Key::KeyCode)> isKeyPressedFn) {
+    void init(
+        std::function<bool(glm::vec4)> mouseInsideFn,
+        std::function<bool(Key::KeyCode)> isKeyPressedFn,
+        std::function<void(glm::vec2, glm::vec2, float, glm::vec4, std::string)>
+            drawFn) {
 #ifdef SUPERMARKET_HOUSEKEEPING
         inited = true;
         began_and_not_ended = false;
@@ -544,6 +549,7 @@ struct UIContext {
         mousePosition = glm::vec2{0};
         isMouseInside = mouseInsideFn;
         isKeyPressed = isKeyPressedFn;
+        drawWidget = drawFn;
     }
 
     void begin(bool mouseDown, glm::vec2 mousePos) {
@@ -633,19 +639,6 @@ std::shared_ptr<T> widget_init(const uuid id) {
     return state;
 }
 
-inline void draw_ui_widget(glm::vec2 position, glm::vec2 size, glm::vec4 color,
-                           std::string texturename, float rotation = 0.f) {
-    if (rotation > 5.f) {
-        Renderer::drawQuadRotated(position,                //
-                                  size,                    //
-                                  glm::radians(rotation),  //
-                                  color,                   //
-                                  texturename);
-        return;
-    }
-    Renderer::drawQuad(position, size, color, texturename);
-}
-
 bool text(const uuid id, WidgetConfig config) {
     // NOTE: currently id is only used for focus and hot/active,
     // we could potentially also track "selections"
@@ -673,8 +666,8 @@ bool text(const uuid id, WidgetConfig config) {
         //
         glm::vec2{size.x / 2.f, size.y / 2.f};
 
-    draw_ui_widget(position, size, config.color, texture->name,
-                   config.rotation);
+    get()->drawWidget(position, size, config.rotation, config.color,
+                      texture->name);
     return true;
 }
 
@@ -698,25 +691,25 @@ bool button(const uuid id, WidgetConfig config) {
     {  // start render
 
         draw_if_kb_focus(id, [&]() {
-            draw_ui_widget(config.position, config.size + glm::vec2{0.1f}, teal,
-                           config.texture, config.rotation);
+            get()->drawWidget(config.position, config.size + glm::vec2{0.1f},
+                              config.rotation, teal, config.texture);
         });
 
         if (get()->hotID == id) {
             if (get()->activeID == id) {
-                draw_ui_widget(config.position, config.size, red,
-                               config.texture, config.rotation);
+                get()->drawWidget(config.position, config.size, config.rotation,
+                                  red, config.texture);
             } else {
                 // Hovered
-                draw_ui_widget(config.position, config.size, green,
-                               config.texture, config.rotation);
+                get()->drawWidget(config.position, config.size, config.rotation,
+                                  green, config.texture);
             }
         } else {
-            draw_ui_widget(config.position, config.size, blue, config.texture,
-                           config.rotation);
+            get()->drawWidget(config.position, config.size, config.rotation,
+                              blue, config.texture);
         }
-        draw_ui_widget(config.position, config.size, config.color,
-                       config.texture, config.rotation);
+        get()->drawWidget(config.position, config.size, config.rotation,
+                          config.color, config.texture);
 
         if (config.text.size() != 0) {
             float sign = config.flipTextY ? 1 : -1;
@@ -1002,22 +995,22 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
                          config.position.y + (config.size.y / 2.f)};
 
     draw_if_kb_focus(id, [&]() {
-        draw_ui_widget(pos, config.size + glm::vec2{0.1f}, teal, config.texture,
-                       config.rotation);
+        get()->drawWidget(pos, config.size + glm::vec2{0.1f}, config.rotation,
+                          teal, config.texture);
     });
 
     // slider rail
-    draw_ui_widget(pos, config.size, red, config.texture, config.rotation);
+    get()->drawWidget(pos, config.size, config.rotation, red, config.texture);
 
     // slide
     if (config.vertical) {
-        draw_ui_widget(
+        get()->drawWidget(
             config.position + glm::vec2{config.size.x / 2.f, pos_offset},
-            glm::vec2{0.5f}, col, config.texture, config.rotation);
+            glm::vec2{0.5f}, config.rotation, col, config.texture);
     } else {
-        draw_ui_widget(
+        get()->drawWidget(
             config.position + glm::vec2{pos_offset, config.size.y / 2.f},
-            glm::vec2{0.5f}, col, config.texture, config.rotation);
+            glm::vec2{0.5f}, config.rotation, col, config.texture);
     }
 
     // TODO can we have a single return statement here?
@@ -1100,24 +1093,24 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
 
         // Draw focus ring
         draw_if_kb_focus(id, [&]() {
-            draw_ui_widget(config.position, config.size + glm::vec2{0.1f}, teal,
-                           config.texture, config.rotation);
+            get()->drawWidget(config.position, config.size + glm::vec2{0.1f},
+                              config.rotation, teal, config.texture);
         });
 
         if (get()->hotID == id) {
             if (get()->activeID == id) {
-                draw_ui_widget(config.position, config.size, red,
-                               config.texture, config.rotation);
+                get()->drawWidget(config.position, config.size, config.rotation,
+                                  red, config.texture);
             } else {
-                draw_ui_widget(config.position, config.size, green,
-                               config.texture, config.rotation);
+                get()->drawWidget(config.position, config.size, config.rotation,
+                                  green, config.texture);
             }
         } else {
-            draw_ui_widget(config.position, config.size, blue, config.texture,
-                           config.rotation);
+            get()->drawWidget(config.position, config.size, config.rotation,
+                              blue, config.texture);
         }
-        draw_ui_widget(config.position, config.size, config.color,
-                       config.texture, config.rotation);
+        get()->drawWidget(config.position, config.size, config.rotation,
+                          config.color, config.texture);
 
         float tSize = config.size.y * 0.5f;
         auto tStartLocation =
@@ -1236,10 +1229,9 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
         std::vector<WidgetConfig> autocompConfigs;
         glm::vec4 hoverColor = green;
         for (int i = 0; i < (int)state->autocomp.asT().size(); i++) {
-            autocompConfigs.push_back(WidgetConfig({
-                .text = state->autocomp.asT()[i],
-                .color = i == si ? hoverColor : config.color,
-            }));
+            autocompConfigs.push_back(
+                WidgetConfig({.text = state->autocomp.asT()[i],
+                              .color = i == si ? hoverColor : config.color}));
         }
 
         bool childrenHaveFocus = true;
@@ -1278,8 +1270,8 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
 }
 
 bool window(uuid, WidgetConfig config) {
-    draw_ui_widget(config.position, config.size, config.color, config.texture,
-                   config.rotation);
+    get()->drawWidget(config.position, config.size, config.rotation,
+                      config.color, config.texture);
     return true;
 }
 
@@ -1290,9 +1282,9 @@ bool drawer(const uuid id, WidgetConfig config, float* pct_open = nullptr) {
     if (state->heightPct < 1.f) {
         state->heightPct.asT() += 0.1;
     }
-    draw_ui_widget(
+    get()->drawWidget(
         glm::vec2{config.position.x, state->heightPct * config.position.y},
-        config.size, config.color, config.texture, config.rotation);
+        config.size, config.rotation, config.color, config.texture);
     // output pct if user wants
     if (pct_open) *pct_open = state->heightPct;
     // return if drawer should render children
@@ -1338,8 +1330,8 @@ bool scroll_view(const uuid id, WidgetConfig config,
     }
 
     if (!config.transparent) {
-        draw_ui_widget(config.position, config.size, config.color,
-                       config.texture, config.rotation);
+        get()->drawWidget(config.position, config.size, config.rotation,
+                          config.color, config.texture);
     }
     int startIndex = ceil(state->yoffset / itemHeight);
     int endIndex = startIndex + itemsInFrame;
