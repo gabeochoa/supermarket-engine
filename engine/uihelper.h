@@ -43,14 +43,15 @@ inline void drawForUI(glm::vec2 position, glm::vec2 size, float rotation,
 }
 
 inline void init_keys(UIContext* uicontext) {
-    uicontext->init_keys(Key::getMapping("Widget Next"),        //
-                         Key::getMapping("Widget Mod"),         //
-                         Key::getMapping("Widget Press"),       //
-                         Key::getMapping("Value Up"),           //
-                         Key::getMapping("Value Down"),         //
-                         Key::getMapping("Text Backspace"),     //
-                         Key::getMapping("Command Enter"),      //
-                         Key::getMapping("Clear Command Line")  //
-    );
+    uicontext->init_keys(UIContext::KeyCodes{
+        .widgetNext = Key::getMapping("Widget Next"),              //
+        .widgetMod = Key::getMapping("Widget Mod"),                //
+        .widgetPress = Key::getMapping("Widget Press"),            //
+        .valueUp = Key::getMapping("Value Up"),                    //
+        .valueDown = Key::getMapping("Value Down"),                //
+        .textBackspace = Key::getMapping("Text Backspace"),        //
+        .commandEnter = Key::getMapping("Command Enter"),          //
+        .clearCommandLine = Key::getMapping("Clear Command Line")  //
+    });
 }
 }  // namespace IUI

@@ -528,34 +528,37 @@ struct UIContext {
     std::function<void(glm::vec2, glm::vec2, float, glm::vec4, std::string)>
         drawWidget;
 
-    void init_keys(int widgetNext,       // tab
-                   int widgetPress,      // enter
-                   int widgetMod,        // shift
-                   int valueUp,          // up arrow
-                   int valueDown,        // down arrow
-                   int textBackspace,    // backspace
-                   int commandEnter,     // enter
-                   int clearCommandLine  // delete
-    ) {
-        keyMapping["Widget Next"] = widgetNext;
-        keyMapping["Widget Press"] = widgetPress;
-        keyMapping["Widget Mod"] = widgetMod;
-        keyMapping["Value Up"] = valueUp;
-        keyMapping["Value Down"] = valueDown;
-        keyMapping["Text Backspace"] = textBackspace;
-        keyMapping["Command Enter"] = commandEnter;
-        keyMapping["Clear Command Line"] = clearCommandLine;
+    struct KeyCodes {
+        int widgetNext = 258;        // tab
+        int widgetPress = 257;       // enter
+        int widgetMod = 340;         // shift
+        int valueUp = 265;           // up arrow
+        int valueDown = 264;         // down arrow
+        int textBackspace = 259;     // backspace
+        int commandEnter = 257;      // enter
+        int clearCommandLine = 261;  // delete
+    };
 
-        widgetMods.insert(widgetMod);
+    void init_keys(KeyCodes keycodes) {
+        keyMapping["Widget Next"] = keycodes.widgetNext;
+        keyMapping["Widget Press"] = keycodes.widgetPress;
+        keyMapping["Widget Mod"] = keycodes.widgetMod;
+        keyMapping["Value Up"] = keycodes.valueUp;
+        keyMapping["Value Down"] = keycodes.valueDown;
+        keyMapping["Text Backspace"] = keycodes.textBackspace;
+        keyMapping["Command Enter"] = keycodes.commandEnter;
+        keyMapping["Clear Command Line"] = keycodes.clearCommandLine;
 
-        widgetKeys.insert(widgetNext);
-        widgetKeys.insert(widgetPress);
-        widgetKeys.insert(valueUp);
-        widgetKeys.insert(valueDown);
-        widgetKeys.insert(commandEnter);
-        widgetKeys.insert(clearCommandLine);
+        widgetMods.insert(keycodes.widgetMod);
 
-        textfieldMods.insert(textBackspace);
+        widgetKeys.insert(keycodes.widgetNext);
+        widgetKeys.insert(keycodes.widgetPress);
+        widgetKeys.insert(keycodes.valueUp);
+        widgetKeys.insert(keycodes.valueDown);
+        widgetKeys.insert(keycodes.commandEnter);
+        widgetKeys.insert(keycodes.clearCommandLine);
+
+        textfieldMods.insert(keycodes.textBackspace);
 
 #ifdef SUPERMARKET_HOUSEKEEPING
         inited_keys = true;
