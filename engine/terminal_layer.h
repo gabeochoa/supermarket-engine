@@ -3,6 +3,7 @@
 
 #include "app.h"
 #include "camera.h"
+#include "edit.h"
 #include "event.h"
 #include "globals.h"
 #include "layer.h"
@@ -145,10 +146,27 @@ struct TerminalLayer : public Layer {
                                            (drawer_location[1].y / 2.f)},
                     .size = cfsize,
                 });
+
+                auto genAutoComplete = [](const std::string& input) {
+                    return EDITOR_COMMANDS.tabComplete(input);
+                };
+
+                auto runCommandFn = [](const std::string& input) {
+                    return EDITOR_COMMANDS.triggerCommand(input);
+                };
+
+                auto getLastCommandRun = []() -> std::string {
+                    if (EDITOR_COMMANDS.command_history.empty()) return "";
+                    return EDITOR_COMMANDS.command_history.back();
+                };
+
                 if (commandfield(command_field_id, commandFieldConfig,
-                                 commandContent)) {
-                    log_info("command field: {}",
-                             EDITOR_COMMANDS.command_history.back());
+                                 commandContent, runCommandFn, genAutoComplete,
+                                 getLastCommandRun)) {
+                    if (!EDITOR_COMMANDS.command_history.empty()) {
+                        log_info("command field: {}",
+                                 EDITOR_COMMANDS.command_history.back());
+                    }
                     startingHistoryIndex =
                         EDITOR_COMMANDS.output_history.size() - 1;
                 }

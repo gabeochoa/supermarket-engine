@@ -184,11 +184,23 @@ struct UITestLayer : public Layer {
         }
 
         uuid commandFieldID = MK_UUID(id, IUI::rootID);
+
+        auto genAutoComplete = [](const std::string& input) {
+            return EDITOR_COMMANDS.tabComplete(input);
+        };
+
+        auto runCommandFn = [](const std::string& input) {
+            return EDITOR_COMMANDS.triggerCommand(input);
+        };
+
         if (commandfield(commandFieldID,
                          WidgetConfig({.position = glm::vec2{2.f, 4.f},
                                        .size = glm::vec2{6.f, 1.f}}),
-                         commandContent)) {
-            log_info("{}", EDITOR_COMMANDS.command_history.back());
+                         commandContent, runCommandFn, genAutoComplete)) {
+            if (!EDITOR_COMMANDS.command_history.empty()) {
+                log_info("Just ran a command ... {}",
+                         EDITOR_COMMANDS.command_history.back());
+            }
         }
 
         // In this case we want to lock the camera when typing in

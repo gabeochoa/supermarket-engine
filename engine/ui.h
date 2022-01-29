@@ -321,7 +321,6 @@ keyboard focus. Must be called after the widget code has run.
 #include <string_view>
 
 //
-#include "edit.h"
 #include "log.h"
 #include "texture.h"
 #include "typeutil.h"
@@ -1188,8 +1187,16 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     return changed;
 }
 
-bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
+typedef std::function<std::vector<std::string>(std::string)> AutoCompleteFn;
+bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
+                  std::function<void(std::string)> runCommand =
+                      std::function<void(std::string)>(),
+                  AutoCompleteFn generateAutoComplete = AutoCompleteFn(),
+                  // TODO idk if we actually need this to be a deque
+                  std::function<std::string()> getLastCommandRun =
+                      std::function<std::string()>()) {
     auto state = widget_init<CommandfieldState>(id);
+
     // TODO can we bold the letters that match in the trie?
 
     // NOTE: We dont need a separate ID since we want
@@ -1218,8 +1225,7 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
         // if autocomplete is empty or we recently typed something
         // regerate the autocomplete and selected the first item
         if (state->autocomp.asT().empty() || changed) {
-            state->autocomp =
-                EDITOR_COMMANDS.tabComplete(to_string(state->buffer));
+            state->autocomp = generateAutoComplete(to_string(state->buffer));
             state->selected = -1;
         }
         // TODO how to do tab completion without tab access ?
@@ -1233,9 +1239,9 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
             state->autocomp.asT().empty() || state->selected == -1;
         if (shouldBeAbleToLoadLastCMD &&
             get()->pressed(get()->keyMapping["Value Up"])) {
-            if (!EDITOR_COMMANDS.command_history.empty()) {
-                state->buffer.asT() =
-                    to_wstring(EDITOR_COMMANDS.command_history.back());
+            std::string lastCommand = getLastCommandRun();
+            if (!lastCommand.empty()) {
+                state->buffer.asT() = to_wstring(lastCommand);
             }
         }
     } else {
@@ -1275,7 +1281,7 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
                 state->autocomp.asT().clear();
             }
             // TODO: Any concerns about non english characters?
-            EDITOR_COMMANDS.triggerCommand(to_string(state->buffer.asT()));
+            runCommand(to_string(state->buffer.asT()));
             state->buffer.asT().clear();
             state->autocomp.asT().clear();
             state->selected = -1;

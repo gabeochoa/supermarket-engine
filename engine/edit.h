@@ -74,6 +74,7 @@ struct EditorCommands {
     }
 
     void triggerCommand(std::string line) {
+        // log_info("trying to run command {}", line);
         addToCmdHistory(line);
 
         auto tokens = split(line, " ");
