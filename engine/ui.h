@@ -323,8 +323,8 @@ keyboard focus. Must be called after the widget code has run.
 //
 #include "edit.h"
 #include "event.h"
-#include "keycodes.h"
-#include "pch.hpp"
+#include "log.h"
+#include "texture.h"
 #include "typeutil.h"
 #include "uuid.h"
 
