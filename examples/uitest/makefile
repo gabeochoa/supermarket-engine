@@ -20,7 +20,7 @@ current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 CCC = clang++
 MFLAGS = -MMD -MP 
 
-all: folders engine uitest
+all: folders uitest
 
 folders:
 	mkdir -p $(OBJ_DIR)
@@ -30,7 +30,7 @@ folders:
 engine: 
 	$(MAKE) -C ../..
 
-uitest: $(OBJ_FILES)
+uitest: engine $(OBJ_FILES)
 	$(CCC) $(FLAGS) $(LIBS) $(FRAMEWORKS) -o $(EXE) ./main.cpp ../../output/libengine.a
 	DEBUG=123 ./$(EXE)
 

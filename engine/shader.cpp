@@ -2,6 +2,8 @@
 
 #include "shader.h"
 
+#include "resources.h"
+
 Shader::Shader(const std::string &n, const std::string &vertexSource,
                const std::string &fragmentSource)
     : name(n) {
@@ -208,7 +210,7 @@ void ShaderLibrary::add(const std::shared_ptr<Shader> &shader) {
     shaders[shader->name] = shader;
 }
 std::shared_ptr<Shader> ShaderLibrary::load(const std::string &path) {
-    const auto abs_path = get_absolute_path_to(".", path);
+    const auto abs_path = get_absolute_path_to(getResourceLocations().folder, path);
     auto shader = std::make_shared<Shader>(abs_path);
     add(shader);
     return shader;

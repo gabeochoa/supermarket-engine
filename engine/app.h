@@ -14,6 +14,7 @@
 #include "shader.h"
 #include "time.h"
 #include "window.h"
+#include "resources.h"
 
 #define M_BIND(x) std::bind(&App::x, this, std::placeholders::_1)
 

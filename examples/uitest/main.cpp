@@ -346,6 +346,10 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
+    ResourceLocations& resources = getResourceLocations();
+    resources.folder = "../resources";
+    resources.init();
+
     App::create({
         .width = WIN_W,
         .height = WIN_H,

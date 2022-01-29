@@ -15,10 +15,18 @@ struct ResourceLocations {
 
     ResourceLocations() {
         folder = "./resources";
+        init();
+    }
+
+    void init(){
         fonts = fmt::format("{}/fonts", folder);
         keybindings = fmt::format("{}/keybindings.ini", folder);
         default_shaders = fmt::format("{}/shaders", folder);
         shaders = fmt::format("{}/shaders", folder);
+        log_trace("Will be loading resources from {}", folder);
+        log_trace("Font folder {}", fonts);
+        log_trace("Shaders folder {}", shaders);
+        log_trace("Keybindings file: {}", keybindings);
     }
 };
 
