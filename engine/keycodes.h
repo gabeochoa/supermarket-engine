@@ -6,6 +6,7 @@
 
 #include "log.h"
 #include "pch.hpp"
+#include "resources.h"
 
 namespace Key {
 enum KeyCode : uint16_t {
@@ -198,7 +199,7 @@ struct Mapping {
         // load default keys
         default_keys();
         // load keybindings from file
-        std::ifstream ifs("./resources/keybindings.ini");
+        std::ifstream ifs(getResourceLocations().keybindings);
         if (!ifs.is_open()) {
             log_warn("failed to find keybindings file");
             return;
@@ -214,7 +215,7 @@ struct Mapping {
 
     void export_keys() {
         log_info("writing out keybindings");
-        std::ofstream ofs("./resources/keybindings.ini");
+        std::ofstream ofs(getResourceLocations().keybindings);
         if (!ofs.is_open()) {
             log_warn("failed to write to keybindings file");
             return;

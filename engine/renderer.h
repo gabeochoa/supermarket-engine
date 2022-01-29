@@ -155,10 +155,15 @@ struct Renderer {
     }
 
     static void init_default_shaders() {
-        sceneData->shaderLibrary.load("./shaders/flat.glsl");
-        sceneData->shaderLibrary.load("./shaders/texture.glsl");
-        sceneData->shaderLibrary.load("./shaders/line.glsl");
-        sceneData->shaderLibrary.load("./shaders/poly.glsl");
+        auto shader_folder = getResourceLocations().default_shaders;
+        sceneData->shaderLibrary.load(
+            fmt::format("{}/flat.glsl", shader_folder));
+        sceneData->shaderLibrary.load(
+            fmt::format("{}/texture.glsl", shader_folder));
+        sceneData->shaderLibrary.load(
+            fmt::format("{}/line.glsl", shader_folder));
+        sceneData->shaderLibrary.load(
+            fmt::format("{}/poly.glsl", shader_folder));
     }
 
     static void init_default_textures() {

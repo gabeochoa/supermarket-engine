@@ -9,7 +9,8 @@
 
 #include "pch.hpp"
 //
-#include "../engine/strutil.h"
+#include "resources.h"
+#include "strutil.h"
 
 const int START_CODEPOINT = 32;
 const int END_CODEPOINT = 30922;
@@ -19,7 +20,8 @@ const int NUM_LETTERS = END_CODEPOINT - START_CODEPOINT;
 
 static std::shared_ptr<Texture> fetch_texture_for_phrase(
     const char* fontname, const std::wstring phrase, bool temporary = false) {
-    std::string filename = fmt::format("./resources/fonts/{}.ttf", fontname);
+    std::string filename =
+        fmt::format("{}/{}.ttf", getResourceLocations().fonts, fontname);
 
     // This "_" is okay since we are never splitting the string
     // into pieces, so its okay if phrase has underscore
