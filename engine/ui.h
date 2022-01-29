@@ -331,7 +331,6 @@ keyboard focus. Must be called after the widget code has run.
 //
 #include "camera.h"
 #include "font.h"
-#include "input.h"
 #include "renderer.h"
 
 namespace IUI {
@@ -530,8 +529,10 @@ struct UIContext {
     }
 
     std::function<bool(glm::vec4)> isMouseInside;
+    std::function<bool(Key::KeyCode)> isKeyPressed;
 
-    void init(std::function<bool(glm::vec4)> mouseInsideCB) {
+    void init(std::function<bool(glm::vec4)> mouseInsideFn,
+              std::function<bool(Key::KeyCode)> isKeyPressedFn) {
 #ifdef SUPERMARKET_HOUSEKEEPING
         inited = true;
         began_and_not_ended = false;
@@ -540,8 +541,9 @@ struct UIContext {
         activeID = rootID;
         kbFocusID = rootID;
         lmouseDown = false;
-        mousePosition = Input::getMousePosition();
-        isMouseInside = mouseInsideCB;
+        mousePosition = glm::vec2{0};
+        isMouseInside = mouseInsideFn;
+        isKeyPressed = isKeyPressedFn;
     }
 
     void begin(bool mouseDown, glm::vec2 mousePos) {
@@ -736,7 +738,7 @@ bool button(const uuid id, WidgetConfig config) {
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::getMapping("Widget Next"))) {
             get()->kbFocusID = rootID;
-            if (Input::isKeyPressed(Key::getMapping("Widget Mod"))) {
+            if (get()->isKeyPressed(Key::getMapping("Widget Mod"))) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
@@ -1026,7 +1028,7 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::getMapping("Widget Next"))) {
             get()->kbFocusID = rootID;
-            if (Input::isKeyPressed(Key::getMapping("Widget Mod"))) {
+            if (get()->isKeyPressed(Key::getMapping("Widget Mod"))) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
@@ -1034,14 +1036,14 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
             (*value) = state->value;
             return true;
         }
-        if (Input::isKeyPressed(Key::getMapping("Value Up"))) {
+        if (get()->isKeyPressed(Key::getMapping("Value Up"))) {
             state->value = state->value + 0.005;
             if (state->value > mxf) state->value = mxf;
 
             (*value) = state->value;
             return true;
         }
-        if (Input::isKeyPressed(Key::getMapping("Value Down"))) {
+        if (get()->isKeyPressed(Key::getMapping("Value Down"))) {
             state->value = state->value - 0.005;
             if (state->value < mnf) state->value = mnf;
             (*value) = state->value;
@@ -1146,7 +1148,7 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     if (has_kb_focus(id)) {
         if (get()->pressed(Key::getMapping("Widget Next"))) {
             get()->kbFocusID = rootID;
-            if (Input::isKeyPressed(Key::getMapping("Widget Mod"))) {
+            if (get()->isKeyPressed(Key::getMapping("Widget Mod"))) {
                 get()->kbFocusID = get()->lastProcessed;
             }
         }
@@ -1189,7 +1191,7 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content) {
     if (has_kb_focus(id)) {
         // TODO is this obvious to the user?
         //      whats a better way to do this?
-        if (Input::isKeyPressed(Key::getMapping("Clear Command Line"))) {
+        if (get()->isKeyPressed(Key::getMapping("Clear Command Line"))) {
             state->buffer.asT().clear();
             state->selected = -1;
             changed = true;
