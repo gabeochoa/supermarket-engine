@@ -8,6 +8,8 @@
 #include "../../engine/pch.hpp"
 #include "../../engine/ui.h"
 
+#include "../../engine/terminal_layer.h"
+
 constexpr int WIN_W = 1920;
 constexpr int WIN_H = 1080;
 constexpr float WIN_RATIO = WIN_W * 1.f / WIN_H;
@@ -53,7 +55,11 @@ struct UITestLayer : public Layer {
 
     virtual void onUpdate(Time dt) override {
         log_trace("{:.2}s ({:.2} ms) ", dt.s(), dt.ms());
-        uiTestCameraController->onUpdate(dt);
+
+        if (GLOBALS.get_or_default<bool>("terminal_closed", true)) {
+            uiTestCameraController->onUpdate(dt);
+        }
+
         Renderer::begin(uiTestCameraController->camera);
         ui_test(dt);
         Renderer::end();
@@ -317,6 +323,11 @@ struct UITestLayer : public Layer {
     virtual void onEvent(Event& event) override {
         // log_warn(event.toString().c_str());
 
+        if (!GLOBALS.get<bool>("terminal_closed")) {
+            return;
+        }
+
+
         uiTestCameraController->onEvent(event);
         EventDispatcher dispatcher(event);
         dispatcher.dispatch<Mouse::MouseButtonPressedEvent>(std::bind(
@@ -343,7 +354,9 @@ int main(int argc, char** argv) {
         .escClosesWindow = false,
     });
 
-    // test code underneath game so it never shows
+    Layer* terminal = new TerminalLayer();
+    App::get().pushLayer(terminal);
+
     Layer* uitest = new UITestLayer();
     App::get().pushLayer(uitest);
 
