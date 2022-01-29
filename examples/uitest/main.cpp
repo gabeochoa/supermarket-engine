@@ -1,14 +1,14 @@
 
 
 #include "../../engine/app.h"
-#include "../../engine/layer.h"
 #include "../../engine/camera.h"
 #include "../../engine/edit.h"
 #include "../../engine/font.h"
+#include "../../engine/layer.h"
 #include "../../engine/pch.hpp"
-#include "../../engine/ui.h"
-
 #include "../../engine/terminal_layer.h"
+#include "../../engine/ui.h"
+#include "../../engine/uihelper.h"
 
 constexpr int WIN_W = 1920;
 constexpr int WIN_H = 1080;
@@ -32,7 +32,6 @@ struct UITestLayer : public Layer {
     std::shared_ptr<OrthoCameraController> uiTestCameraController;
 
     UITestLayer() : Layer("UI Test") {
-
         uiTestCameraController.reset(
             new OrthoCameraController(WIN_RATIO, 10.f, 5.f, 0.f));
         uiTestCameraController->camera.setPosition(glm::vec3{15.f, 0.f, 0.f});
@@ -43,7 +42,8 @@ struct UITestLayer : public Layer {
             glm::vec4{0, 0, WIN_W, WIN_H});
 
         ui_context.reset(new IUI::UIContext());
-        ui_context->init();
+        ui_context->init(std::bind(&isMouseInside, uiTestCameraController,
+                                   std::placeholders::_1));
         ui_context->c_id = 1;
 
         GLOBALS.set<float>("slider_val", &value);
@@ -67,7 +67,16 @@ struct UITestLayer : public Layer {
 
     void ui_test(Time dt) {
         using namespace IUI;
-        ui_context->begin(uiTestCameraController);
+        auto mouseDown =
+            Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
+        auto mousePosition =
+            screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
+                          uiTestCameraController->camera.view,        //
+                          uiTestCameraController->camera.projection,  //
+                          uiTestCameraController->camera.viewport     //
+            );
+
+        ui_context->begin(mouseDown, mousePosition);
 
         if (button(MK_UUID(id, rootID),
                    WidgetConfig({.position = glm::vec2{0.f, 0.f},
@@ -326,7 +335,6 @@ struct UITestLayer : public Layer {
         if (!GLOBALS.get<bool>("terminal_closed")) {
             return;
         }
-
 
         uiTestCameraController->onEvent(event);
         EventDispatcher dispatcher(event);

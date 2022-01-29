@@ -8,6 +8,7 @@
 #include "pch.hpp"
 #include "time.h"
 #include "ui.h"
+#include "uihelper.h"
 
 static std::shared_ptr<OrthoCameraController> terminalCameraController;
 
@@ -40,7 +41,8 @@ struct TerminalLayer : public Layer {
         terminalCameraController->resizeEnabled = false;
 
         uicontext.reset(new IUI::UIContext());
-        uicontext->init();
+        uicontext->init(std::bind(&isMouseInside, terminalCameraController,
+                                  std::placeholders::_1));
 
         startingHistoryIndex = EDITOR_COMMANDS.output_history.size() - 1;
     }
@@ -80,7 +82,16 @@ struct TerminalLayer : public Layer {
         Renderer::begin(terminalCameraController->camera);
         {
             using namespace IUI;
-            uicontext->begin(terminalCameraController);
+            auto mouseDown =
+                Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
+            auto mousePosition =
+                screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
+                              terminalCameraController->camera.view,        //
+                              terminalCameraController->camera.projection,  //
+                              terminalCameraController->camera.viewport     //
+                );
+
+            uicontext->begin(mouseDown, mousePosition);
 
             float h1_fs = 64.f;
             float p_fs = 32.f;

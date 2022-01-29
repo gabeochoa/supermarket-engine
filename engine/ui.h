@@ -459,7 +459,6 @@ struct UIContext {
     int c_id = 0;
     StateManager statemanager;
 
-    std::shared_ptr<OrthoCameraController> camController;
     uuid hotID;     // probably about to be touched
     uuid activeID;  // currently being touched
 
@@ -530,7 +529,9 @@ struct UIContext {
                          std::placeholders::_1);
     }
 
-    void init() {
+    std::function<bool(glm::vec4)> isMouseInside;
+
+    void init(std::function<bool(glm::vec4)> mouseInsideCB) {
 #ifdef SUPERMARKET_HOUSEKEEPING
         inited = true;
         began_and_not_ended = false;
@@ -540,9 +541,10 @@ struct UIContext {
         kbFocusID = rootID;
         lmouseDown = false;
         mousePosition = Input::getMousePosition();
+        isMouseInside = mouseInsideCB;
     }
 
-    void begin(const std::shared_ptr<OrthoCameraController> controller) {
+    void begin(bool mouseDown, glm::vec2 mousePos) {
 #ifdef SUPERMARKET_HOUSEKEEPING
         M_ASSERT(inited, "UIContext must be inited before you begin()");
         M_ASSERT(
@@ -552,15 +554,11 @@ struct UIContext {
 #endif
 
         globalContext = this;
-        camController = controller;
         hotID = rootID;
-        lmouseDown = Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
-        mousePosition = screenToWorld(glm::vec3{Input::getMousePosition(), 0.f},
-                                      camController->camera.view,        //
-                                      camController->camera.projection,  //
-                                      camController->camera.viewport     //
-        );
+        lmouseDown = mouseDown;
+        mousePosition = mousePos;
     }
+
     void end() {
 #ifdef SUPERMARKET_HOUSEKEEPING
         began_and_not_ended = false;
@@ -591,20 +589,6 @@ inline bool has_kb_focus(const uuid& id) { return (get()->kbFocusID == id); }
 
 inline void draw_if_kb_focus(const uuid& id, std::function<void(void)> cb) {
     if (has_kb_focus(id)) cb();
-}
-
-inline bool isMouseInside(glm::vec4 rect) {
-    auto mouseScreen = glm::vec3{Input::getMousePosition(), 0.f};
-    mouseScreen.y = get()->camController->camera.viewport.w - mouseScreen.y;
-
-    auto mouse = screenToWorld(mouseScreen,                              //
-                               get()->camController->camera.view,        //
-                               get()->camController->camera.projection,  //
-                               get()->camController->camera.viewport     //
-    );
-    // log_warn("{} => {}, inside? {}", Input::getMousePosition(), mouse, rect);
-    return mouse.x >= rect.x && mouse.x <= rect.x + rect.z &&
-           mouse.y >= rect.y && mouse.y <= rect.y + rect.w;
 }
 
 // This couldnt have been done without the tutorial
@@ -693,7 +677,7 @@ bool text(const uuid id, WidgetConfig config) {
 }
 
 bool button(const uuid id, WidgetConfig config) {
-    bool inside = isMouseInside(glm::vec4{config.position, config.size});
+    bool inside = get()->isMouseInside(glm::vec4{config.position, config.size});
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
     config.position.x += config.size.x / 2.f;
@@ -979,8 +963,8 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
     auto state = widget_init<SliderState>(id);
     if (value) state->value.set(*value);
 
-    bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
-                                          config.size.x, config.size.y});
+    bool inside = get()->isMouseInside(glm::vec4{
+        config.position.x, config.position.y, config.size.x, config.size.y});
 
     float min;
     float max;
@@ -1091,8 +1075,8 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
 bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     auto state = widget_init<TextfieldState>(id);
 
-    bool inside = isMouseInside(glm::vec4{config.position.x, config.position.y,
-                                          config.size.x, config.size.y});
+    bool inside = get()->isMouseInside(glm::vec4{
+        config.position.x, config.position.y, config.size.x, config.size.y});
 
     // everything is drawn from the center so move it so its not the center
     // that way the mouse collision works
@@ -1326,7 +1310,7 @@ bool scroll_view(const uuid id, WidgetConfig config,
     auto state = widget_init<ScrollViewState>(id);
     if (startingIndex) state->yoffset = (*startingIndex) * itemHeight;
 
-    bool inside = isMouseInside(glm::vec4{config.position, config.size});
+    bool inside = get()->isMouseInside(glm::vec4{config.position, config.size});
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
     config.position.x += config.size.x / 2.f;
