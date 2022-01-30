@@ -12,7 +12,7 @@
 struct Piece {
     glm::vec2 position;
     glm::vec4 color;
-    int type = 0;
+    int type = -1;
     std::array<int, 16> piece;
     glm::vec4 bounds;
     int angle = 0;
@@ -31,8 +31,14 @@ struct Piece {
 
     void regen(glm::vec2 pos) {
         position = pos;
-        type = rand() % 6;
         angle = 0;
+        // Ensure we dont get the same exact piece twice in a row
+        int newtype = -1;
+        do {
+            newtype = rand() % 6;
+        } while (newtype == type);
+        type = newtype;
+        // Load shape info
         piece = type_to_rotated_array(type, angle);
         bounds = genBounds();
         color = piece_color(type);

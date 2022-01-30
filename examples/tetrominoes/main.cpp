@@ -4,11 +4,32 @@
 #include "../../engine/layer.h"
 #include "../../engine/pch.hpp"
 
-constexpr int TILESIZE = 80;
-constexpr int MAP_H = 31;
+////////////////////////////////////////
+//
+// simple tetris clone
+//
+//
+// Left as an excercise to the reader ( thats you ! )
+// - ui
+// - give points based on lines num total cleared together
+// - should space be rotate and up drop ?
+// - test with various window sizes to make sure zoom setting works correctly
+// - add an end to the game
+// - instead of locking immediately when piece doesnt move, have a lock timer,
+// that resets when piece moves
+//
+// Known Bugs
+// - (LOW) Sometimes the clear_top_row inserts true black instead of gray
+// into the map
+//
+////////////////////////////////////////
+
+constexpr int WIN_H = 1080;
+constexpr int WIN_W = 1920 / 2;
+
+constexpr int MAP_H = 33;
 constexpr int MAP_W = 12;
-constexpr int WIN_H = MAP_H * TILESIZE;
-constexpr int WIN_W = (MAP_W - 2) * 2 * TILESIZE;
+constexpr int TILESIZE = (WIN_H * 0.95) / MAP_H;
 constexpr float WIN_RATIO = WIN_W * 1.f / WIN_H;
 
 struct Tile {
@@ -39,6 +60,7 @@ struct DemoLayer : public Layer {
     Piece currentPiece, previewPiece, ghostPiece;
     float moveTimer;
     float timeBetweenMoves = 0.5f;
+    int linesCleared;
 
     virtual ~DemoLayer() {}
 
@@ -52,8 +74,8 @@ struct DemoLayer : public Layer {
             new OrthoCameraController(WIN_RATIO, 0.f, 5.f, 5.f));
         cameraController->camera.setViewport(glm::vec4{0, 0, WIN_W, WIN_H});
         cameraController->camera.setPosition(
-            glm::vec3{WIN_W / 2.f, WIN_H / 2.f, 0.f});
-        cameraController->setZoomLevel(WIN_H);
+            glm::vec3{WIN_W / 4.f, WIN_H / 2.f, 0.f});
+        cameraController->setZoomLevel(WIN_W * 0.6f);
     }
 
     void init_map() {
@@ -84,7 +106,7 @@ struct DemoLayer : public Layer {
             }
         }
         currentPiece = previewPiece;
-        currentPiece.position = {(MAP_W / 2), (MAP_H)};
+        currentPiece.position = {MAP_W / 2, MAP_H - 2};
         previewPiece.regen({(MAP_W + 1), (MAP_H + 1)});
     }
 
@@ -94,7 +116,6 @@ struct DemoLayer : public Layer {
         moveTimer = 0.f;
 
         bool moved = currentPiece.move(0, -1);
-        // TODO find a better way to check "lock"
         if (!moved) lock_piece();
     }
 
@@ -123,6 +144,7 @@ struct DemoLayer : public Layer {
     }
 
     void clear_full_rows() {
+        int totalCleared = 0;
         for (int j = 0; j < MAP_H; j++) {
             if (!is_row_full(j)) continue;
             clear_row(j);
@@ -134,6 +156,11 @@ struct DemoLayer : public Layer {
             }
             // replace top row with empty tiles
             clear_row(MAP_H);
+
+            // Increment num lines and speed up game
+            totalCleared++;
+            linesCleared++;
+            speedup();
         }
     }
 
@@ -148,6 +175,11 @@ struct DemoLayer : public Layer {
         Renderer::end();
     }
 
+    void speedup() {
+        if (linesCleared != 0 && linesCleared % 10 == 0)
+            timeBetweenMoves *= 0.9f;
+    }
+
     virtual void onUpdate(Time dt) override {
         cameraController->onUpdate(dt);
         clear_full_rows();
@@ -159,7 +191,6 @@ struct DemoLayer : public Layer {
     bool onKeyPressed(KeyPressedEvent& event) {
         using namespace Key;
         int keycode = event.keycode;
-        // TODO should space be rotate and up drop?
         if (keycode == KeyCode::Up) currentPiece.rotate();
         if (keycode == KeyCode::Left) currentPiece.move(-1, 0);
         if (keycode == KeyCode::Right) currentPiece.move(1, 0);

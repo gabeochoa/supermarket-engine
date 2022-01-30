@@ -29,6 +29,11 @@ https://github.com/bombela/backward-cpp
 
 TODOs
 
+Fixes / Annoyances
+- camera positioning is a nighmare 
+    need some way to have reasonable defaults for a certain viewport size 
+    for games with no cam movement, i just want to not have to touch anything 
+
 Middleware 
 
 - keybindings on the layer level 
