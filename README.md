@@ -80,6 +80,9 @@ Engine Ideas
      make it obvious that the texture you are trying to draw doesnt exist
 - smoke / water 
     https://www.dgp.toronto.edu/public_user/stam/reality/Research/pdf/GDC03.pdf
+
+Open Questions
+- should each layer come with a camera controller? 
 ```
 
 
