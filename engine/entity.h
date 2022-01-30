@@ -226,8 +226,14 @@ struct EntityHelper {
         }
     }
 
+    // Note: originally I was planning to just have this be called
+    // forEach() but std::function doesnt really do param overloading
+    // and so we need to have the function have a different name
+    //
+    // TODO come up with a better func name than this
+    // but hopefully one as short
     template <typename T>
-    static void forEach(std::function<void(std::shared_ptr<T>)> cb) {
+    static void forEachV(std::function<void(std::shared_ptr<T>)> cb) {
         forEach<T>([cb](std::shared_ptr<T> t) {
             cb(t);
             return ForEachFlow::None;

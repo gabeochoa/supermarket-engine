@@ -40,6 +40,12 @@ App::App(AppSettings settings) {
 
     window->setEventCallback(M_BIND(onEvent));
 
+    if (!settings.initResourcesFolder.empty()) {
+        ResourceLocations& resources = getResourceLocations();
+        resources.folder = settings.initResourcesFolder;
+        resources.init();
+    }
+
     Renderer::init();
 }
 

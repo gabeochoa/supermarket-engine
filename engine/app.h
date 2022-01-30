@@ -11,10 +11,10 @@
 #include "log.h"
 #include "pch.hpp"
 #include "renderer.h"
+#include "resources.h"
 #include "shader.h"
 #include "time.h"
 #include "window.h"
-#include "resources.h"
 
 #define M_BIND(x) std::bind(&App::x, this, std::placeholders::_1)
 
@@ -27,6 +27,8 @@ struct AppSettings {
     bool clearEnabled = false;
     // should this close the window when user hits escape?
     bool escClosesWindow = false;
+    // if not empty, init resources folder to this
+    std::string initResourcesFolder = "";
 };
 
 struct App {

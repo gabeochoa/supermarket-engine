@@ -1,17 +1,9 @@
 
-//
-#include "../../engine/ui.h"
-#include "../../engine/uihelper.h"
-//
-
 #include "../../engine/app.h"
 #include "../../engine/camera.h"
-#include "../../engine/edit.h"
 #include "../../engine/entity.h"
-#include "../../engine/font.h"
 #include "../../engine/layer.h"
 #include "../../engine/pch.hpp"
-#include "../../engine/terminal_layer.h"
 
 constexpr int WIN_W = 1920;
 constexpr int WIN_H = 1080;
@@ -68,7 +60,6 @@ struct Ball : public CanReset {
             vel = glm::normalize(vel) * mxspeed;
         }
         position += vel * dt.s();
-
         if (position.x < -100) {
             rightPoints += 1;
             reset();
@@ -92,7 +83,6 @@ struct Ball : public CanReset {
 };
 
 struct PongLayer : public Layer {
-    std::shared_ptr<IUI::UIContext> ui_context;
     std::shared_ptr<OrthoCameraController> pongCameraController;
     std::shared_ptr<Ball> ball;
 
@@ -103,9 +93,6 @@ struct PongLayer : public Layer {
             glm::vec3{WIN_W / 2.f, WIN_H / 2.f, 0.f});
 
         pongCameraController->camera.setViewport(glm::vec4{0, 0, WIN_W, WIN_H});
-
-        ui_context.reset(new IUI::UIContext());
-        IUI::init_uicontext(ui_context.get(), pongCameraController);
 
         EntityHelper::addEntity(
             std::make_shared<Paddle>(true, glm::vec2{10, WIN_H / 2}));
@@ -119,7 +106,7 @@ struct PongLayer : public Layer {
     }
 
     void reset() {
-        EntityHelper::forEach<CanReset>([](auto e) { e->reset(); });
+        EntityHelper::forEachV<CanReset>([](auto e) { e->reset(); });
         leftPoints = 0, rightPoints = 0;
     }
 
@@ -127,26 +114,21 @@ struct PongLayer : public Layer {
 
     virtual void onUpdate(Time dt) override {
         pongCameraController->onUpdate(dt);
-
         Renderer::begin(pongCameraController->camera);
-
         EntityHelper::forEachEntity([dt](auto e) {
             e->onUpdate(dt);
             e->render();
             return EntityHelper::ForEachFlow::None;
         });
-
-        EntityHelper::forEach<Ball>([](auto b) {
-            EntityHelper::forEach<Paddle>([b](auto p) { b->collide(*p); });
+        EntityHelper::forEachV<Ball>([](auto b) {
+            EntityHelper::forEachV<Paddle>([b](auto p) { b->collide(*p); });
         });
-
         Renderer::end();
     }
 
     bool onKeyPressed(KeyPressedEvent& event) {
         if (event.keycode == Key::KeyCode::D0) reset();
         if (event.keycode == Key::KeyCode::Space) ball->go();
-        if (ui_context->processKeyPressEvent(event.keycode)) return true;
         return false;
     }
 
@@ -154,16 +136,6 @@ struct PongLayer : public Layer {
         EventDispatcher dispatcher(event);
         dispatcher.dispatch<KeyPressedEvent>(
             std::bind(&PongLayer::onKeyPressed, this, std::placeholders::_1));
-        dispatcher.dispatch<CharPressedEvent>(
-            [this](CharPressedEvent& event) -> bool {
-                ui_context->processCharPressEvent(event.charcode);
-                return true;
-            });
-        dispatcher.dispatch<Mouse::MouseScrolledEvent>(
-            [this](Mouse::MouseScrolledEvent& event) -> bool {
-                ui_context->processMouseScrolled(event.GetYOffset());
-                return true;
-            });
     }
 };
 
@@ -171,16 +143,13 @@ int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
 
-    ResourceLocations& resources = getResourceLocations();
-    resources.folder = "../resources";
-    resources.init();
-
     App::create({
         .width = WIN_W,
         .height = WIN_H,
         .title = "pong",
         .clearEnabled = true,
         .escClosesWindow = true,
+        .initResourcesFolder = "../resources",
     });
 
     Layer* pong = new PongLayer();
