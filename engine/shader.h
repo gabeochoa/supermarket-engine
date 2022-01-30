@@ -13,6 +13,7 @@ struct Shader {
            const std::string &fragmentSource);
 
     Shader(const std::string &filepath);
+    Shader(const std::string &name, const char *data, int size);
 
     std::unordered_map<GLenum, std::string> preProcess(
         const std::string &source);
@@ -42,5 +43,7 @@ struct ShaderLibrary {
     std::unordered_map<std::string, std::shared_ptr<Shader>> shaders;
     void add(const std::shared_ptr<Shader> &shader);
     std::shared_ptr<Shader> load(const std::string &path);
+    std::shared_ptr<Shader> load_binary(const std::string &name,
+                                        const char *data, int size);
     std::shared_ptr<Shader> get(const std::string &name);
 };

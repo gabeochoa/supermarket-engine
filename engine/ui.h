@@ -647,7 +647,7 @@ struct WidgetConfig;
 struct WidgetConfig {
     WidgetConfig* child;
     glm::vec4 color = white;
-    const char* font = "Karmina-Regular";
+    const char* font = "default";
     glm::vec2 position = glm::vec2{0.f};
     float rotation = 0;
     glm::vec2 size = glm::vec2{1.f};

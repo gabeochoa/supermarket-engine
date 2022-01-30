@@ -150,7 +150,7 @@ struct UITestLayer : public Layer {
 
         auto hiraganaConfig = WidgetConfig({
             .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-            .font = "Sazanami-Hanazono-Mincho",
+            .font = "default_cjk",
             .position = glm::vec2{0.f, -14.f},
             .size = glm::vec2{1.f, 1.f},
             .text = "Hiragana: "
@@ -159,7 +159,7 @@ struct UITestLayer : public Layer {
         });
         auto kanjiConfig = WidgetConfig({
             .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
-            .font = "Sazanami-Hanazono-Mincho",
+            .font = "default_cjk",
             .position = glm::vec2{0.f, -16.f},
             .size = glm::vec2{1.f, 1.f},
             .text = "Kanji: \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e",

@@ -20,6 +20,7 @@ LIBGEN = ar
 CCC = clang++
 MFLAGS = -MMD -MP 
 
+
 all: super
 
 super: pch $(LIBRARY) $(OBJ_FILES)
@@ -28,7 +29,7 @@ pch: $(LIB_H_FILES)
 	$(CCC) -c engine/pch.hpp -o ./output/pch.d $(FLAGS) 
 
 $(LIBRARY): $(LIB_OBJ_FILES) 
-	$(LIBGEN) rcs $(LIBRARY) $(LIB_OBJ_FILES)
+	$(LIBGEN) rcs $(LIBRARY) $(LIB_OBJ_FILES) 
 
 $(LIB_OBJ_DIR)/%.o: $(LIB_SRC_DIR)/%.cpp 
 	$(CCC) $(FLAGS) $(MFLAGS) -c $< -o $@ 
@@ -39,4 +40,4 @@ $(LIB_OBJ_DIR)/%.d: $(LIB_SRC_DIR)/%.h
 clean:
 	$(RM) $(LIB_OBJ_FILES) $(DEPENDS) ${LIBRARY}
 
-.PHONY: all clean
+.PHONY: all clean resources

@@ -56,6 +56,19 @@
 #include "../vendor/glText.h"
 #include "../vendor/portable-file-dialogs.h"
 
+#define INCBIN_SILENCE_BITCODE_WARNING
+#define INCBIN_STYLE INCBIN_STYLE_SNAKE
+#define INCBIN_PREFIX g_
+#include "../vendor/incbin/incbin.h"
+/* Usage: INCBIN(<<LABLE>>, <<FILE>>)
+ *
+ * Symbols defined by INCBIN
+ * ------------------------------------------
+ *  const unsigned char        g_asset_data[]  // g_<<LABLE>>_data
+ *  const unsigned char* const g_asset_end;    // g_<<LABEL>>_end
+ *  const unsinged int         g_asset_size;   // g_<<LABEL>>_size
+ */
+
 #ifdef __APPLE__
 #pragma clang diagnostic pop
 #else

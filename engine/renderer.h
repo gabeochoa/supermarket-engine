@@ -154,17 +154,7 @@ struct Renderer {
                                             spriteWidth, spriteHeight);
     }
 
-    static void init_default_shaders() {
-        auto shader_folder = getResourceLocations().default_shaders;
-        sceneData->shaderLibrary.load(
-            fmt::format("{}/flat.glsl", shader_folder));
-        sceneData->shaderLibrary.load(
-            fmt::format("{}/texture.glsl", shader_folder));
-        sceneData->shaderLibrary.load(
-            fmt::format("{}/line.glsl", shader_folder));
-        sceneData->shaderLibrary.load(
-            fmt::format("{}/poly.glsl", shader_folder));
-    }
+    static void init_default_shaders();
 
     static void init_default_textures() {
         std::shared_ptr<Texture> whiteTexture =

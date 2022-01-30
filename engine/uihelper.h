@@ -49,7 +49,7 @@ inline void init_uicontext(
     auto genFontTexture = [](std::string fontname, std::wstring phrase,
                              bool is_temporary) {
         auto texture =
-            fetch_texture_for_phrase(fontname.c_str(), phrase, is_temporary);
+            fetch_texture_for_phrase(phrase, fontname.c_str(), is_temporary);
         if (!texture) return UIContext::FontPhraseTexInfo{};
         return UIContext::FontPhraseTexInfo{
             .textureName = texture->name,

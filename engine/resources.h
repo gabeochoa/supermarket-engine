@@ -10,7 +10,6 @@ struct ResourceLocations {
     std::string keybindings;
     // TODO consider just keeping these strings inside the codebase instead of
     // files?
-    std::string default_shaders;
     std::string shaders;
 
     ResourceLocations() {
@@ -18,10 +17,9 @@ struct ResourceLocations {
         init();
     }
 
-    void init(){
+    void init() {
         fonts = fmt::format("{}/fonts", folder);
         keybindings = fmt::format("{}/keybindings.ini", folder);
-        default_shaders = fmt::format("{}/shaders", folder);
         shaders = fmt::format("{}/shaders", folder);
         log_trace("Will be loading resources from {}", folder);
         log_trace("Font folder {}", fonts);

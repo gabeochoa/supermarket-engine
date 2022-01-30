@@ -24,6 +24,15 @@ Shader::Shader(const std::string &filepath) {
     compile(sources);
 }
 
+Shader::Shader(const std::string &name, const char *data, int size)
+    : name(name) {
+    log_trace("Got shader contents of size {} ", size);
+    std::string contents(data, data + size);
+    std::unordered_map<GLenum, std::string> sources = preProcess(contents);
+    log_trace("finished preprocessing shader {} ", name);
+    compile(sources);
+}
+
 std::unordered_map<GLenum, std::string> Shader::preProcess(
     const std::string &source) {
     std::unordered_map<GLenum, std::string> shaderSources;
@@ -210,8 +219,16 @@ void ShaderLibrary::add(const std::shared_ptr<Shader> &shader) {
     shaders[shader->name] = shader;
 }
 std::shared_ptr<Shader> ShaderLibrary::load(const std::string &path) {
-    const auto abs_path = get_absolute_path_to(getResourceLocations().folder, path);
+    const auto abs_path =
+        get_absolute_path_to(getResourceLocations().folder, path);
     auto shader = std::make_shared<Shader>(abs_path);
+    add(shader);
+    return shader;
+}
+
+std::shared_ptr<Shader> ShaderLibrary::load_binary(const std::string &name,
+                                                   const char *data, int size) {
+    auto shader = std::make_shared<Shader>(name, data, size);
     add(shader);
     return shader;
 }
