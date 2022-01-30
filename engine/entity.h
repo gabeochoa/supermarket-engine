@@ -215,7 +215,6 @@ struct EntityHelper {
         }
     }
 
-    // TODO add support for break / continue with cb return value
     template <typename T>
     static void forEach(std::function<ForEachFlow(std::shared_ptr<T>)> cb) {
         for (auto e : entities_DO_NOT_USE) {
@@ -225,6 +224,14 @@ struct EntityHelper {
             if (fef == 1) continue;
             if (fef == 2) break;
         }
+    }
+
+    template <typename T>
+    static void forEach(std::function<void(std::shared_ptr<T>)> cb) {
+        forEach<T>([cb](std::shared_ptr<T> t) {
+            cb(t);
+            return ForEachFlow::None;
+        });
     }
 
     static bool entityInLocation(glm::vec4 rect) {
