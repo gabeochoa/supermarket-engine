@@ -4,6 +4,47 @@
 #include "log.h"
 #include "math.h"
 
+template <>
+struct fmt::formatter<glm::vec2> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    constexpr auto format(glm::vec2 const& v, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(), "({:.2f},{:.2f})", v.x, v.y);
+    }
+};
+
+template <>
+struct fmt::formatter<glm::vec3> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    constexpr auto format(glm::vec3 const& v, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(), "({:.2f},{:.2f},{:.2f})", v.x, v.y,
+                              v.z);
+    }
+};
+
+template <>
+struct fmt::formatter<glm::vec4> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    constexpr auto format(glm::vec4 const& v, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(), "({:.2f},{:.2f},{:.2f},{:.2f})", v.x,
+                              v.y, v.z, v.w);
+    }
+};
+
 inline glm::vec2 lerp(const glm::vec2& x, const glm::vec2& y, float t) {
     return x * (1.f - t) + y * t;
 }
