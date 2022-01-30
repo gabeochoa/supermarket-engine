@@ -36,6 +36,8 @@ Fixes / Annoyances
 - camera positioning is a nighmare 
     need some way to have reasonable defaults for a certain viewport size 
     for games with no cam movement, i just want to not have to touch anything 
+- using incbin during development is probably slower than just having the files ready
+    use some defines to specify files vs incbin
 
 Middleware 
 
