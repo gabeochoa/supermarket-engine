@@ -8,46 +8,49 @@
 
 #include "external_include.h"
 
+namespace superlog {
 enum LogLevel : int {
-    ALL = 0,
-    TRACE,
-    INFO,
-    WARN,
-    ERROR,
+    SUPER_LOG_ALL = 0,
+    SUPER_LOG_TRACE,
+    SUPER_LOG_INFO,
+    SUPER_LOG_WARN,
+    SUPER_LOG_ERROR,
 };
 
 // TODO lets move this to an env var or something
 // we shouldnt have to recompile to change the level
-static auto LOG_LEVEL = LogLevel::INFO;
+static auto LOG_LEVEL = LogLevel::SUPER_LOG_INFO;
 
 inline const char* level_to_string(int level) {
     switch (level) {
         default:
-        case LogLevel::ALL:
+        case LogLevel::SUPER_LOG_ALL:
             return "";
-        case LogLevel::TRACE:
+        case LogLevel::SUPER_LOG_TRACE:
             return "Trace";
-        case LogLevel::INFO:
+        case LogLevel::SUPER_LOG_INFO:
             return "Info";
-        case LogLevel::WARN:
+        case LogLevel::SUPER_LOG_WARN:
             return "Warn";
-        case LogLevel::ERROR:
+        case LogLevel::SUPER_LOG_ERROR:
             return "Error";
     }
 }
 
+}  // namespace superlog
+
 inline void vlog(int level, const char* file, int line, fmt::string_view format,
                  fmt::format_args args) {
-    if (level < LOG_LEVEL) return;
-    fmt::print("{}: {}: {}: ", file, line, level_to_string(level));
+    if (level < superlog::LOG_LEVEL) return;
+    fmt::print("{}: {}: {}: ", file, line, superlog::level_to_string(level));
     fmt::vprint(format, args);
     fmt::print("\n");
 }
 
 inline void vlog(int level, const char* file, int line,
                  fmt::wstring_view format, fmt::wformat_args args) {
-    if (level < LOG_LEVEL) return;
-    fmt::print("{}: {}: {}: ", file, line, level_to_string(level));
+    if (level < superlog::LOG_LEVEL) return;
+    fmt::print("{}: {}: {}: ", file, line, superlog::level_to_string(level));
     fmt::vprint(format, args);
     fmt::print("\n");
 }
@@ -80,12 +83,16 @@ inline void log_me(int level, const char* file, int line, const wchar_t* format,
          fmt::make_args_checked<const wchar_t*>(format, args));
 }
 
-#define log_trace(...) log_me(LogLevel::TRACE, __FILE__, __LINE__, __VA_ARGS__)
+#define log_trace(...) \
+    log_me(superlog::LogLevel::SUPER_LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
 
-#define log_info(...) log_me(LogLevel::INFO, __FILE__, __LINE__, __VA_ARGS__)
-#define log_warn(...) log_me(LogLevel::WARN, __FILE__, __LINE__, __VA_ARGS__)
-#define log_error(...)                                        \
-    log_me(LogLevel::ERROR, __FILE__, __LINE__, __VA_ARGS__); \
+#define log_info(...) \
+    log_me(superlog::LogLevel::SUPER_LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
+#define log_warn(...) \
+    log_me(superlog::LogLevel::SUPER_LOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
+#define log_error(...)                                              \
+    log_me(superlog::LogLevel::SUPER_LOG_ERROR, __FILE__, __LINE__, \
+           __VA_ARGS__);                                            \
     assert(false)
 
 #define M_ASSERT(x, ...)                                    \

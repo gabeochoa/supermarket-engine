@@ -3,6 +3,9 @@
 
 #include "edit.h"
 
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
@@ -123,3 +126,4 @@ int App::run() {
 }
 
 #pragma clang diagnostic pop
+#pragma GCC diagnostic pop

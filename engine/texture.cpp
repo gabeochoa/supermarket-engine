@@ -116,6 +116,10 @@ void Texture2D::bind(int i) const {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 TextureLibrary &TextureLibrary::get() { return textureLibrary__DO_NOT_USE; }
 
 #pragma clang diagnostic pop
+#pragma GCC diagnostic pop

@@ -20,6 +20,9 @@ LIBGEN = ar
 CCC = clang++
 MFLAGS = -MMD -MP 
 
+# windows: CCC=x86_64-w64-mingw32-g++
+# windows: FLAGS=-std=c++20 -DWIN32 -lstdc++fs
+# windows: super
 
 all: super
 

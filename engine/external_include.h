@@ -15,20 +15,30 @@
 #define GL_SILENCE_DEPRECATION
 #define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 #endif
-#include <GL/glew.h>
-/* Ask for an OpenGL Core Context */
 
+#ifdef WIN32
+#include "../windows/glew-2.1.0/include/GL/glew.h"
+#include "../windows/glfw-3.3.6.bin.WIN64/include/GLFW/glfw3.h"
+#include "../vendor/glm/glm/glm.hpp"
+#include "../vendor/glm/glm/gtc/random.hpp"
+#include "../vendor/glm/glm/gtc/type_ptr.hpp"
+#include "../vendor/glm/glm/gtc/matrix_transform.hpp"
+#include <experimental/filesystem>
+#else
+#include <GL/glew.h>
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/random.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#endif
 
 // //
 
 #include <cstdint>
 #include <fstream>
 #include <functional>
-#include <glm/glm.hpp>
-#include <glm/gtc/random.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <initializer_list>
 #include <iostream>
 #include <map>
