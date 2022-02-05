@@ -623,6 +623,10 @@ struct UIContext {
     }
 };
 
+inline bool isHot(const uuid& id) { return (get()->hotID == id); }
+inline bool isActive(const uuid& id) { return (get()->activeID == id); }
+inline bool isActiveOrHot(const uuid& id) { return isHot(id) || isActive(id); }
+
 inline void try_to_grab_kb(const uuid id) {
     if (get()->kbFocusID == rootID) {
         get()->kbFocusID = id;
@@ -1000,44 +1004,25 @@ bool checkbox(const uuid id, WidgetConfig config, bool* cbState = nullptr) {
 
 inline void _slider_render(const uuid id, const WidgetConfig& config,
                            const float value) {
-    float min;
-    float max;
-    if (config.vertical) {
-        min = config.position.y - (config.size.y / 2.f);
-        max = config.position.y + (config.size.y / 2.f);
-    } else {
-        min = config.position.x - (config.size.x / 2.f);
-        max = config.position.x + (config.size.x / 2.f);
-    }
-    float pos_offset = ((max - min) * value);
-
-    auto col = white;
-    if (get()->activeID == id || get()->hotID == id) {
-        col = green;
-    } else {
-        col = blue;
-    }
-
-    auto pos = widget_center(config.position, config.size);
-
+    const auto cs = config.size;
+    const float pos_offset = value * (config.vertical ? cs.y : cs.x);
+    const auto col = isActiveOrHot(id) ? green : blue;
+    const auto pos = widget_center(config.position, config.size);
     draw_if_kb_focus(id, [&]() {
-        get()->drawWidget(pos, config.size + glm::vec2{0.1f}, config.rotation,
-                          teal, config.texture);
+        get()->drawWidget(pos,  //
+                                // TODO should this be times because
+                                // we want it to be the same % size increase
+                                // no matter the size of the widget
+                          config.size + glm::vec2{0.1f},  //
+                          config.rotation, teal, config.texture);
     });
-
     // slider rail
-    get()->drawWidget(pos, config.size, config.rotation, red, config.texture);
-
+    get()->drawWidget(pos, cs, config.rotation, red, config.texture);
     // slide
-    if (config.vertical) {
-        get()->drawWidget(
-            config.position + glm::vec2{config.size.x / 2.f, pos_offset},
-            glm::vec2{0.5f}, config.rotation, col, config.texture);
-    } else {
-        get()->drawWidget(
-            config.position + glm::vec2{pos_offset, config.size.y / 2.f},
-            glm::vec2{0.5f}, config.rotation, col, config.texture);
-    }
+    glm::vec2 offset = config.vertical ? glm::vec2{cs.x / 2.f, pos_offset}
+                                       : glm::vec2{pos_offset, cs.y / 2.f};
+    get()->drawWidget(config.position + offset, glm::vec2{0.5f},
+                      config.rotation, col, config.texture);
 }
 
 bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
