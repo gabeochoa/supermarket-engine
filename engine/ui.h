@@ -1078,7 +1078,7 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
 // this will also help with temporary texture size
 
 inline void _textfield_render(const uuid& id, const WidgetConfig& config,
-                              const std::wstring& buffer) {
+                              const std::shared_ptr<TextfieldState>& state) {
     // Draw focus ring
     draw_if_kb_focus(id, [&]() {
         get()->drawWidget(config.position, config.size + glm::vec2{0.1f},
@@ -1108,7 +1108,8 @@ inline void _textfield_render(const uuid& id, const WidgetConfig& config,
                                     config.flipTextY ? -tSize : 0.5f};
 
     std::wstring focusStr = has_kb_focus(id) ? L"_" : L"";
-    std::wstring focused_content = fmt::format(L"{}{}", buffer, focusStr);
+    std::wstring focused_content =
+        fmt::format(L"{}{}", state->buffer.asT(), focusStr);
 
     text(MK_UUID(id.ownerLayer, id.hash),
          WidgetConfig({
@@ -1134,7 +1135,7 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     // dont mind if i do
     try_to_grab_kb(id);
 
-    _textfield_render(id, config, state->buffer.asT());
+    _textfield_render(id, config, state);
 
     bool changed = false;
     handle_tabbing(id);
