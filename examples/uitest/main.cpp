@@ -27,6 +27,7 @@ struct UITestLayer : public Layer {
     int buttonListIndex = 0;
     float upperCaseRotation = 0.f;
     bool camHasMovement = false;
+    bool camHasRotation = false;
     bool camHasZoom = false;
     std::wstring commandContent;
 
@@ -34,10 +35,12 @@ struct UITestLayer : public Layer {
     std::shared_ptr<OrthoCameraController> uiTestCameraController;
 
     UITestLayer() : Layer("UI Test") {
-        uiTestCameraController.reset(
-            new OrthoCameraController(WIN_RATIO, 10.f, 5.f, 0.f));
+        uiTestCameraController.reset(new OrthoCameraController(
+            WIN_RATIO, 10.f /*default zoom*/, 5.f /*cam speed*/,
+            90.f /*rotation speed*/));
         uiTestCameraController->camera.setPosition(glm::vec3{15.f, 0.f, 0.f});
         camHasMovement = uiTestCameraController->movementEnabled;
+        camHasRotation = uiTestCameraController->rotationEnabled;
         camHasZoom = uiTestCameraController->zoomEnabled;
 
         uiTestCameraController->camera.setViewport(
@@ -205,10 +208,12 @@ struct UITestLayer : public Layer {
         // TODO should this be the default?
         // TODO should this live in the textFieldConfig?
         uiTestCameraController->movementEnabled = camHasMovement;
+        uiTestCameraController->rotationEnabled = camHasRotation;
         if (uiTestCameraController->movementEnabled &&
             (IUI::has_kb_focus(textFieldID) ||
              IUI::has_kb_focus(commandFieldID))) {
             uiTestCameraController->movementEnabled = false;
+            uiTestCameraController->rotationEnabled = false;
         }
 
         auto tapToContiueText = WidgetConfig({
