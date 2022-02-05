@@ -1137,14 +1137,9 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     }  // end render
 
     bool changed = false;
+    handle_tabbing(id);
 
     if (has_kb_focus(id)) {
-        if (get()->pressed(get()->keyMapping["Widget Next"])) {
-            get()->kbFocusID = rootID;
-            if (get()->isKeyPressed(get()->keyMapping["Widget Mod"])) {
-                get()->kbFocusID = get()->lastProcessed;
-            }
-        }
         if (get()->keychar != int()) {
             state->buffer.asT().append(std::wstring(1, get()->keychar));
             changed = true;
@@ -1156,9 +1151,6 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
             changed = true;
         }
     }
-
-    // before any returns
-    get()->lastProcessed = id;
 
     if (!get()->lmouseDown && get()->hotID == id && get()->activeID == id) {
         get()->kbFocusID = id;
