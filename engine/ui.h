@@ -1055,13 +1055,12 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
     // runs after changing state?
 
     // all drawing has to happen before this ///
+
+
+    handle_tabbing(id);
+    
     if (has_kb_focus(id)) {
-        if (get()->pressed(get()->keyMapping["Widget Next"])) {
-            get()->kbFocusID = rootID;
-            if (get()->isKeyPressed(get()->keyMapping["Widget Mod"])) {
-                get()->kbFocusID = get()->lastProcessed;
-            }
-        }
+
         if (get()->pressed(get()->keyMapping["Widget Press"])) {
             (*value) = state->value;
             return true;
@@ -1080,7 +1079,6 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
             return true;
         }
     }
-    get()->lastProcessed = id;
 
     if (get()->activeID == id) {
         get()->kbFocusID = id;
