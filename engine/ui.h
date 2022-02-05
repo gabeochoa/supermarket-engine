@@ -708,19 +708,19 @@ bool text(const uuid id, const WidgetConfig& config) {
     return true;
 }
 
-void ifMouseInside(const glm::vec4& rect, std::function<void(void)> cb) {
+void activeIfMouseInside(const uuid id, const glm::vec4& rect) {
     bool inside = get()->isMouseInside(rect);
-    if (inside) cb();
-    return;
-}
-
-bool button(const uuid id, WidgetConfig config) {
-    ifMouseInside(glm::vec4{config.position, config.size}, [id]() {
+    if (inside) {
         get()->hotID = id;
         if (get()->activeID == rootID && get()->lmouseDown) {
             get()->activeID = id;
         }
-    });
+    }
+    return;
+}
+
+bool button(const uuid id, WidgetConfig config) {
+    activeIfMouseInside(id, glm::vec4{config.position, config.size});
 
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
@@ -1000,8 +1000,7 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
     auto state = widget_init<SliderState>(id);
     if (value) state->value.set(*value);
 
-    bool inside = get()->isMouseInside(glm::vec4{
-        config.position.x, config.position.y, config.size.x, config.size.y});
+    activeIfMouseInside(id, glm::vec4{config.position, config.size});
 
     float min;
     float max;
@@ -1013,13 +1012,6 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
         max = config.position.x + (config.size.x / 2.f);
     }
     float pos_offset = ((max - min) * state->value);
-
-    if (inside) {
-        get()->hotID = id;
-        if (get()->activeID == rootID && get()->lmouseDown) {
-            get()->activeID = id;
-        }
-    }
 
     auto col = white;
     if (get()->activeID == id || get()->hotID == id) {
@@ -1111,19 +1103,11 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
 bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     auto state = widget_init<TextfieldState>(id);
 
-    bool inside = get()->isMouseInside(glm::vec4{
-        config.position.x, config.position.y, config.size.x, config.size.y});
+    activeIfMouseInside(id, glm::vec4{config.position, config.size});
 
     // everything is drawn from the center so move it so its not the center
     // that way the mouse collision works
     config.position = widget_center(config.position, config.size);
-
-    if (inside) {
-        get()->hotID = id;
-        if (get()->activeID == rootID && get()->lmouseDown) {
-            get()->activeID = id;
-        }
-    }
 
     // if no one else has keyboard focus
     // dont mind if i do
@@ -1351,13 +1335,11 @@ bool scroll_view(const uuid id, WidgetConfig config,
     auto state = widget_init<ScrollViewState>(id);
     if (startingIndex) state->yoffset = (*startingIndex) * itemHeight;
 
-    bool inside = get()->isMouseInside(glm::vec4{config.position, config.size});
+    activeIfMouseInside(id, glm::vec4{config.position, config.size});
+
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
     config.position = widget_center(config.position, config.size);
-    if (inside) {
-        get()->hotID = id;
-    }
 
     // TODO add scrollbar
     int itemsInFrame = ceil(config.size.y / itemHeight);
