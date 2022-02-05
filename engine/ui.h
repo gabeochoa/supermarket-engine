@@ -1056,27 +1056,22 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
 
     // all drawing has to happen before this ///
 
-
     handle_tabbing(id);
-    
-    if (has_kb_focus(id)) {
 
-        if (get()->pressed(get()->keyMapping["Widget Press"])) {
-            (*value) = state->value;
-            return true;
-        }
+    bool value_changed = false;
+    if (has_kb_focus(id)) {
         if (get()->isKeyPressed(get()->keyMapping["Value Up"])) {
             state->value = state->value + 0.005;
             if (state->value > mxf) state->value = mxf;
 
             (*value) = state->value;
-            return true;
+            value_changed = true;
         }
         if (get()->isKeyPressed(get()->keyMapping["Value Down"])) {
             state->value = state->value - 0.005;
             if (state->value < mnf) state->value = mnf;
             (*value) = state->value;
-            return true;
+            value_changed = true;
         }
     }
 
@@ -1093,10 +1088,10 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
         if (v != *value) {
             state->value = v;
             (*value) = state->value;
-            return true;
+            value_changed = true;
         }
     }
-    return false;
+    return value_changed;
 }
 
 // TODO add support for max-length textfield
