@@ -708,7 +708,7 @@ bool text(const uuid id, const WidgetConfig& config) {
     return true;
 }
 
-void activeIfMouseInside(const uuid id, const glm::vec4& rect) {
+inline void activeIfMouseInside(const uuid id, const glm::vec4& rect) {
     bool inside = get()->isMouseInside(rect);
     if (inside) {
         get()->hotID = id;
@@ -719,57 +719,46 @@ void activeIfMouseInside(const uuid id, const glm::vec4& rect) {
     return;
 }
 
-bool button(const uuid id, WidgetConfig config) {
-    activeIfMouseInside(id, glm::vec4{config.position, config.size});
+inline void _button_render(const uuid id, const WidgetConfig& config) {
+    draw_if_kb_focus(id, [&]() {
+        get()->drawWidget(config.position, config.size + glm::vec2{0.1f},
+                          config.rotation, teal, config.texture);
+    });
 
-    // everything is drawn from the center so move it so its not the center that
-    // way the mouse collision works
-    config.position = widget_center(config.position, config.size);
-
-    // if no one else has keyboard focus
-    // dont mind if i do
-    try_to_grab_kb(id);
-
-    {  // start render
-
-        draw_if_kb_focus(id, [&]() {
-            get()->drawWidget(config.position, config.size + glm::vec2{0.1f},
-                              config.rotation, teal, config.texture);
-        });
-
-        if (get()->hotID == id) {
-            if (get()->activeID == id) {
-                get()->drawWidget(config.position, config.size, config.rotation,
-                                  red, config.texture);
-            } else {
-                // Hovered
-                get()->drawWidget(config.position, config.size, config.rotation,
-                                  green, config.texture);
-            }
-        } else {
+    if (get()->hotID == id) {
+        if (get()->activeID == id) {
             get()->drawWidget(config.position, config.size, config.rotation,
-                              blue, config.texture);
+                              red, config.texture);
+        } else {
+            // Hovered
+            get()->drawWidget(config.position, config.size, config.rotation,
+                              green, config.texture);
         }
-        get()->drawWidget(config.position, config.size, config.rotation,
-                          config.color, config.texture);
+    } else {
+        get()->drawWidget(config.position, config.size, config.rotation, blue,
+                          config.texture);
+    }
+    get()->drawWidget(config.position, config.size, config.rotation,
+                      config.color, config.texture);
 
-        if (config.text.size() != 0) {
-            float sign = config.flipTextY ? 1 : -1;
+    if (config.text.size() != 0) {
+        float sign = config.flipTextY ? 1 : -1;
 
-            WidgetConfig textConfig(config);
-            // TODO detect if the button color is dark
-            // and change the color to white automatically
-            textConfig.color =
-                glm::vec4{1.f - config.color.r,  //
-                          1.f - config.color.g, 1.f - config.color.b, 1.f};
-            textConfig.position =
-                config.position + glm::vec2{(-config.size.x / 2.f) + 0.10f,
-                                            config.size.y * sign * 0.5f};
-            textConfig.size = 0.75f * glm::vec2{config.size.y, config.size.y};
-            text(MK_UUID(id.ownerLayer, 0), textConfig);
-        }
+        WidgetConfig textConfig(config);
+        // TODO detect if the button color is dark
+        // and change the color to white automatically
+        textConfig.color =
+            glm::vec4{1.f - config.color.r,  //
+                      1.f - config.color.g, 1.f - config.color.b, 1.f};
+        textConfig.position =
+            config.position + glm::vec2{(-config.size.x / 2.f) + 0.10f,
+                                        config.size.y * sign * 0.5f};
+        textConfig.size = 0.75f * glm::vec2{config.size.y, config.size.y};
+        text(MK_UUID(id.ownerLayer, 0), textConfig);
+    }
+}
 
-    }  // end render
+inline void handle_tabbing(const uuid id) {
     if (has_kb_focus(id)) {
         if (get()->pressed(get()->keyMapping["Widget Next"])) {
             get()->kbFocusID = rootID;
@@ -780,6 +769,9 @@ bool button(const uuid id, WidgetConfig config) {
     }
     // before any returns
     get()->lastProcessed = id;
+}
+
+inline bool _button_pressed(const uuid id) {
     // check click
     if (has_kb_focus(id)) {
         if (get()->pressed(get()->keyMapping["Widget Press"])) {
@@ -792,6 +784,18 @@ bool button(const uuid id, WidgetConfig config) {
     }
     return false;
 }
+
+bool button(const uuid id, WidgetConfig config) {
+    // no state
+    activeIfMouseInside(id, glm::vec4{config.position, config.size});
+    config.position = widget_center(config.position, config.size);
+    try_to_grab_kb(id);
+    _button_render(id, config);
+    handle_tabbing(id);
+    bool pressed = _button_pressed(id);
+    return pressed;
+}
+
 
 bool button_with_label(const uuid id, WidgetConfig config) {
     auto pressed = button(id, config);
