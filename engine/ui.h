@@ -372,6 +372,8 @@ struct SliderState : public UIState {
 
 struct TextfieldState : public UIState {
     State<std::wstring> buffer;
+    State<int> cursorBlinkTime;
+    State<bool> showCursor;
 };
 
 struct CommandfieldState : public TextfieldState {
@@ -1107,7 +1109,14 @@ inline void _textfield_render(const uuid& id, const WidgetConfig& config,
                                     // text will be too high in the box
                                     config.flipTextY ? -tSize : 0.5f};
 
-    std::wstring focusStr = has_kb_focus(id) ? L"_" : L"";
+    state->cursorBlinkTime = state->cursorBlinkTime + 1;
+    if (state->cursorBlinkTime > 60) {
+        state->cursorBlinkTime = 0;
+        state->showCursor = !state->showCursor;
+    }
+
+    bool shouldWriteCursor = has_kb_focus(id) && state->showCursor;
+    std::wstring focusStr = shouldWriteCursor ? L"_" : L"";
     std::wstring focused_content =
         fmt::format(L"{}{}", state->buffer.asT(), focusStr);
 
