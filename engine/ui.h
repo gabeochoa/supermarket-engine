@@ -626,6 +626,7 @@ struct UIContext {
 inline bool isHot(const uuid& id) { return (get()->hotID == id); }
 inline bool isActive(const uuid& id) { return (get()->activeID == id); }
 inline bool isActiveOrHot(const uuid& id) { return isHot(id) || isActive(id); }
+inline bool isActiveAndHot(const uuid& id) { return isHot(id) && isActive(id); }
 
 inline void try_to_grab_kb(const uuid id) {
     if (get()->kbFocusID == rootID) {
@@ -782,7 +783,7 @@ inline bool _button_pressed(const uuid id) {
             return true;
         }
     }
-    if (!get()->lmouseDown && get()->hotID == id && get()->activeID == id) {
+    if (!get()->lmouseDown && isActiveAndHot(id)) {
         get()->kbFocusID = id;
         return true;
     }
@@ -1076,6 +1077,50 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
 // TODO add support for max-length textfield
 // this will also help with temporary texture size
 
+inline void _textfield_render(const uuid& id, const WidgetConfig& config,
+                              const std::wstring& buffer) {
+    // Draw focus ring
+    draw_if_kb_focus(id, [&]() {
+        get()->drawWidget(config.position, config.size + glm::vec2{0.1f},
+                          config.rotation, teal, config.texture);
+    });
+
+    if (get()->hotID == id) {
+        if (get()->activeID == id) {
+            get()->drawWidget(config.position, config.size, config.rotation,
+                              red, config.texture);
+        } else {
+            get()->drawWidget(config.position, config.size, config.rotation,
+                              green, config.texture);
+        }
+    } else {
+        get()->drawWidget(config.position, config.size, config.rotation, blue,
+                          config.texture);
+    }
+    get()->drawWidget(config.position, config.size, config.rotation,
+                      config.color, config.texture);
+
+    float tSize = config.size.y * 0.5f;
+    auto tStartLocation =
+        config.position - glm::vec2{config.size.x / 2.f,
+                                    // only move text if not flipped otherwise
+                                    // text will be too high in the box
+                                    config.flipTextY ? -tSize : 0.5f};
+
+    std::wstring focusStr = has_kb_focus(id) ? L"_" : L"";
+    std::wstring focused_content = fmt::format(L"{}{}", buffer, focusStr);
+
+    text(MK_UUID(id.ownerLayer, id.hash),
+         WidgetConfig({
+             .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+             .position = tStartLocation,
+             .size = glm::vec2{tSize},
+             .text = to_string(focused_content),
+             .flipTextY = config.flipTextY,
+             .temporary = true,
+         }));
+}
+
 bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     auto state = widget_init<TextfieldState>(id);
 
@@ -1089,52 +1134,7 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     // dont mind if i do
     try_to_grab_kb(id);
 
-    {  // start render
-
-        // Draw focus ring
-        draw_if_kb_focus(id, [&]() {
-            get()->drawWidget(config.position, config.size + glm::vec2{0.1f},
-                              config.rotation, teal, config.texture);
-        });
-
-        if (get()->hotID == id) {
-            if (get()->activeID == id) {
-                get()->drawWidget(config.position, config.size, config.rotation,
-                                  red, config.texture);
-            } else {
-                get()->drawWidget(config.position, config.size, config.rotation,
-                                  green, config.texture);
-            }
-        } else {
-            get()->drawWidget(config.position, config.size, config.rotation,
-                              blue, config.texture);
-        }
-        get()->drawWidget(config.position, config.size, config.rotation,
-                          config.color, config.texture);
-
-        float tSize = config.size.y * 0.5f;
-        auto tStartLocation =
-            config.position -
-            glm::vec2{config.size.x / 2.f,
-                      // only move text if not flipped otherwise
-                      // text will be too high in the box
-                      config.flipTextY ? -tSize : 0.5f};
-
-        std::wstring focusStr = has_kb_focus(id) ? L"_" : L"";
-        std::wstring focused_content =
-            fmt::format(L"{}{}", state->buffer.asT(), focusStr);
-
-        text(MK_UUID(id.ownerLayer, id.hash),
-             WidgetConfig({
-                 .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
-                 .position = tStartLocation,
-                 .size = glm::vec2{tSize},
-                 .text = to_string(focused_content),
-                 .flipTextY = config.flipTextY,
-                 .temporary = true,
-             }));
-
-    }  // end render
+    _textfield_render(id, config, state->buffer.asT());
 
     bool changed = false;
     handle_tabbing(id);
@@ -1152,7 +1152,7 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
         }
     }
 
-    if (!get()->lmouseDown && get()->hotID == id && get()->activeID == id) {
+    if (!get()->lmouseDown && isActiveAndHot(id)) {
         get()->kbFocusID = id;
     }
 
@@ -1268,12 +1268,6 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
     return false;
 }
 
-bool window(uuid, WidgetConfig config) {
-    get()->drawWidget(config.position, config.size, config.rotation,
-                      config.color, config.texture);
-    return true;
-}
-
 bool drawer(const uuid id, WidgetConfig config, float* pct_open = nullptr) {
     auto state = widget_init<DrawerState>(id);
     if (pct_open) state->heightPct = *pct_open;
@@ -1289,6 +1283,12 @@ bool drawer(const uuid id, WidgetConfig config, float* pct_open = nullptr) {
     // return if drawer should render children
     if (state->heightPct > 0.9) return true;
     return false;
+}
+
+bool window(const uuid&, const WidgetConfig& config) {
+    get()->drawWidget(config.position, config.size, config.rotation,
+                      config.color, config.texture);
+    return true;
 }
 
 bool scroll_view(const uuid id, WidgetConfig config,
