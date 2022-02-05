@@ -796,7 +796,6 @@ bool button(const uuid id, WidgetConfig config) {
     return pressed;
 }
 
-
 bool button_with_label(const uuid id, WidgetConfig config) {
     auto pressed = button(id, config);
     if (config.text == "") {
@@ -999,13 +998,8 @@ bool checkbox(const uuid id, WidgetConfig config, bool* cbState = nullptr) {
     return changed;
 }
 
-bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
-            float mxf) {
-    auto state = widget_init<SliderState>(id);
-    if (value) state->value.set(*value);
-
-    activeIfMouseInside(id, glm::vec4{config.position, config.size});
-
+inline void _slider_render(const uuid id, const WidgetConfig& config,
+                           const float value) {
     float min;
     float max;
     if (config.vertical) {
@@ -1015,7 +1009,7 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
         min = config.position.x - (config.size.x / 2.f);
         max = config.position.x + (config.size.x / 2.f);
     }
-    float pos_offset = ((max - min) * state->value);
+    float pos_offset = ((max - min) * value);
 
     auto col = white;
     if (get()->activeID == id || get()->hotID == id) {
@@ -1024,11 +1018,6 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
         col = blue;
     }
 
-    // dont mind if i do
-    try_to_grab_kb(id);
-
-    // everything is drawn from the center so move it so its not the center
-    // that way the mouse collision works
     auto pos = widget_center(config.position, config.size);
 
     draw_if_kb_focus(id, [&]() {
@@ -1049,13 +1038,18 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
             config.position + glm::vec2{pos_offset, config.size.y / 2.f},
             glm::vec2{0.5f}, config.rotation, col, config.texture);
     }
+}
 
-    // TODO can we have a single return statement here?
-    // does it matter that the rest of the code
-    // runs after changing state?
+bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
+            float mxf) {
+    // TODO be able to scroll this bar with the scroll wheel
+    auto state = widget_init<SliderState>(id);
+    if (value) state->value.set(*value);
 
-    // all drawing has to happen before this ///
-
+    activeIfMouseInside(id, glm::vec4{config.position, config.size});
+    // dont mind if i do
+    try_to_grab_kb(id);
+    _slider_render(id, config, state->value.asT());
     handle_tabbing(id);
 
     bool value_changed = false;
