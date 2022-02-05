@@ -673,18 +673,18 @@ std::shared_ptr<T> widget_init(const uuid id) {
     return state;
 }
 
-inline glm::vec2 widget_center(const glm::vec2& position, const glm::vec2& size){
+inline glm::vec2 widget_center(const glm::vec2& position,
+                               const glm::vec2& size) {
     return position + (size / 2.f);
 }
 
-
-bool text(const uuid id, WidgetConfig config) {
+bool text(const uuid id, const WidgetConfig& config) {
     // NOTE: currently id is only used for focus and hot/active,
     // we could potentially also track "selections"
     // with a range so the user can highlight text
     // not needed for supermarket but could be in the future?
     (void)id;
-
+    // No need to render if text is empty
     if (config.text.empty()) return false;
 
     UIContext::FontPhraseTexInfo texInfo = get()->generateFontPhraseTexture(
@@ -692,37 +692,40 @@ bool text(const uuid id, WidgetConfig config) {
     if (!texInfo.valid()) {
         log_error("failed to fetch texture for text {} with font {}",
                   config.text, config.font);
+        return false;
     }
+    auto font_scale = glm::vec2{texInfo.width, texInfo.height};
+    font_scale /= (1.f * texInfo.fontSize);
+    font_scale.y *= config.flipTextY ? -1.f : 1.f;
 
-    auto scaled_width = (1.f * texInfo.width / texInfo.fontSize);
-    auto scaled_height = (1.f * texInfo.height / texInfo.fontSize);
-    auto size =
-        glm::vec2{config.size.x * scaled_width,
-                  (config.flipTextY ? -1 : 1) * config.size.y * scaled_height};
+    auto size = config.size * font_scale;
 
-    auto position =
-        // where we should draw it
-        config.position +
-        //
-        glm::vec2{size.x / 2.f, size.y / 2.f};
-
-    get()->drawWidget(position, size, config.rotation, config.color,
+    get()->drawWidget(widget_center(config.position, size),  //
+                      config.size * font_scale,              //
+                      config.rotation,                       //
+                      config.color,                          //
                       texInfo.textureName);
     return true;
 }
 
-bool button(const uuid id, WidgetConfig config) {
-    bool inside = get()->isMouseInside(glm::vec4{config.position, config.size});
-    // everything is drawn from the center so move it so its not the center that
-    // way the mouse collision works
-    config.position = widget_center(config.position, config.size);
+void ifMouseInside(const glm::vec4& rect, std::function<void(void)> cb) {
+    bool inside = get()->isMouseInside(rect);
+    if (inside) cb();
+    return;
+}
 
-    if (inside) {
+bool button(const uuid id, WidgetConfig config) {
+    ifMouseInside(glm::vec4{config.position, config.size}, [id]() {
         get()->hotID = id;
         if (get()->activeID == rootID && get()->lmouseDown) {
             get()->activeID = id;
         }
-    }
+    });
+
+    // everything is drawn from the center so move it so its not the center that
+    // way the mouse collision works
+    config.position = widget_center(config.position, config.size);
+
     // if no one else has keyboard focus
     // dont mind if i do
     try_to_grab_kb(id);
