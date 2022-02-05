@@ -673,6 +673,11 @@ std::shared_ptr<T> widget_init(const uuid id) {
     return state;
 }
 
+inline glm::vec2 widget_center(const glm::vec2& position, const glm::vec2& size){
+    return position + (size / 2.f);
+}
+
+
 bool text(const uuid id, WidgetConfig config) {
     // NOTE: currently id is only used for focus and hot/active,
     // we could potentially also track "selections"
@@ -710,8 +715,7 @@ bool button(const uuid id, WidgetConfig config) {
     bool inside = get()->isMouseInside(glm::vec4{config.position, config.size});
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
-    config.position.x += config.size.x / 2.f;
-    config.position.y += config.size.y / 2.f;
+    config.position = widget_center(config.position, config.size);
 
     if (inside) {
         get()->hotID = id;
@@ -1026,8 +1030,7 @@ bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
 
     // everything is drawn from the center so move it so its not the center
     // that way the mouse collision works
-    auto pos = glm::vec2{config.position.x + (config.size.x / 2.f),
-                         config.position.y + (config.size.y / 2.f)};
+    auto pos = widget_center(config.position, config.size);
 
     draw_if_kb_focus(id, [&]() {
         get()->drawWidget(pos, config.size + glm::vec2{0.1f}, config.rotation,
@@ -1110,8 +1113,7 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
 
     // everything is drawn from the center so move it so its not the center
     // that way the mouse collision works
-    config.position.x += config.size.x / 2.f;
-    config.position.y += config.size.y / 2.f;
+    config.position = widget_center(config.position, config.size);
 
     if (inside) {
         get()->hotID = id;
@@ -1349,8 +1351,7 @@ bool scroll_view(const uuid id, WidgetConfig config,
     bool inside = get()->isMouseInside(glm::vec4{config.position, config.size});
     // everything is drawn from the center so move it so its not the center that
     // way the mouse collision works
-    config.position.x += config.size.x / 2.f;
-    config.position.y += config.size.y / 2.f;
+    config.position = widget_center(config.position, config.size);
     if (inside) {
         get()->hotID = id;
     }
