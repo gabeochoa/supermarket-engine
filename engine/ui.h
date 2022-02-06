@@ -1087,18 +1087,6 @@ inline void _textfield_render(const uuid& id, const WidgetConfig& config,
                           config.rotation, teal, config.texture);
     });
 
-    if (get()->hotID == id) {
-        if (get()->activeID == id) {
-            get()->drawWidget(config.position, config.size, config.rotation,
-                              red, config.texture);
-        } else {
-            get()->drawWidget(config.position, config.size, config.rotation,
-                              green, config.texture);
-        }
-    } else {
-        get()->drawWidget(config.position, config.size, config.rotation, blue,
-                          config.texture);
-    }
     get()->drawWidget(config.position, config.size, config.rotation,
                       config.color, config.texture);
 
@@ -1133,13 +1121,10 @@ inline void _textfield_render(const uuid& id, const WidgetConfig& config,
 
 bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
     auto state = widget_init<TextfieldState>(id);
-
     activeIfMouseInside(id, glm::vec4{config.position, config.size});
-
     // everything is drawn from the center so move it so its not the center
     // that way the mouse collision works
     config.position = widget_center(config.position, config.size);
-
     // if no one else has keyboard focus
     // dont mind if i do
     try_to_grab_kb(id);
@@ -1189,6 +1174,8 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
     auto changed = textfield(id, config, content);
 
     // TODO add support for selecting suggestion with keyboard
+
+    handle_tabbing(id);
 
     // TODO animate cursor blinking
     if (has_kb_focus(id)) {
@@ -1255,7 +1242,7 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
         state->selected = si;
     }
 
-    try_to_grab_kb(id);
+    bool command_run = false;
     if (has_kb_focus(id)) {
         if (get()->pressed(get()->keyMapping["Command Enter"])) {
             if (state->selected != -1) {
@@ -1269,13 +1256,10 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
             state->autocomp.asT().clear();
             state->selected = -1;
             // TODO: should we instead have a singular return?
-            return true;
+            command_run = true;
         }
     }
-
-    // TODO what should we return here,
-    // changed? or user ran command
-    return false;
+    return command_run;
 }
 
 bool drawer(const uuid id, WidgetConfig config, float* pct_open = nullptr) {
