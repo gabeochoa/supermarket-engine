@@ -13,3 +13,4 @@ windows_build/*
 old/*
 *.tmp
 *.trace
+libengine.a
