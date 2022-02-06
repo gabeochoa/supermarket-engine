@@ -1,27 +1,31 @@
 #pragma once
-
-#include <glm/gtc/matrix_transform.hpp>
+#include "external_include.h"
+//
 
 #include "event.h"
 #include "input.h"
 #include "pch.hpp"
 
-struct Camera {};
+struct Camera {
+    glm::mat4 projection;
+    Camera() = default;
+    Camera(const glm::mat4& projection, const glm::mat4 view,
+           const glm::vec3 position)
+        : projection(projection), view(view), position(position) {}
+
+    glm::mat4 view;
+    glm::vec3 position;
+};
 
 struct OrthoCamera : public Camera {
-    glm::mat4 projection;
-    glm::mat4 view;
     glm::mat4 viewProjection;
-    glm::vec3 position;
     glm::vec4 viewport;
     // TODO maybe switch to quaternion later?
     float rotation;
 
     OrthoCamera(float left, float right, float bottom, float top)
-        : projection(glm::ortho(left, right, bottom, top, -1.f, 1.f)),
-
-          view(1.0f),
-          position(0.0f),
+        : Camera(glm::ortho(left, right, bottom, top, -1.f, 1.f),
+                 glm::mat4{1.f}, glm::vec3{0.f}),
           rotation(0.0f) {
         updateViewMat();
     }
@@ -60,4 +64,55 @@ struct OrthoCameraController {
     bool onMouseScrolled(Mouse::MouseScrolledEvent& event);
     bool onWindowResized(WindowResizeEvent& event);
     void onEvent(Event& event);
+};
+
+struct FreeCamera : public Camera {
+    float pitch = 0.0f, yaw = 0.0f;
+    glm::vec3 focalPoint = {0.0f, 0.0f, 0.0f};
+
+    float m_FOV = 45.0f, m_AspectRatio = 1.778f, m_NearClip = 0.1f,
+          m_FarClip = 10000.0f;
+
+    glm::vec2 m_InitialMousePosition = {0.0f, 0.0f};
+    float distance = 10.0f;
+    float m_ViewportWidth = 1280, m_ViewportHeight = 720;
+
+    FreeCamera() = default;
+    FreeCamera(float fov, float aspectRatio, float nearClip, float farClip);
+
+    void onUpdate(Time dt);
+    void onEvent(Event& e);
+
+    inline void setViewport(const glm::vec4& vp) {
+        m_ViewportWidth = vp.z;
+        m_ViewportHeight = vp.w;
+        UpdateProjection();
+    }
+
+    inline void setPosition(const glm::vec3& p) {
+        position = p;
+        UpdateView();
+    }
+
+    glm::mat4 getViewProjection() const { return projection * view; }
+
+    void UpdateProjection();
+    void UpdateView();
+
+    bool onMouseScroll(Mouse::MouseScrolledEvent& e);
+    bool onKeyPressed(KeyPressedEvent& e);
+
+    void pan(const glm::vec2& delta);
+    void MouseRotate(const glm::vec2& delta);
+    void setZoomLevel(float delta);
+
+    glm::vec2 getPanSpeed() const;
+    float RotationSpeed() const;
+    float getZoomSpeed() const;
+
+    glm::vec3 getUpDirection() const;
+    glm::vec3 getRightDirection() const;
+    glm::vec3 getForwardDirection() const;
+    glm::vec3 calculatePosition() const;
+    glm::quat getOrientation() const;
 };
