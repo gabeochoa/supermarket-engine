@@ -332,7 +332,16 @@ struct Renderer {
     static void begin(OrthoCamera& cam) {
         prof give_me_a_name(__PROFILE_FUNC__);
         sceneData->viewProjection = cam.viewProjection;
+        _generic_begin();
+    }
 
+    static void begin(FreeCamera& cam) {
+        prof give_me_a_name(__PROFILE_FUNC__);
+        sceneData->viewProjection = cam.getViewProjection();
+        _generic_begin();
+    }
+
+    static void _generic_begin() {
         auto textureShader = sceneData->shaderLibrary.get("texture");
         textureShader->bind();
         textureShader->uploadUniformMat4("viewProjection",
