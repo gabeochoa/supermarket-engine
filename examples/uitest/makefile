@@ -40,4 +40,11 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 clean:
 	$(RM) $(OBJ_FILES) $(DEPENDS) 
 
+trace:
+	rm -f $(EXE).trace
+	../../../apitracedyld/build/apitrace trace -o $(EXE).trace --api gl $(EXE)
+
+view:
+	../../../apitrace/build/qapitrace $(EXE).trace
+
 .PHONY: all clean

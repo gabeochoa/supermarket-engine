@@ -47,7 +47,7 @@ std::array<Tile, MAP_H * MAP_W> grid;
 bool running = true;
 
 struct DemoLayer : public Layer {
-    std::shared_ptr<OrthoCameraController> cameraController;
+    std::shared_ptr<FreeCamera> cameraController;
     float moveTimer;
     float timeBetweenMoves = 0.12f;
 
@@ -138,17 +138,16 @@ struct DemoLayer : public Layer {
     virtual ~DemoLayer() {}
 
     DemoLayer() : Layer("") {
-        init_camera();
         init_map();
+        init_camera();
     }
 
     virtual void init_camera() {
-        cameraController.reset(
-            new OrthoCameraController(WIN_RATIO, 0.f, 5.f, 5.f));
-        cameraController->camera.setViewport(glm::vec4{0, 0, WIN_W, WIN_H});
-        cameraController->camera.setPosition(
-            glm::vec3{WIN_W / 2.f, WIN_H / 2.f, 0.f});
-        cameraController->setZoomLevel(WIN_W * 0.3f);
+        cameraController.reset(new FreeCamera());
+        cameraController->setViewport(glm::vec4{0, 0, WIN_W, WIN_H});
+        cameraController->focalPoint = {900, 500, 0};
+        cameraController->distance = 1500.f;
+        cameraController->UpdateView();
     }
 
     void init_map() {
@@ -176,7 +175,7 @@ struct DemoLayer : public Layer {
     }
 
     void render() {
-        Renderer::begin(cameraController->camera);
+        Renderer::begin(*cameraController);
         {
             for (auto t : grid) t.render();
             snake.render();
@@ -191,6 +190,12 @@ struct DemoLayer : public Layer {
     }
 
     bool onKeyPressed(KeyPressedEvent& event) {
+        // TODO why do we have to eat input in here
+        // instead of in onEvent ...
+        if (cameraController->onKeyPressed(event)) {
+            return true;
+        }
+
         using namespace Key;
         int keycode = event.keycode;
         if (keycode == KeyCode::Up) snake.setFacing(0);

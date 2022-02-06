@@ -40,6 +40,14 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CCC) $(FLAGS) $(MFLAGS) -c $< -o $@ 
 
 clean:
-	$(RM) $(OBJ_FILES) $(DEPENDS) 
+	 $(RM) $(OBJ_FILES) $(DEPENDS) 
+
+trace:
+	rm -f super.exe.trace
+	../../../apitracedyld/build/apitrace trace -o $(OBJ_DIR)/super.trace --api gl $(EXE)
+
+view:
+	../../../apitrace/build/qapitrace $(OBJ_DIR)/super.trace
+
 
 .PHONY: all clean
