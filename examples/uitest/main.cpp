@@ -6,6 +6,7 @@
 
 #include "../../engine/app.h"
 #include "../../engine/camera.h"
+#include "../../engine/commands.h"
 #include "../../engine/edit.h"
 #include "../../engine/font.h"
 #include "../../engine/layer.h"
@@ -51,6 +52,15 @@ struct UITestLayer : public Layer {
         ui_context->c_id = 1;
 
         GLOBALS.set<float>("slider_val", &value);
+
+        // We register some command with similar names
+        // to test the auto complete feature
+        EDITOR_COMMANDS.registerCommand("zzzz_1", ToggleBoolCommand<bool>(),
+                                        "example zzz");
+        EDITOR_COMMANDS.registerCommand("zzzz_2", ToggleBoolCommand<bool>(),
+                                        "example zzz");
+        EDITOR_COMMANDS.registerCommand("zzzz_3", ToggleBoolCommand<bool>(),
+                                        "example zzz");
     }
 
     virtual ~UITestLayer() {}
@@ -189,14 +199,13 @@ struct UITestLayer : public Layer {
             return EDITOR_COMMANDS.tabComplete(input);
         };
 
-        auto runCommandFn = [](const std::string& input) {
-            return EDITOR_COMMANDS.triggerCommand(input);
-        };
-
         if (commandfield(commandFieldID,
                          WidgetConfig({.position = glm::vec2{2.f, 4.f},
                                        .size = glm::vec2{6.f, 1.f}}),
-                         commandContent, runCommandFn, genAutoComplete)) {
+                         commandContent, genAutoComplete)) {
+            log_info("running command {}", to_string(commandContent));
+            EDITOR_COMMANDS.triggerCommand(to_string(commandContent));
+            commandContent = L"";
             if (!EDITOR_COMMANDS.command_history.empty()) {
                 log_info("Just ran a command ... {}",
                          EDITOR_COMMANDS.command_history.back());

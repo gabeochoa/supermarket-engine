@@ -378,7 +378,7 @@ struct TextfieldState : public UIState {
 
 struct CommandfieldState : public TextfieldState {
     State<std::vector<std::string>> autocomp;
-    State<int> selected;
+    State<int> selected = State<int>(-1);
 };
 
 struct ButtonListState : public UIState {
@@ -1156,28 +1156,84 @@ bool textfield(const uuid id, WidgetConfig config, std::wstring& content) {
 }
 
 typedef std::function<std::vector<std::string>(std::string)> AutoCompleteFn;
+
+void _commandfield_autocmp_render(
+    const uuid& id, const WidgetConfig& config,
+    const std::shared_ptr<CommandfieldState>& state) {
+    if (state->autocomp.asT().size()) {
+        int si = state->selected;
+        std::vector<WidgetConfig> autocompConfigs;
+        glm::vec4 hoverColor = green;
+        for (int i = 0; i < (int)state->autocomp.asT().size(); i++) {
+            autocompConfigs.push_back(
+                WidgetConfig({.text = state->autocomp.asT()[i],
+                              .color = i == si ? hoverColor : config.color}));
+        }
+
+        bool childrenHaveFocus = true;
+        if (button_list(MK_UUID(id.ownerLayer, id.hash), config,
+                        autocompConfigs, &si, &childrenHaveFocus)) {
+            state->buffer.asT() = to_wstring(state->autocomp.asT().at(si));
+            state->autocomp.asT().clear();
+        }
+        if (si != state->selected) {
+            state->buffer.asT().clear();
+        }
+        state->selected = si;
+    }
+}
+
 bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
-                  std::function<void(std::string)> runCommand =
-                      std::function<void(std::string)>(),
                   AutoCompleteFn generateAutoComplete = AutoCompleteFn(),
-                  // TODO idk if we actually need this to be a deque
                   std::function<std::string()> getLastCommandRun =
                       std::function<std::string()>()) {
-    auto state = widget_init<CommandfieldState>(id);
-
+    //
     // TODO can we bold the letters that match in the trie?
+    // TODO add support for selecting suggestion with keyboard
+    //
+    auto state = widget_init<CommandfieldState>(id);
+    // log_info("commandfield selected{} autocomp size{}",
+    // state->selected.asT(), state->autocomp.asT().size());
 
     // NOTE: We dont need a separate ID since we want
     // global state to match and for them to have the
     // same keyboard focus
-    // TODO should we be passing in content here? or state->buffer?
     auto changed = textfield(id, config, content);
 
-    // TODO add support for selecting suggestion with keyboard
+    bool commandRun = false;
 
+    if (has_kb_focus(id)) {
+        if (get()->pressed(get()->keyMapping["Command Enter"])) {
+            if (state->selected != -1) {
+                state->buffer.asT() =
+                    to_wstring(state->autocomp.asT().at(state->selected));
+                state->autocomp.asT().clear();
+            }
+            state->autocomp.asT().clear();
+            state->selected = -1;
+
+            commandRun = true;
+            content = state->buffer.asT();
+            state->buffer.asT().clear();
+        }
+
+        // if autocomplete is empty or we recently typed something
+        // regerate the autocomplete and selected the first item
+        if (state->autocomp.asT().empty() || changed) {
+            state->autocomp = generateAutoComplete(to_string(state->buffer));
+            state->selected = -1;
+        }
+    } else {
+        // This ends up being kinda clear-on-exit in a way
+        // but also for clear-on-tab (this hides the button_list)
+        state->autocomp.asT().clear();
+        commandRun = false;
+    }
+
+    _commandfield_autocmp_render(id, config, state);
     handle_tabbing(id);
+    return commandRun;
 
-    // TODO animate cursor blinking
     if (has_kb_focus(id)) {
         // TODO is this obvious to the user?
         //      whats a better way to do this?
@@ -1214,52 +1270,8 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
                 state->buffer.asT() = to_wstring(lastCommand);
             }
         }
-    } else {
-        // This ends up being kinda clear-on-exit in a way
-        // but also for clear-on-tab (this hides the button_list)
-        state->autocomp.asT().clear();
     }
-
-    if (state->autocomp.asT().size()) {
-        int si = state->selected;
-        std::vector<WidgetConfig> autocompConfigs;
-        glm::vec4 hoverColor = green;
-        for (int i = 0; i < (int)state->autocomp.asT().size(); i++) {
-            autocompConfigs.push_back(
-                WidgetConfig({.text = state->autocomp.asT()[i],
-                              .color = i == si ? hoverColor : config.color}));
-        }
-
-        bool childrenHaveFocus = true;
-        if (button_list(MK_UUID(id.ownerLayer, id.hash), config,
-                        autocompConfigs, &si, &childrenHaveFocus)) {
-            state->buffer.asT() = to_wstring(state->autocomp.asT().at(si));
-            state->autocomp.asT().clear();
-        }
-        if (si != state->selected) {
-            state->buffer.asT().clear();
-        }
-        state->selected = si;
-    }
-
-    bool command_run = false;
-    if (has_kb_focus(id)) {
-        if (get()->pressed(get()->keyMapping["Command Enter"])) {
-            if (state->selected != -1) {
-                state->buffer.asT() =
-                    to_wstring(state->autocomp.asT().at(state->selected));
-                state->autocomp.asT().clear();
-            }
-            // TODO: Any concerns about non english characters?
-            runCommand(to_string(state->buffer.asT()));
-            state->buffer.asT().clear();
-            state->autocomp.asT().clear();
-            state->selected = -1;
-            // TODO: should we instead have a singular return?
-            command_run = true;
-        }
-    }
-    return command_run;
+    return commandRun;
 }
 
 bool drawer(const uuid id, WidgetConfig config, float* pct_open = nullptr) {
