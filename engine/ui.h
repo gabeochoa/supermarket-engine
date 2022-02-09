@@ -1160,7 +1160,7 @@ typedef std::function<std::vector<std::string>(std::string)> AutoCompleteFn;
 void _commandfield_autocmp_render(
     const uuid& id, const WidgetConfig& config,
     const std::shared_ptr<CommandfieldState>& state) {
-    if (state->autocomp.asT().size()) {
+    if (state->autocomp.asT().size() && state->selected >= -1) {
         int si = state->selected;
         std::vector<WidgetConfig> autocompConfigs;
         glm::vec4 hoverColor = green;
@@ -1183,17 +1183,28 @@ void _commandfield_autocmp_render(
     }
 }
 
+inline void _commandfield_process_enter(
+    const std::shared_ptr<CommandfieldState>& state, std::wstring& content) {
+    if (state->selected > 0) {
+        const auto ac = state->autocomp.asT().at(state->selected);
+        state->buffer.asT() = to_wstring(ac);
+    }
+    content = state->buffer.asT();
+    state->autocomp.asT().clear();
+    state->selected = -1;
+    state->buffer.asT().clear();
+}
+
 bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
-                  AutoCompleteFn generateAutoComplete = AutoCompleteFn(),
-                  std::function<std::string()> getLastCommandRun =
-                      std::function<std::string()>()) {
+                  AutoCompleteFn generateAutoComplete = AutoCompleteFn()) {
     //
     // TODO can we bold the letters that match in the trie?
     // TODO add support for selecting suggestion with keyboard
     //
     auto state = widget_init<CommandfieldState>(id);
-    // log_info("commandfield selected{} autocomp size{}",
-    // state->selected.asT(), state->autocomp.asT().size());
+
+    // log_info("index: {} autocmp size {} buffer {}", state->selected.asT(),
+    // state->autocomp.asT().size(), to_string(state->buffer));
 
     // NOTE: We dont need a separate ID since we want
     // global state to match and for them to have the
@@ -1204,17 +1215,8 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
 
     if (has_kb_focus(id)) {
         if (get()->pressed(get()->keyMapping["Command Enter"])) {
-            if (state->selected != -1) {
-                state->buffer.asT() =
-                    to_wstring(state->autocomp.asT().at(state->selected));
-                state->autocomp.asT().clear();
-            }
-            state->autocomp.asT().clear();
-            state->selected = -1;
-
+            _commandfield_process_enter(state, content);
             commandRun = true;
-            content = state->buffer.asT();
-            state->buffer.asT().clear();
         }
 
         // if autocomplete is empty or we recently typed something
@@ -1229,48 +1231,10 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
         state->autocomp.asT().clear();
         commandRun = false;
     }
+    // TODO - should we bring back clearing the command line?
 
     _commandfield_autocmp_render(id, config, state);
     handle_tabbing(id);
-    return commandRun;
-
-    if (has_kb_focus(id)) {
-        // TODO is this obvious to the user?
-        //      whats a better way to do this?
-        if (get()->isKeyPressed(get()->keyMapping["Clear Command Line"])) {
-            state->buffer.asT().clear();
-            state->selected = -1;
-            changed = true;
-        }
-
-        if (state->selected == -1 &&
-            get()->pressed(get()->keyMapping["Value Down"])) {
-            state->selected = state->selected + 1;
-        }
-
-        // if autocomplete is empty or we recently typed something
-        // regerate the autocomplete and selected the first item
-        if (state->autocomp.asT().empty() || changed) {
-            state->autocomp = generateAutoComplete(to_string(state->buffer));
-            state->selected = -1;
-        }
-        // TODO how to do tab completion without tab access ?
-        // TODO probably make a separate mapping for this
-
-        // TODO when you are at selection 0 and hit up it should do the normal
-        // up thing
-        // TODO: make sure this short circuit works and doesnt eat tokesn
-        // when should is false
-        bool shouldBeAbleToLoadLastCMD =
-            state->autocomp.asT().empty() || state->selected == -1;
-        if (shouldBeAbleToLoadLastCMD &&
-            get()->pressed(get()->keyMapping["Value Up"])) {
-            std::string lastCommand = getLastCommandRun();
-            if (!lastCommand.empty()) {
-                state->buffer.asT() = to_wstring(lastCommand);
-            }
-        }
-    }
     return commandRun;
 }
 

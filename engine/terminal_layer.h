@@ -148,14 +148,8 @@ struct TerminalLayer : public Layer {
                     return EDITOR_COMMANDS.tabComplete(input);
                 };
 
-                auto getLastCommandRun = []() -> std::string {
-                    if (EDITOR_COMMANDS.command_history.empty()) return "";
-                    return EDITOR_COMMANDS.command_history.back();
-                };
-
                 if (commandfield(command_field_id, commandFieldConfig,
-                                 commandContent, genAutoComplete,
-                                 getLastCommandRun)) {
+                                 commandContent, genAutoComplete)) {
                     EDITOR_COMMANDS.triggerCommand(to_string(commandContent));
                     commandContent = L"";
                     if (!EDITOR_COMMANDS.command_history.empty()) {
