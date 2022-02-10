@@ -16,7 +16,7 @@
 // Theta t(start, end, isWalkable);
 // auto path = t.go();
 //
-// where isWalkable is a function that takes a glm::vec2 and returns wether
+// where isWalkable is a function that takes a glm::vec2 and returns whether
 // or not the path can include it
 //
 ///////// ///////// ///////// ///////// ///////// ///////// ///////// /////////
@@ -37,63 +37,24 @@ S& UnderlyingContainer(std::priority_queue<T, S, C>& q) {
     return HackedQueue::UnderlyingContainer(q);
 }
 
-/*
-struct ThetaPQ {
-    typedef std::pair<glm::vec2, double> Qi;
-    std::vector<Qi> Q;
-
-    bool empty() { return Q.empty(); }
-
-    Qi pop() {
-        Qi i = *(Q.rbegin());
-        Q.pop_back();
-        return i;
-    }
-
-    void add(glm::vec2 loc, double prio) {
-        for (auto& i : Q) {
-            if (i.first == loc && prio < i.second) {
-                i.second = prio;
-                return;
-            }
-        }
-        Q.push_back({loc, prio});
-        sort(Q.begin(), Q.end(),
-             [](const Qi& a, const Qi& b) { return a.second > b.second; });
-    }
-
-    bool contains(glm::vec2 location) {
-        for (auto& i : Q) {
-            if (i.first == location) return true;
-        }
-        return false;
-    }
-
-    void erase(glm::vec2 location) {
-        for (auto it = Q.begin(); it != Q.end();) {
-            if (it->first == location) {
-                it = Q.erase(it);
-            } else {
-                ++it;
-            }
-        }
-    }
-};
-*/
-
 struct Theta {
+    struct Options {
+        bool isLazy;
+        bool moveDiagonally;
+        float step;
+        bool disableLineOfSight;
+    } options;
+
     const float EQUAL_RANGE = 0.5f;
     const float maxnum = std::numeric_limits<float>::max();
+
+    // Make sure the first 4 are the cardinal directions
     const float x[8] = {0, 0, 1, -1, -1, 1, -1, 1};
     const float y[8] = {1, -1, 0, 0, -1, -1, 1, 1};
-    const float dst = 0.25f;
-    const int LOOP_LIMIT = 10000;
 
     glm::vec2 start;
     glm::vec2 end;
-    glm::vec4 bounds;
-    std::function<bool(const glm::vec2& pos)> isWalkable;
-    bool lazy;
+    std::function<bool(const glm::vec2& pos)> canVisit;
 
     std::unordered_map<glm::vec2, double, VectorHash> gScore;
     std::unordered_map<glm::vec2, glm::vec2, VectorHash> parent;
@@ -103,15 +64,21 @@ struct Theta {
     ThetaPQ openSet;
     ThetaPQ closedSet;
 
-    Theta(const glm::vec2& s, const glm::vec2& e, const glm::vec4& b,
-          std::function<bool(const glm::vec2& pos)> valid, bool isLazy = false)
-        : start(s), end(e), bounds(b), isWalkable(valid), lazy(isLazy) {
+    Theta(const glm::vec2 start, const glm::vec2 end,
+          std::function<bool(const glm::vec2& pos)> isWalkable,
+          Options options =
+              {
+                  .isLazy = false,
+                  .moveDiagonally = false,
+                  .disableLineOfSight = false,
+                  .step = 1.f,
+              })
+        : options(options), start(start), end(end), canVisit(isWalkable) {
         log_trace("trying to find path from {} to {}", start, end);
-
         // if the goal isnt reachable, then we have to change the goal for now
         if (!canVisit(end)) {
             // uses the closedSet
-            end = expandUntilWalkable(end);
+            this->end = expandUntilWalkable(end);
             while (!closedSet.empty()) closedSet.pop();
             log_trace("couldnt get to end so end is now {}", end);
         } else {
@@ -120,16 +87,8 @@ struct Theta {
 
         // init vars
         gScore[start] = 0;
-        openSet.push(Qi{start, (gScore[start] + glm::distance(start, end))});
-    }
-
-    bool canVisit(glm::vec2 p) {
-        auto l = p.x >= bounds.x;
-        auto r = p.x <= bounds.z;
-        auto t = p.y >= bounds.y;
-        auto b = p.y <= bounds.w;
-        if (l && r && t && b) return this->isWalkable(p);
-        return false;
+        openSet.push(
+            Qi{start, (gScore[start] + glm::distance(start, this->end))});
     }
 
     glm::vec2 expandUntilWalkable(glm::vec2 n) {
@@ -138,8 +97,10 @@ struct Theta {
             Qi qi = closedSet.top();
             closedSet.pop();
             n = qi.first;
-            for (int i = 0; i < 8; i++) {
-                glm::vec2 neighbor = {n.x + (x[i] * dst), n.y + (y[i] * dst)};
+            int neighbors = options.moveDiagonally ? 8 : 4;
+            for (int i = 0; i < neighbors; i++) {
+                glm::vec2 neighbor = {n.x + (x[i] * options.step),
+                                      n.y + (y[i] * options.step)};
                 if (canVisit(neighbor)) return neighbor;
                 closedSet.push(Qi{neighbor, qi.second + 1});
             }
@@ -165,29 +126,24 @@ struct Theta {
     }
 
     std::vector<glm::vec2> go() {
-        if (!canVisit(end)) {
-            // for now just clear it,
-            // otherwise itll inf loop
-            while (!openSet.empty()) openSet.pop();
-        }
-
         prof give_me_a_name(__PROFILE_FUNC__);
-        int loop_iter = 0;
-        while (loop_iter < LOOP_LIMIT && !openSet.empty()) {
+        int neighbors = options.moveDiagonally ? 8 : 4;
+        while (!openSet.empty()) {
             Qi qi = openSet.top();
             openSet.pop();
             auto s = qi.first;
-            if (lazy) {
+            if (options.isLazy) {
                 set_vertex(s);
             }
             // wow we got here already
-            if (glm::distance(s, end) < EQUAL_RANGE) {
+            if (glm::distance(s, end) < (options.step / 2.f)) {
                 return reconstruct_path(s);
             }
             closedSet.push(Qi{s, 0});
             // Loop through each immediate neighbor of s
-            for (int i = 0; i < 8; i++) {
-                glm::vec2 neighbor = {s.x + (x[i] * dst), s.y + (y[i] * dst)};
+            for (int i = 0; i < neighbors; i++) {
+                glm::vec2 neighbor = {s.x + (x[i] * options.step),
+                                      s.y + (y[i] * options.step)};
                 if (!canVisit(neighbor)) continue;
                 // if (neighbor not in closed){
                 if (!contains(closedSet, neighbor)) {
@@ -198,27 +154,47 @@ struct Theta {
                         // gScore(neighbor) := infinity;
                         // parent(neighbor) := Null;
                         gScore[neighbor] = maxnum;
+                        parent[neighbor] = {};
                     }
                     update_vertex(s, neighbor);
                 }
             }
-            loop_iter++;
-        }
-        if (loop_iter >= LOOP_LIMIT) {
-            log_trace("hit loop limit and quit early");
         }
         log_trace("no path found to thing");
         return std::vector<glm::vec2>();
     }
 
+    glm::vec2 moveToward(const glm::vec2& me, const glm::vec2& you) {
+        // already there
+        if (you.y == me.y && you.x == me.x) return me;
+
+        glm::vec2 next(me);
+        bool movedInX = false;
+
+        if (you.x != me.x) {
+            movedInX = true;
+            next.x += you.x > me.x ? options.step : -options.step;
+        }
+
+        // Can only move in one dir at a time
+        if (movedInX && !options.moveDiagonally) return next;
+
+        if (you.y != me.y) {
+            next.y += you.y > me.y ? options.step : -options.step;
+        }
+
+        return next;
+    }
+
     bool line_of_sight(const glm::vec2& parentNode, const glm::vec2& neighbor) {
         // technically we can see it but cant walk to it its in the wall?
-        if (!canVisit(neighbor)) {
+        if (options.disableLineOfSight || !canVisit(neighbor)) {
             return false;
         }
         glm::vec2 loc(parentNode);
-        while (distance(loc, neighbor) > 0.5f) {
-            loc = lerp(loc, neighbor, 0.25f);
+        float halfstep = options.step / 2.f;
+        while (distance(loc, neighbor) > halfstep) {
+            loc = moveToward(loc, neighbor);
             if (!canVisit(loc)) {
                 return false;
             }
@@ -226,24 +202,25 @@ struct Theta {
         return true;
     }
 
-    std::vector<glm::vec2> reconstruct_path(glm::vec2 cur) {
+    std::vector<glm::vec2> reconstruct_path(glm::vec2 e) {
         std::vector<glm::vec2> path;
-        path.push_back(end);
-        path.push_back(cur);
+        path.push_back(e);
+        glm::vec2 cur = e;
         while (parent.find(cur) != parent.end() && cur != start) {
-            cur = parent.at(cur);
-            if (cur.x == 0.f && cur.y == 0.f) continue;
             path.push_back(cur);
+            cur = parent.at(cur);
         }
         return path;
     }
 
     void set_vertex(const glm::vec2& s) {
+        int neighbors = options.moveDiagonally ? 8 : 4;
         if (!line_of_sight(parent[s], s)) {
             glm::vec2 minN;
             double minS = -1;
-            for (int i = 0; i < 8; i++) {
-                glm::vec2 neighbor = {s.x + (x[i] * dst), s.y + (y[i] * dst)};
+            for (int i = 0; i < neighbors; i++) {
+                glm::vec2 neighbor = {s.x + (x[i] * options.step),
+                                      s.y + (y[i] * options.step)};
                 if (!canVisit(neighbor)) continue;
                 if (contains(closedSet, neighbor)) {
                     if (close(minS, -1) || minS > gScore[neighbor]) {
@@ -257,15 +234,16 @@ struct Theta {
         }
     }
 
+    // This part is the main difference between A* and Theta*
     void update_vertex(const glm::vec2& s, const glm::vec2& neighbor) {
         double oldScore = gScore[neighbor];
-        // This part of the algorithm is the main difference between A* and
-        // Theta*
-        if (this->lazy) {
+
+        if (options.isLazy) {
             // If there is line-of-sight between parent(s) and neighbor
             // then ignore s and use the path from parent(s) to neighbor
+            auto sparent = parent[s];
             auto newPathScore =
-                gScore[parent[s]] + glm::distance(parent[s], neighbor);
+                gScore[sparent] + glm::distance(sparent, neighbor);
             if (newPathScore < gScore[neighbor]) {
                 parent[neighbor] = parent[s];
                 gScore[neighbor] = newPathScore;
@@ -283,8 +261,9 @@ struct Theta {
         if (line_of_sight(parent[s], neighbor)) {
             // If there is line-of-sight between parent(s) and neighbor
             // then ignore s and use the path from parent(s) to neighbor
+            auto sparent = parent[s];
             auto newPathScore =
-                gScore[parent[s]] + glm::distance(parent[s], neighbor);
+                gScore[sparent] + glm::distance(sparent, neighbor);
             if (newPathScore < gScore[neighbor]) {
                 parent[neighbor] = parent[s];
                 gScore[neighbor] = newPathScore;
@@ -312,8 +291,3 @@ struct Theta {
     }
 };
 
-struct LazyTheta : public Theta {
-    LazyTheta(const glm::vec2& s, const glm::vec2& e, const glm::vec4& b,
-              std::function<bool(const glm::vec2& pos)> valid)
-        : Theta(s, e, b, valid, true) {}
-};
