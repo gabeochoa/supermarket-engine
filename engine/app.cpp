@@ -33,12 +33,10 @@ App::App(AppSettings settings) {
     config.title = settings.title;
 
     window = std::unique_ptr<Window>(Window::create(config));
+    M_ASSERT(window, "failed to grab window");
+    window->setEventCallback(M_BIND(onEvent));
 
     Key::initMapping();
-
-    M_ASSERT(window, "failed to grab window");
-
-    window->setEventCallback(M_BIND(onEvent));
 
     if (!settings.initResourcesFolder.empty()) {
         ResourceLocations& resources = getResourceLocations();
@@ -110,12 +108,14 @@ int App::run() {
         time.end();
         Renderer::stats.reset();
         Renderer::stats.begin();
+        window->setActive(true);
         if (isMinimized) continue;
         if (settings.clearEnabled)
             Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
         for (Layer* layer : layerstack) {
             layer->onUpdate(time);
         }
+        window->setActive(false);
         window->update();
         Renderer::stats.end();
     }

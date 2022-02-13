@@ -2,7 +2,7 @@ MAKEFLAGS := --jobs=16
 MAKEFLAGS += --output-sync=target
 
 FLAGS = -std=c++2a -Wall -Wextra -Wpedantic -Wuninitialized -Wshadow -Wmost -g -I/usr/local/include
-LIBS = -lglfw -lglew 
+LIBS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 FRAMEWORKS = -Ivendor/ -framework OpenGL -framework Cocoa 
 
 example_name=tetro

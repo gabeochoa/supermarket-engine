@@ -9,9 +9,9 @@
 #include "pch.hpp"
 #include "window.h"
 
+// Probably should be called SFML window but a little too late
 struct OpenGLWindow : public Window {
-    GLFWwindow* window;
-    GraphicsContext* context;
+    sf::Window* window;
 
     struct WindowInfo {
         std::string title;
@@ -22,9 +22,9 @@ struct OpenGLWindow : public Window {
     WindowInfo info;
 
     OpenGLWindow(const WindowConfig& config) { init(config); }
-    virtual ~OpenGLWindow() {
-        delete context;
-        close();
+    virtual ~OpenGLWindow() { close(); }
+    inline virtual void setActive(bool active) override {
+        window->setActive(active);
     }
     inline virtual int width() const override { return info.width; }
     inline virtual int height() const override { return info.height; }
@@ -35,22 +35,16 @@ struct OpenGLWindow : public Window {
         info.callback = callback;
     }
 
-    virtual void update() override {
-        prof give_me_a_name(__PROFILE_FUNC__);
-        glfwPollEvents();
-        context->swapBuffers();
-    }
+    virtual void update() override;
+    void pollForEvents();
 
     virtual void setVSync(bool enabled) override {
-        if (enabled) {
-            glfwSwapInterval(1);
-        } else {
-            glfwSwapInterval(0);
-        }
+        M_ASSERT(window, "Trying to set VSync on uninitialized window");
+        window->setVerticalSyncEnabled(enabled);
         info.vsync = enabled;
     }
 
     virtual void init(const WindowConfig& config);
-    virtual void close() { glfwTerminate(); }
+    virtual void close() {}
 };
 

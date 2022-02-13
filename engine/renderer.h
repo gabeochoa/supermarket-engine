@@ -8,6 +8,7 @@
 #include "camera.h"
 #include "shader.h"
 #include "texture.h"
+#include "time.h"
 
 // TODO if there are ever any other renderers (directx vulcan metal)
 // then have to subclass this for each one
@@ -88,10 +89,10 @@ struct Renderer {
             textureCount = 0;
         }
 
-        void begin() { frameBeginTime = (float)glfwGetTime(); }
+        void begin() { frameBeginTime = getCurrentTime(); }
 
         void end() {
-            auto endt = (float)glfwGetTime();
+            auto endt = getCurrentTime();
             renderTimes[frameCount] = endt - frameBeginTime;
             totalFrameTime +=
                 renderTimes[frameCount] -
