@@ -19,6 +19,7 @@ struct Shader {
         const std::string &source);
 
     GLenum typeFromString(const std::string &type);
+    const char *typeToString(GLenum type);
     std::string readFromFile(const std::string &filepath);
 
     void compile(const std::unordered_map<GLenum, std::string> &shaderSources);

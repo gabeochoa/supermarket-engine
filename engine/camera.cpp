@@ -62,7 +62,8 @@ void OrthoCameraController::setZoomLevel(float zm) {
 }
 
 bool OrthoCameraController::onMouseScrolled(Mouse::MouseScrolledEvent& event) {
-    float zl = fmin(fmax(zoomLevel - (event.GetYOffset() * 0.25), 0.5f), 20.f);
+    float zl = zoomLevel - (event.GetYOffset() * 0.25);
+    // float zl = fmin(fmax(zoomLevel - (event.GetYOffset() * 0.25), 0.5f), 20.f);
     setZoomLevel(zl);
     // TODO should this be true since we dont want to scroll and zoom at the
     // same time

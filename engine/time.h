@@ -8,16 +8,23 @@
 
 #include "external_include.h"
 
+inline float getCurrentTime() {
+    using namespace std::chrono;
+    using secs = std::chrono::duration<double>;
+    return duration_cast<secs>(high_resolution_clock::now().time_since_epoch())
+        .count();
+}
+
 struct Time {
     const char* name;
 
     float last;
     float delta;
 
-    void start() { last = glfwGetTime(); }
+    void start() { last = getCurrentTime(); }
 
     void end() {
-        float now = (float)glfwGetTime();
+        float now = getCurrentTime();
         delta = now - last;
         last = now;
     }

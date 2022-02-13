@@ -357,7 +357,7 @@ struct UITestLayer : public Layer {
     }
 
     virtual void onEvent(Event& event) override {
-        // log_warn(event.toString().c_str());
+        log_warn(event.toString().c_str());
 
         if (!GLOBALS.get<bool>("terminal_closed")) {
             return;

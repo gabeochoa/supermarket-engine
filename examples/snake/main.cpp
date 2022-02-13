@@ -223,7 +223,10 @@ int main(int argc, char** argv) {
     App::create({
         .width = WIN_W,
         .height = WIN_H,
-        .title = " snake 🐍",
+        // TODO when we switched to SFML opengl, instead of GLFW 
+        // we lost the ability to do wstring titles
+        // .title = " snake 🐍",
+        .title = " snake",
         .clearEnabled = true,
         .escClosesWindow = true,
         .initResourcesFolder = "../resources",

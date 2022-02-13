@@ -73,6 +73,13 @@ GLenum Shader::typeFromString(const std::string &type) {
     return 0;
 }
 
+const char *Shader::typeToString(GLenum type) {
+    if (type == GL_VERTEX_SHADER) return "vertex";
+    if (type == GL_FRAGMENT_SHADER) return "fragment/pixel";
+    M_ASSERT(false, "Unknown shader type: {}", type);
+    return 0;
+}
+
 std::string Shader::readFromFile(const std::string &filepath) {
     std::string result;
     std::ifstream in(
@@ -128,7 +135,7 @@ void Shader::compile(
             glDeleteShader(shader);
 
             // Use the infoLog as you see fit.
-            log_error("{} Shader failed to compile: \n{}", type,
+            log_error("{} Shader failed to compile: \n{}", typeToString(type),
                       std::string(infoLog.begin(), infoLog.end()));
             return;
         }

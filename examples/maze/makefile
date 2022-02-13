@@ -2,10 +2,10 @@ MAKEFLAGS := --jobs=16
 MAKEFLAGS += --output-sync=target
 
 FLAGS = -std=c++2a -Wall -Wextra -Wpedantic -Wuninitialized -Wshadow -Wmost -g -I/usr/local/include
-LIBS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
+LIBS = -lglfw -lglew 
 FRAMEWORKS = -Ivendor/ -framework OpenGL -framework Cocoa 
 
-example_name=snake
+example_name=maze
 
 SRC_DIR := .
 OBJ_DIR := ../../output/$(example_name)

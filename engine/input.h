@@ -10,6 +10,7 @@ struct Input {
     static bool isKeyReleased(Key::KeyCode key);
     static bool isMouseButtonPressed(Mouse::MouseCode button);
     static glm::vec2 getMousePosition();
+    static glm::vec2 getMousePositionInWindow(sf::Window window);
     static float getMouseX();
     static float getMouseY();
 };

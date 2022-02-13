@@ -11,15 +11,22 @@
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
-#ifdef __APPLE__
-#define GL_SILENCE_DEPRECATION
-#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
-#endif
-#include <GL/glew.h>
-/* Ask for an OpenGL Core Context */
+// stolen from glad.h/glad.c
+#define GL_TEXTURE_SWIZZLE_R 0x8E42
+#define GL_TEXTURE_SWIZZLE_G 0x8E43
+#define GL_TEXTURE_SWIZZLE_B 0x8E44
+#define GL_TEXTURE_SWIZZLE_A 0x8E45
 
-#define GLFW_INCLUDE_GLCOREARB
-#include <GLFW/glfw3.h>
+#define GL_SILENCE_DEPRECATION
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/OpenGL.hpp>
+#include <SFML/Window.hpp>
+
+#ifdef __APPLE__
+#define glGenVertexArrays glGenVertexArraysAPPLE
+#define glBindVertexArray glBindVertexArrayAPPLE
+#define glDeleteVertexArrays glDeleteVertexArraysAPPLE
+#endif
 
 // //
 
@@ -55,8 +62,6 @@
 #include "../vendor/fmt/ostream.h"
 // this is needed for wstring printing
 #include "../vendor/fmt/xchar.h"
-#define GLT_IMPLEMENTATION
-#include "../vendor/glText.h"
 #include "../vendor/portable-file-dialogs.h"
 
 #define INCBIN_SILENCE_BITCODE_WARNING

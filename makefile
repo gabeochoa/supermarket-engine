@@ -5,7 +5,7 @@ MAKEFLAGS += --output-sync=target
 # FLAGS = -std=c++2a -Wall -Wextra -g -I/usr/local/include -stdlib=libc++ -fsanitize=address -fsanitize=undefined
 # consider adding -Wfloat-equal
 FLAGS = -std=c++2a -Wall -Wextra -Wpedantic -Wuninitialized -Wshadow -Wmost -g -I/usr/local/include
-LIBS = -lglfw -lglew 
+LIBS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 FRAMEWORKS = -Ivendor/ -framework CoreVideo -framework OpenGL -framework IOKit -framework Cocoa -framework Carbon
 
 LIB_SRC_DIR := ./engine

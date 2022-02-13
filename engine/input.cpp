@@ -6,40 +6,31 @@
 #include "app.h" 
 
 bool Input::isKeyPressedNoRepeat(const Key::KeyCode key) {
-    auto* window =
-        static_cast<GLFWwindow*>(App::get().getWindow().getNativeWindow());
-    auto state = glfwGetKey(window, static_cast<int32_t>(key));
-    return state == GLFW_PRESS;
+    return sf::Keyboard::isKeyPressed(static_cast<sf::Keyboard::Key>(key));
 }
 
 bool Input::isKeyPressed(const Key::KeyCode key) {
-    auto* window =
-        static_cast<GLFWwindow*>(App::get().getWindow().getNativeWindow());
-    auto state = glfwGetKey(window, static_cast<int32_t>(key));
-    return state == GLFW_PRESS || state == GLFW_REPEAT;
+    return sf::Keyboard::isKeyPressed(static_cast<sf::Keyboard::Key>(key));
+    // TODO support repeat? 
+    // return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
 
 bool Input::isKeyReleased(const Key::KeyCode key) {
-    auto* window =
-        static_cast<GLFWwindow*>(App::get().getWindow().getNativeWindow());
-    auto state = glfwGetKey(window, static_cast<int32_t>(key));
-    return state == GLFW_RELEASE;
+    return !Input::isKeyPressed(key);
 }
 
 bool Input::isMouseButtonPressed(const Mouse::MouseCode button) {
-    auto* window =
-        static_cast<GLFWwindow*>(App::get().getWindow().getNativeWindow());
-    auto state = glfwGetMouseButton(window, static_cast<int32_t>(button));
-    return state == GLFW_PRESS;
+    return sf::Mouse::isButtonPressed(static_cast<sf::Mouse::Button>(button));
 }
 
 glm::vec2 Input::getMousePosition() {
-    auto* window =
-        static_cast<GLFWwindow*>(App::get().getWindow().getNativeWindow());
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
+    sf::Vector2i pos = sf::Mouse::getPosition();
+    return {(float)pos.x, (float)pos.y};
+}
 
-    return {(float)xpos, (float)ypos};
+glm::vec2 Input::getMousePositionInWindow(sf::Window window) {
+    sf::Vector2i pos = sf::Mouse::getPosition(window);
+    return {(float)pos.x, (float)pos.y};
 }
 
 float Input::getMouseX() { return getMousePosition().x; }
