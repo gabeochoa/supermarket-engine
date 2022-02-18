@@ -32,7 +32,7 @@ struct UITestLayer : public Layer {
     bool camHasZoom = false;
     std::wstring commandContent;
 
-    std::shared_ptr<IUI::UIContext> ui_context;
+    std::shared_ptr<GOUI::UIContext> ui_context;
     std::shared_ptr<OrthoCameraController> uiTestCameraController;
 
     UITestLayer() : Layer("UI Test") {
@@ -47,8 +47,8 @@ struct UITestLayer : public Layer {
         uiTestCameraController->camera.setViewport(
             glm::vec4{0, 0, WIN_W, WIN_H});
 
-        ui_context.reset(new IUI::UIContext());
-        IUI::init_uicontext(ui_context.get(), uiTestCameraController);
+        ui_context.reset(new GOUI::UIContext());
+        GOUI::init_uicontext(ui_context.get(), uiTestCameraController);
         ui_context->c_id = 1;
 
         GLOBALS.set<float>("slider_val", &value);
@@ -80,7 +80,7 @@ struct UITestLayer : public Layer {
     }
 
     void ui_test(Time dt) {
-        using namespace IUI;
+        using namespace GOUI;
         auto mouseDown =
             Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
         auto mousePosition =
@@ -194,14 +194,14 @@ struct UITestLayer : public Layer {
             .text = "Kanji: \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e",
         });
 
-        text(MK_UUID(id, IUI::rootID), upperCaseConfig);
-        text(MK_UUID(id, IUI::rootID), lowerCaseConfig);
-        text(MK_UUID(id, IUI::rootID), numbersConfig);
-        text(MK_UUID(id, IUI::rootID), extrasConfig);
-        text(MK_UUID(id, IUI::rootID), hiraganaConfig);
-        text(MK_UUID(id, IUI::rootID), kanjiConfig);
+        text(MK_UUID(id, GOUI::rootID), upperCaseConfig);
+        text(MK_UUID(id, GOUI::rootID), lowerCaseConfig);
+        text(MK_UUID(id, GOUI::rootID), numbersConfig);
+        text(MK_UUID(id, GOUI::rootID), extrasConfig);
+        text(MK_UUID(id, GOUI::rootID), hiraganaConfig);
+        text(MK_UUID(id, GOUI::rootID), kanjiConfig);
 
-        uuid textFieldID = MK_UUID(id, IUI::rootID);
+        uuid textFieldID = MK_UUID(id, GOUI::rootID);
         if (textfield(textFieldID,
                       WidgetConfig({.position = glm::vec2{2.f, 2.f},
                                     .size = glm::vec2{6.f, 1.f}}),
@@ -209,7 +209,7 @@ struct UITestLayer : public Layer {
             log_info("{}", to_string(content));
         }
 
-        uuid commandFieldID = MK_UUID(id, IUI::rootID);
+        uuid commandFieldID = MK_UUID(id, GOUI::rootID);
 
         auto genAutoComplete = [](const std::string& input) {
             return EDITOR_COMMANDS.tabComplete(input);
@@ -235,8 +235,8 @@ struct UITestLayer : public Layer {
         uiTestCameraController->movementEnabled = camHasMovement;
         uiTestCameraController->rotationEnabled = camHasRotation;
         if (uiTestCameraController->movementEnabled &&
-            (IUI::has_kb_focus(textFieldID) ||
-             IUI::has_kb_focus(commandFieldID))) {
+            (GOUI::has_kb_focus(textFieldID) ||
+             GOUI::has_kb_focus(commandFieldID))) {
             uiTestCameraController->movementEnabled = false;
             uiTestCameraController->rotationEnabled = false;
         }
@@ -247,9 +247,9 @@ struct UITestLayer : public Layer {
             .text = "Tap to continue",
         });
 
-        if (IUI::button_with_label(
-                IUI::MK_UUID(id, IUI::rootID),
-                IUI::WidgetConfig({
+        if (GOUI::button_with_label(
+                GOUI::MK_UUID(id, GOUI::rootID),
+                GOUI::WidgetConfig({
                     .child = &tapToContiueText,  //
                     .theme = WidgetTheme({
                         .backgroundColor = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
@@ -261,9 +261,9 @@ struct UITestLayer : public Layer {
                 )) {
         }
 
-        if (IUI::checkbox(                      //
-                IUI::MK_UUID(id, IUI::rootID),  //
-                IUI::WidgetConfig({
+        if (GOUI::checkbox(                       //
+                GOUI::MK_UUID(id, GOUI::rootID),  //
+                GOUI::WidgetConfig({
                     .theme = WidgetTheme({
                         .backgroundColor = glm::vec4{0.6f, 0.3f, 0.3f, 1.f},  //
                     }),
@@ -277,14 +277,14 @@ struct UITestLayer : public Layer {
 
         {
             std::vector<WidgetConfig> dropdownConfigs;
-            dropdownConfigs.push_back(IUI::WidgetConfig({.text = "option A"}));
-            dropdownConfigs.push_back(IUI::WidgetConfig({.text = "option B"}));
+            dropdownConfigs.push_back(GOUI::WidgetConfig({.text = "option A"}));
+            dropdownConfigs.push_back(GOUI::WidgetConfig({.text = "option B"}));
             dropdownConfigs.push_back(
-                IUI::WidgetConfig({.text = "long option"}));
+                GOUI::WidgetConfig({.text = "long option"}));
             dropdownConfigs.push_back(
-                IUI::WidgetConfig({.text = "really really long option"}));
+                GOUI::WidgetConfig({.text = "really really long option"}));
 
-            WidgetConfig dropdownMain = IUI::WidgetConfig({
+            WidgetConfig dropdownMain = GOUI::WidgetConfig({
                 .theme = WidgetTheme({
                     .backgroundColor = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
                 }),
@@ -294,9 +294,9 @@ struct UITestLayer : public Layer {
                 .transparent = false,               //
             });
 
-            if (IUI::dropdown(IUI::MK_UUID(id, IUI::rootID), dropdownMain,
-                              dropdownConfigs, &dropdownState,
-                              &dropdownIndex)) {
+            if (GOUI::dropdown(GOUI::MK_UUID(id, GOUI::rootID), dropdownMain,
+                               dropdownConfigs, &dropdownState,
+                               &dropdownIndex)) {
                 log_info("dropdown selected {}",
                          dropdownConfigs[dropdownIndex].text);
             }
@@ -306,11 +306,14 @@ struct UITestLayer : public Layer {
             //
 
             std::vector<WidgetConfig> buttonListConfigs;
-            buttonListConfigs.push_back(IUI::WidgetConfig({.text = "button1"}));
-            buttonListConfigs.push_back(IUI::WidgetConfig({.text = "button2"}));
-            buttonListConfigs.push_back(IUI::WidgetConfig({.text = "button3"}));
+            buttonListConfigs.push_back(
+                GOUI::WidgetConfig({.text = "button1"}));
+            buttonListConfigs.push_back(
+                GOUI::WidgetConfig({.text = "button2"}));
+            buttonListConfigs.push_back(
+                GOUI::WidgetConfig({.text = "button3"}));
 
-            WidgetConfig buttonListConfig = IUI::WidgetConfig({
+            WidgetConfig buttonListConfig = GOUI::WidgetConfig({
                 .theme = WidgetTheme({
                     .backgroundColor = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
                 }),
@@ -320,16 +323,16 @@ struct UITestLayer : public Layer {
                 .transparent = false,              //
             });
 
-            if (IUI::button_list(IUI::MK_UUID(id, IUI::rootID),
-                                 buttonListConfig, buttonListConfigs,
-                                 &buttonListIndex)) {
+            if (GOUI::button_list(GOUI::MK_UUID(id, GOUI::rootID),
+                                  buttonListConfig, buttonListConfigs,
+                                  &buttonListIndex)) {
                 log_info("button in list {} pressed", buttonListIndex);
             }
         }
 
-        const uuid scroll_view_id = IUI::MK_UUID(id, IUI::rootID);
+        const uuid scroll_view_id = GOUI::MK_UUID(id, GOUI::rootID);
         {
-            WidgetConfig scrollViewConfig = IUI::WidgetConfig({
+            WidgetConfig scrollViewConfig = GOUI::WidgetConfig({
                 .theme = WidgetTheme({
                     .backgroundColor = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
                 }),
@@ -339,18 +342,18 @@ struct UITestLayer : public Layer {
                 .transparent = false,               //
             });
 
-            std::vector<IUI::Child> rows;
+            std::vector<GOUI::Child> rows;
             for (int i = 0; i < 10; i++) {
                 rows.push_back([i](WidgetConfig config) {
                     config.size.x = 1.f;
                     config.text = fmt::format("row{}", i),
-                    IUI::text(
+                    GOUI::text(
                         // text doesnt need ids really
-                        IUI::MK_UUID_LOOP(0, 0, i), config);
+                        GOUI::MK_UUID_LOOP(0, 0, i), config);
                 });
             }
 
-            IUI::scroll_view(scroll_view_id, scrollViewConfig, rows, 1.f);
+            GOUI::scroll_view(scroll_view_id, scrollViewConfig, rows, 1.f);
         }
 
         // In this case we want to lock the camera when typing in

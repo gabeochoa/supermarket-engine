@@ -6,7 +6,7 @@
 #include "constexpr_map.h"
 #include "external_include.h"
 
-namespace IUI {
+namespace GOUI {
 
 // From cppreference.com
 // For two different parameters k1 and k2 that are not equal, the probability
@@ -32,7 +32,8 @@ struct uuid {
         hash = h0 ^ (h1 << 1) ^ (h2 << 2);
     }
 
-    uuid(int o, std::size_t ownerHash, const std::string& s1, int i1, int index) {
+    uuid(int o, std::size_t ownerHash, const std::string& s1, int i1,
+         int index) {
         ownerLayer = o;
         auto h0 = std::hash<int>{}(ownerHash);
         auto h1 = std::hash<std::string>{}(s1);
@@ -44,13 +45,13 @@ struct uuid {
     uuid(const uuid& other) { this->operator=(other); }
 
     uuid& operator=(const uuid& other) {
-        this->ownerLayer= other.ownerLayer;
+        this->ownerLayer = other.ownerLayer;
         this->hash = other.hash;
         return *this;
     }
 
     bool operator==(const uuid& other) const {
-        return ownerLayer== other.ownerLayer && hash == other.hash;
+        return ownerLayer == other.ownerLayer && hash == other.hash;
     }
 
     bool operator<(const uuid& other) const {
@@ -61,14 +62,11 @@ struct uuid {
         return false;
     }
 
-    operator std::size_t() const{
-        return this->hash;
-    }
+    operator std::size_t() const { return this->hash; }
 
-    operator std::string() const{
+    operator std::string() const {
         return fmt::format("layer: {} hash: {}", this->ownerLayer, this->hash);
     }
-
 };
 
 std::ostream& operator<<(std::ostream& os, const uuid& obj) {
@@ -77,10 +75,11 @@ std::ostream& operator<<(std::ostream& os, const uuid& obj) {
 }
 
 #define MK_UUID(x, parent) uuid(x, parent, __FILE__, __LINE__)
-#define MK_UUID_LOOP(x, parent, index) uuid(x, parent, __FILE__, __LINE__, index)
+#define MK_UUID_LOOP(x, parent, index) \
+    uuid(x, parent, __FILE__, __LINE__, index)
 
 static uuid rootID = MK_UUID(-1, -1);
 static uuid fakeID = MK_UUID(-2, -1);
 
-}  // namespace IUI
+}  // namespace GOUI
 

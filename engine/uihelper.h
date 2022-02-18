@@ -8,7 +8,7 @@
 #include "renderer.h"
 #include "ui.h"
 
-namespace IUI {
+namespace GOUI {
 
 inline bool isKeyPressed(int keycode) {
     return Input::isKeyPressed(static_cast<Key::KeyCode>(keycode));
@@ -59,9 +59,9 @@ inline void init_uicontext(
         };
     };
 
-    uicontext->init(
-        std::bind(&IUI::isMouseInside, cameraController, std::placeholders::_1),
-        &IUI::isKeyPressed, &IUI::drawForUI, genFontTexture);
+    uicontext->init(std::bind(&GOUI::isMouseInside, cameraController,
+                              std::placeholders::_1),
+                    &GOUI::isKeyPressed, &GOUI::drawForUI, genFontTexture);
 
     uicontext->init_keys(UIContext::KeyCodes{
         .widgetNext = Key::getMapping("Widget Next"),              //
@@ -75,4 +75,4 @@ inline void init_uicontext(
     });
 }
 
-}  // namespace IUI
+}  // namespace GOUI

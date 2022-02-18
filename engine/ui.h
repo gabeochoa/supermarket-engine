@@ -7,8 +7,8 @@ Before using any components, you should create and init a context. this only
 needs to happen once on startup, dont call it every frame.
 
 ```
-    std::shared_ptr<IUI::UIContext> uicontext;
-    uicontext.reset(new IUI::UIContext());
+    std::shared_ptr<GOUI::UIContext> uicontext;
+    uicontext.reset(new GOUI::UIContext());
     uicontext->init();
 ```
 
@@ -291,7 +291,7 @@ struct Style {
 
 
 State is stored in the Statemanager and you can fetch the underlying
-state of a widget using IUI::get()->statemanager.get(uuid).
+state of a widget using GOUI::get()->statemanager.get(uuid).
 
 TODO Would we rather have the user specify an output
 or just let them search the UIContext?
@@ -307,7 +307,7 @@ keyboard focus. Must be called after the widget code has run.
             if (textfield(textFieldID, WidgetConfig({...}), content)) {
                 log_info("{}", content);
             }
-            if (IUI::has_kb_focus(textFieldID)) {
+            if (GOUI::has_kb_focus(textFieldID)) {
                 editing_field = true;
             }else {
                 editing_field = false;
@@ -326,7 +326,7 @@ keyboard focus. Must be called after the widget code has run.
 #include "typeutil.h"
 #include "uuid.h"
 
-namespace IUI {
+namespace GOUI {
 
 static const glm::vec4 DEFAULT_COLOR = glm::vec4{-1.0f, 1.0f, 1.0f, 1.0f};
 static const glm::vec4 white = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
@@ -1406,4 +1406,4 @@ inline bool plusMinusButton(const uuid id, WidgetConfig config,
     return changed;
 }
 
-}  // namespace IUI
+}  // namespace GOUI

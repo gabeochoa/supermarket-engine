@@ -19,11 +19,11 @@ struct TerminalLayer : public Layer {
     const glm::vec2 camBottomRight = {35.f, -18.f};
     glm::vec4 rect = glm::vec4{200.f, 1000.f, 1500.f, 200.f};
 
-    IUI::uuid drawer_uuid = IUI::MK_UUID(id, IUI::rootID);
-    IUI::uuid command_field_id = IUI::MK_UUID(id, IUI::rootID);
+    GOUI::uuid drawer_uuid = GOUI::MK_UUID(id, GOUI::rootID);
+    GOUI::uuid command_field_id = GOUI::MK_UUID(id, GOUI::rootID);
     std::wstring commandContent = L"test";
     float drawerPctOpen = 0.f;
-    std::shared_ptr<IUI::UIContext> uicontext;
+    std::shared_ptr<GOUI::UIContext> uicontext;
     int startingHistoryIndex = 0;
 
     TerminalLayer() : Layer("Debug Terminal") {
@@ -42,8 +42,8 @@ struct TerminalLayer : public Layer {
         terminalCameraController->zoomEnabled = false;
         terminalCameraController->resizeEnabled = false;
 
-        uicontext.reset(new IUI::UIContext());
-        IUI::init_uicontext(uicontext.get(), terminalCameraController);
+        uicontext.reset(new GOUI::UIContext());
+        GOUI::init_uicontext(uicontext.get(), terminalCameraController);
 
         startingHistoryIndex = EDITOR_COMMANDS.output_history.size() - 1;
     }
@@ -82,7 +82,7 @@ struct TerminalLayer : public Layer {
 
         Renderer::begin(terminalCameraController->camera);
         {
-            using namespace IUI;
+            using namespace GOUI;
             auto mouseDown =
                 Input::isMouseButtonPressed(Mouse::MouseCode::ButtonLeft);
             auto mousePosition =
@@ -109,7 +109,7 @@ struct TerminalLayer : public Layer {
                            .size = drawer_location[1],
                        }),
                        &drawerPctOpen)) {
-                WidgetConfig scrollViewConfig = IUI::WidgetConfig({
+                WidgetConfig scrollViewConfig = GOUI::WidgetConfig({
                     .theme = WidgetTheme({
                         .backgroundColor = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
                     }),
@@ -122,7 +122,7 @@ struct TerminalLayer : public Layer {
 
                 // TODO how come this doesnt render correctly
                 // until i mouse over it
-                std::vector<IUI::Child> rows;
+                std::vector<GOUI::Child> rows;
                 for (size_t i = 0; i < EDITOR_COMMANDS.output_history.size();
                      i++) {
                     rows.push_back([p_fs, i](WidgetConfig config) {
@@ -134,8 +134,8 @@ struct TerminalLayer : public Layer {
                     });
                 }
 
-                IUI::scroll_view(MK_UUID(id, IUI::rootID), scrollViewConfig,
-                                 rows, p_fs, &startingHistoryIndex);
+                GOUI::scroll_view(MK_UUID(id, GOUI::rootID), scrollViewConfig,
+                                  rows, p_fs, &startingHistoryIndex);
 
                 uicontext->kbFocusID = command_field_id;
                 auto cfsize = glm::vec2{drawer_location[1].x, h1_fs};
