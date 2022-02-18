@@ -137,32 +137,46 @@ struct UITestLayer : public Layer {
 
         upperCaseRotation += 90.f * dt.s();
         auto upperCaseConfig =
-            WidgetConfig({.color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+            WidgetConfig({//
+                          .theme = WidgetTheme({
+                              .fontColor = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+
+                          }),
                           .position = glm::vec2{0.f, -6.f},
                           .rotation = upperCaseRotation,
                           .size = glm::vec2{1.f, 1.f},
                           .text = "THE FIVE BOXING WIZARDS JUMP QUICKLY"});
 
         auto lowerCaseConfig =
-            WidgetConfig({.color = glm::vec4{0.8, 0.3f, 0.7f, 1.0f},
+            WidgetConfig({//
+                          .theme = WidgetTheme({
+                              .fontColor = glm::vec4{0.8, 0.3f, 0.7f, 1.0f},
+                          }),
                           .position = glm::vec2{0.f, -8.f},
                           .size = glm::vec2{1.f, 1.f},
                           .text = "the five boxing wizards jump quickly"});
 
         auto numbersConfig =
-            WidgetConfig({.color = glm::vec4{0.7, 0.5f, 0.8f, 1.0f},
+            WidgetConfig({//
+                          .theme = WidgetTheme({
+                              .fontColor = glm::vec4{0.7, 0.5f, 0.8f, 1.0f},
+                          }),
                           .position = glm::vec2{0.f, -10.f},
                           .size = glm::vec2{1.f, 1.f},
                           .text = "0123456789"});
 
         auto extrasConfig =
-            WidgetConfig({.color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+            WidgetConfig({.theme = WidgetTheme({
+                              .fontColor = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+                          }),
                           .position = glm::vec2{0.f, -12.f},
                           .size = glm::vec2{1.f, 1.f},
                           .text = " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"});
 
         auto hiraganaConfig = WidgetConfig({
-            .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+            .theme = WidgetTheme({
+                .fontColor = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+            }),
             .font = "default_cjk",
             .position = glm::vec2{0.f, -14.f},
             .size = glm::vec2{1.f, 1.f},
@@ -171,7 +185,9 @@ struct UITestLayer : public Layer {
                     "\x81\x91\xe3\x81\x93",
         });
         auto kanjiConfig = WidgetConfig({
-            .color = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+            .theme = WidgetTheme({
+                .fontColor = glm::vec4{0.2, 0.7f, 0.4f, 1.0f},
+            }),
             .font = "default_cjk",
             .position = glm::vec2{0.f, -16.f},
             .size = glm::vec2{1.f, 1.f},
@@ -234,23 +250,27 @@ struct UITestLayer : public Layer {
         if (IUI::button_with_label(
                 IUI::MK_UUID(id, IUI::rootID),
                 IUI::WidgetConfig({
-                    .child = &tapToContiueText,                 //
-                    .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
-                    .position = glm::vec2{12.f, 1.f},           //
-                    .size = glm::vec2{8.f, 1.f},                //
-                    .transparent = false,                       //
-                })                                              //
+                    .child = &tapToContiueText,  //
+                    .theme = WidgetTheme({
+                        .backgroundColor = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
+                    }),
+                    .position = glm::vec2{12.f, 1.f},  //
+                    .size = glm::vec2{8.f, 1.f},       //
+                    .transparent = false,              //
+                })                                     //
                 )) {
         }
 
         if (IUI::checkbox(                      //
                 IUI::MK_UUID(id, IUI::rootID),  //
                 IUI::WidgetConfig({
-                    .color = glm::vec4{0.6f, 0.3f, 0.3f, 1.f},  //
-                    .position = glm::vec2{16.f, 3.f},           //
-                    .size = glm::vec2{1.f, 1.f},                //
-                    .transparent = false,                       //
-                }),                                             //
+                    .theme = WidgetTheme({
+                        .backgroundColor = glm::vec4{0.6f, 0.3f, 0.3f, 1.f},  //
+                    }),
+                    .position = glm::vec2{16.f, 3.f},  //
+                    .size = glm::vec2{1.f, 1.f},       //
+                    .transparent = false,              //
+                }),                                    //
                 &checkbox_state)) {
             log_info("checkbox changed {}", checkbox_state);
         }
@@ -265,11 +285,13 @@ struct UITestLayer : public Layer {
                 IUI::WidgetConfig({.text = "really really long option"}));
 
             WidgetConfig dropdownMain = IUI::WidgetConfig({
-                .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
-                .position = glm::vec2{12.f, -1.f},          //
-                .size = glm::vec2{8.5f, 1.f},               //
-                .text = "",                                 //
-                .transparent = false,                       //
+                .theme = WidgetTheme({
+                    .backgroundColor = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
+                }),
+                .position = glm::vec2{12.f, -1.f},  //
+                .size = glm::vec2{8.5f, 1.f},       //
+                .text = "",                         //
+                .transparent = false,               //
             });
 
             if (IUI::dropdown(IUI::MK_UUID(id, IUI::rootID), dropdownMain,
@@ -289,11 +311,13 @@ struct UITestLayer : public Layer {
             buttonListConfigs.push_back(IUI::WidgetConfig({.text = "button3"}));
 
             WidgetConfig buttonListConfig = IUI::WidgetConfig({
-                .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
-                .position = glm::vec2{22.f, 6.f},           //
-                .size = glm::vec2{8.5f, 1.f},               //
-                .text = "",                                 //
-                .transparent = false,                       //
+                .theme = WidgetTheme({
+                    .backgroundColor = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
+                }),
+                .position = glm::vec2{22.f, 6.f},  //
+                .size = glm::vec2{8.5f, 1.f},      //
+                .text = "",                        //
+                .transparent = false,              //
             });
 
             if (IUI::button_list(IUI::MK_UUID(id, IUI::rootID),
@@ -306,11 +330,13 @@ struct UITestLayer : public Layer {
         const uuid scroll_view_id = IUI::MK_UUID(id, IUI::rootID);
         {
             WidgetConfig scrollViewConfig = IUI::WidgetConfig({
-                .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
-                .position = glm::vec2{22.f, -3.f},          //
-                .size = glm::vec2{8.5f, 4.f},               //
-                .text = "",                                 //
-                .transparent = false,                       //
+                .theme = WidgetTheme({
+                    .backgroundColor = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
+                }),
+                .position = glm::vec2{22.f, -3.f},  //
+                .size = glm::vec2{8.5f, 4.f},       //
+                .text = "",                         //
+                .transparent = false,               //
             });
 
             std::vector<IUI::Child> rows;

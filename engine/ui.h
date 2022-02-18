@@ -328,11 +328,43 @@ keyboard focus. Must be called after the widget code has run.
 
 namespace IUI {
 
+static const glm::vec4 DEFAULT_COLOR = glm::vec4{-1.0f, 1.0f, 1.0f, 1.0f};
 static const glm::vec4 white = glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
+static const glm::vec4 black = glm::vec4{0.0f, 0.0f, 0.0f, 1.0f};
 static const glm::vec4 red = glm::vec4{1.0f, 0.0f, 0.0f, 1.0f};
 static const glm::vec4 green = glm::vec4{0.0f, 1.0f, 0.0f, 1.0f};
 static const glm::vec4 blue = glm::vec4{0.0f, 0.0f, 1.0f, 1.0f};
 static const glm::vec4 teal = glm::vec4{0.0f, 1.0f, 1.0f, 1.0f};
+static const glm::vec4 magenta = glm::vec4{1.0f, 0.0f, 1.0f, 1.0f};
+
+inline glm::vec4 getOppositeColor(const glm::vec4& color) {
+    // TODO detect if the button color is dark
+    // and change the color to white automatically
+    return glm::vec4{1.f - color.r, 1.f - color.g, 1.f - color.b, color.a};
+}
+
+struct WidgetTheme {
+    enum ColorType {
+        FONT = 0,
+        FG = 0,
+        BG,
+    };
+
+    glm::vec4 fontColor = DEFAULT_COLOR;
+    glm::vec4 backgroundColor = DEFAULT_COLOR;
+    std::string texture = "white";
+
+    glm::vec4 color(WidgetTheme::ColorType type = ColorType::BG) const {
+        if (type == ColorType::FONT || type == ColorType::FG) {
+            if (fontColor.x < 0)  // default
+                return black;
+            return fontColor;
+        }
+        if (backgroundColor.x < 0)  // default
+            return white;
+        return backgroundColor;
+    }
+};
 
 template <typename T>
 struct State {
@@ -591,9 +623,9 @@ struct UIContext {
     void begin(bool mouseDown, glm::vec2 mousePos) {
 #ifdef SUPERMARKET_HOUSEKEEPING
         M_ASSERT(inited, "UIContext must be inited before you begin()");
-        M_ASSERT(
-            !began_and_not_ended,
-            "You should call end every frame before calling begin() again ");
+        M_ASSERT(!began_and_not_ended,
+                 "You should call end every frame before calling begin() "
+                 "again ");
         began_and_not_ended = true;
         M_ASSERT(inited_keys,
                  "UIContext init_keys() must be inited before you begin()");
@@ -653,13 +685,12 @@ struct WidgetConfig;
 
 struct WidgetConfig {
     WidgetConfig* child;
-    glm::vec4 color = white;
+    WidgetTheme theme;
     const char* font = "default";
     glm::vec2 position = glm::vec2{0.f};
     float rotation = 0;
     glm::vec2 size = glm::vec2{1.f};
     std::string text = "";
-    std::string texture = "white";
     bool transparent = false;
     bool vertical = false;
     bool flipTextY = false;
@@ -707,10 +738,10 @@ bool text(const uuid id, const WidgetConfig& config) {
 
     auto size = config.size * font_scale;
 
-    get()->drawWidget(widget_center(config.position, size),  //
-                      config.size * font_scale,              //
-                      config.rotation,                       //
-                      config.color,                          //
+    get()->drawWidget(widget_center(config.position, size),   //
+                      config.size * font_scale,               //
+                      config.rotation,                        //
+                      config.theme.color(WidgetTheme::FONT),  //
                       texInfo.textureName);
     return true;
 }
@@ -729,24 +760,26 @@ inline void activeIfMouseInside(const uuid id, const glm::vec4& rect) {
 inline void _button_render(const uuid id, const WidgetConfig& config) {
     draw_if_kb_focus(id, [&]() {
         get()->drawWidget(config.position, config.size + glm::vec2{0.1f},
-                          config.rotation, teal, config.texture);
+                          config.rotation, teal, config.theme.texture);
     });
 
+#if 0
     if (get()->hotID == id) {
         if (get()->activeID == id) {
             get()->drawWidget(config.position, config.size, config.rotation,
-                              red, config.texture);
+                              red, config.theme.texture);
         } else {
             // Hovered
             get()->drawWidget(config.position, config.size, config.rotation,
-                              green, config.texture);
+                              green, config.theme.texture);
         }
     } else {
         get()->drawWidget(config.position, config.size, config.rotation, blue,
-                          config.texture);
+                          config.theme.texture);
     }
+#endif
     get()->drawWidget(config.position, config.size, config.rotation,
-                      config.color, config.texture);
+                      config.theme.color(), config.theme.texture);
 
     if (config.text.size() != 0) {
         float sign = config.flipTextY ? 1 : -1;
@@ -754,9 +787,7 @@ inline void _button_render(const uuid id, const WidgetConfig& config) {
         WidgetConfig textConfig(config);
         // TODO detect if the button color is dark
         // and change the color to white automatically
-        textConfig.color =
-            glm::vec4{1.f - config.color.r,  //
-                      1.f - config.color.g, 1.f - config.color.b, 1.f};
+        textConfig.theme.fontColor = getOppositeColor(config.theme.color());
         textConfig.position =
             config.position + glm::vec2{(-config.size.x / 2.f) + 0.10f,
                                         config.size.y * sign * 0.5f};
@@ -840,7 +871,7 @@ bool button_list(const uuid id, WidgetConfig config,
         bwlconfig.position =
             config.position + glm::vec2{0.f, sign * spacing * (i + 1)};
         bwlconfig.text = configs[i].text;
-        bwlconfig.color = configs[i].color;
+        // bwlconfig.theme.backgroundColor = configs[i].theme.color();
 
         if (button_with_label(button_id, bwlconfig)) {
             state->selected = i;
@@ -862,8 +893,8 @@ bool button_list(const uuid id, WidgetConfig config,
     // and pressing up accidentally would unfocus that and bring you to some
     // random button list somewhere**
     //
-    // ** in this situation they have to be visible, so no worries about arrow
-    // keying your way into a dropdown
+    // ** in this situation they have to be visible, so no worries about
+    // arrow keying your way into a dropdown
     //
     for (size_t i = 0; i < configs.size(); i++) {
         somethingFocused |= has_kb_focus(ids[i]);
@@ -890,8 +921,8 @@ bool button_list(const uuid id, WidgetConfig config,
     // --
     // doing this above the keypress, allows a single frame
     // where neither the dropdown parent nor its children are in focus
-    // and that causes the dropdown to close on selection change which isnt what
-    // we want
+    // and that causes the dropdown to close on selection change which isnt
+    // what we want
     for (size_t i = 0; i < configs.size(); i++) {
         // if you got the kb focus somehow
         // (ie by clicking or tabbing)
@@ -936,15 +967,18 @@ bool dropdown(const uuid id, WidgetConfig config,
     auto offset = glm::vec2{config.size.x - (state->on ? 1.f : 1.6f),
                             config.size.y * -0.25f};
     text(MK_UUID(id.ownerLayer, id.hash),
-         WidgetConfig({.rotation = state->on ? 90.f : 270.f,
+         WidgetConfig({.theme = WidgetTheme(
+                           {.fontColor = getOppositeColor(config.theme.color()),
+                            .backgroundColor = config.theme.color()}),
+                       .rotation = state->on ? 90.f : 270.f,
                        .text = ">",
                        .flipTextY = config.flipTextY,
                        .position = config.position + offset}));
 
     bool childrenHaveFocus = false;
 
-    // NOTE: originally we only did this when the dropdown wasnt already open
-    // but we should be safe to always do this
+    // NOTE: originally we only did this when the dropdown wasnt already
+    // open but we should be safe to always do this
     // 1. doesnt toggle on, sets on directly
     // 2. open should have children focused anyway
     // 3. we dont eat the input, so it doesnt break the button_list value
@@ -986,7 +1020,9 @@ bool checkbox(const uuid id, WidgetConfig config, bool* cbState = nullptr) {
 
     bool changed = false;
     auto textConf = WidgetConfig({
-        .color = glm::vec4{0.f, 0.f, 0.f, 1.f},
+        .theme = WidgetTheme({
+            .fontColor = glm::vec4{0.f, 0.f, 0.f, 1.f},
+        }),
         .position = glm::vec2{0.1f, -0.25f},
         .text = state->checked ? "X" : "",
     });
@@ -1017,15 +1053,15 @@ inline void _slider_render(const uuid id, const WidgetConfig& config,
                                 // we want it to be the same % size increase
                                 // no matter the size of the widget
                           config.size + glm::vec2{0.1f},  //
-                          config.rotation, teal, config.texture);
+                          config.rotation, teal, config.theme.texture);
     });
     // slider rail
-    get()->drawWidget(pos, cs, config.rotation, red, config.texture);
+    get()->drawWidget(pos, cs, config.rotation, red, config.theme.texture);
     // slide
     glm::vec2 offset = config.vertical ? glm::vec2{cs.x / 2.f, pos_offset}
                                        : glm::vec2{pos_offset, cs.y / 2.f};
     get()->drawWidget(config.position + offset, glm::vec2{0.5f},
-                      config.rotation, col, config.texture);
+                      config.rotation, col, config.theme.texture);
 }
 
 bool slider(const uuid id, WidgetConfig config, float* value, float mnf,
@@ -1084,11 +1120,11 @@ inline void _textfield_render(const uuid& id, const WidgetConfig& config,
     // Draw focus ring
     draw_if_kb_focus(id, [&]() {
         get()->drawWidget(config.position, config.size + glm::vec2{0.1f},
-                          config.rotation, teal, config.texture);
+                          config.rotation, teal, config.theme.texture);
     });
 
     get()->drawWidget(config.position, config.size, config.rotation,
-                      config.color, config.texture);
+                      config.theme.color(), config.theme.texture);
 
     float tSize = config.size.y * 0.5f;
     auto tStartLocation =
@@ -1110,7 +1146,9 @@ inline void _textfield_render(const uuid& id, const WidgetConfig& config,
 
     text(MK_UUID(id.ownerLayer, id.hash),
          WidgetConfig({
-             .color = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+             .theme = WidgetTheme({
+                 .backgroundColor = glm::vec4{1.0, 0.8f, 0.5f, 1.0f},
+             }),
              .position = tStartLocation,
              .size = glm::vec2{tSize},
              .text = to_string(focused_content),
@@ -1165,9 +1203,11 @@ void _commandfield_autocmp_render(
         std::vector<WidgetConfig> autocompConfigs;
         glm::vec4 hoverColor = green;
         for (int i = 0; i < (int)state->autocomp.asT().size(); i++) {
-            autocompConfigs.push_back(
-                WidgetConfig({.text = state->autocomp.asT()[i],
-                              .color = i == si ? hoverColor : config.color}));
+            autocompConfigs.push_back(WidgetConfig(
+                {.text = state->autocomp.asT()[i],
+                 .theme = WidgetTheme(
+                     {.backgroundColor =
+                          i == si ? hoverColor : config.theme.color()})}));
         }
 
         bool childrenHaveFocus = true;
@@ -1203,8 +1243,9 @@ bool commandfield(const uuid id, WidgetConfig config, std::wstring& content,
     //
     auto state = widget_init<CommandfieldState>(id);
 
-    // log_info("index: {} autocmp size {} buffer {}", state->selected.asT(),
-    // state->autocomp.asT().size(), to_string(state->buffer));
+    // log_info("index: {} autocmp size {} buffer {}",
+    // state->selected.asT(), state->autocomp.asT().size(),
+    // to_string(state->buffer));
 
     // NOTE: We dont need a separate ID since we want
     // global state to match and for them to have the
@@ -1247,7 +1288,8 @@ bool drawer(const uuid id, WidgetConfig config, float* pct_open = nullptr) {
     }
     get()->drawWidget(
         glm::vec2{config.position.x, state->heightPct * config.position.y},
-        config.size, config.rotation, config.color, config.texture);
+        config.size, config.rotation, config.theme.color(),
+        config.theme.texture);
     // output pct if user wants
     if (pct_open) *pct_open = state->heightPct;
     // return if drawer should render children
@@ -1257,16 +1299,16 @@ bool drawer(const uuid id, WidgetConfig config, float* pct_open = nullptr) {
 
 bool window(const uuid&, const WidgetConfig& config) {
     get()->drawWidget(config.position, config.size, config.rotation,
-                      config.color, config.texture);
+                      config.theme.color(), config.theme.texture);
     return true;
 }
 
 bool scroll_view(const uuid id, WidgetConfig config,
                  std::vector<Child> children, float itemHeight,
                  int* startingIndex = nullptr) {
-    // TODO is there a way for us to render all of this to a separate texture?
-    // then we can just hide part of it on the gpu based on y position or
-    // something
+    // TODO is there a way for us to render all of this to a separate
+    // texture? then we can just hide part of it on the gpu based on y
+    // position or something
 
     // TODO smooth scrolling
 
@@ -1275,8 +1317,8 @@ bool scroll_view(const uuid id, WidgetConfig config,
 
     activeIfMouseInside(id, glm::vec4{config.position, config.size});
 
-    // everything is drawn from the center so move it so its not the center that
-    // way the mouse collision works
+    // everything is drawn from the center so move it so its not the center
+    // that way the mouse collision works
     config.position = widget_center(config.position, config.size);
 
     // TODO add scrollbar
@@ -1297,7 +1339,7 @@ bool scroll_view(const uuid id, WidgetConfig config,
 
     if (!config.transparent) {
         get()->drawWidget(config.position, config.size, config.rotation,
-                          config.color, config.texture);
+                          config.theme.color(), config.theme.texture);
     }
     int startIndex = ceil(state->yoffset / itemHeight);
     int endIndex = startIndex + itemsInFrame;

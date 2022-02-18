@@ -102,13 +102,17 @@ struct TerminalLayer : public Layer {
 
             if (drawer(drawer_uuid,
                        WidgetConfig({
-                           .color = blue,
+                           .theme = WidgetTheme({
+                               .backgroundColor = blue,
+                           }),
                            .position = drawer_location[0],
                            .size = drawer_location[1],
                        }),
                        &drawerPctOpen)) {
                 WidgetConfig scrollViewConfig = IUI::WidgetConfig({
-                    .color = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},             //
+                    .theme = WidgetTheme({
+                        .backgroundColor = glm::vec4{0.3f, 0.9f, 0.5f, 1.f},  //
+                    }),
                     .flipTextY = true,                                     //
                     .position = convertUIPos({0, 0}),                      //
                     .size = glm::vec2{drawer_location[1].x, p_fs * 12.f},  //
@@ -136,7 +140,9 @@ struct TerminalLayer : public Layer {
                 uicontext->kbFocusID = command_field_id;
                 auto cfsize = glm::vec2{drawer_location[1].x, h1_fs};
                 auto commandFieldConfig = WidgetConfig({
-                    .color = glm::vec4{0.4f},
+                    .theme = WidgetTheme({
+                        .backgroundColor = glm::vec4{0.4f},
+                    }),
                     .flipTextY = true,
                     .position =
                         glm::vec2{0.f, drawer_location[0].y +
