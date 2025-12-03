@@ -1,7 +1,6 @@
 
-#include "renderer.h"
-
-#include "pch.hpp"
+#include "mrender/renderer.h"
+#include "mrender/pch.hpp"
 
 Renderer::Statistics Renderer::stats;
 Renderer::SceneData* Renderer::sceneData = new Renderer::SceneData;

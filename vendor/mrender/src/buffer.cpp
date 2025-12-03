@@ -1,6 +1,5 @@
-#include "buffer.h"
-
-#include "pch.hpp"
+#include "mrender/buffer.h"
+#include "mrender/pch.hpp"
 
 VertexArray* VertexArray::create() { return new OpenGLVertexArray(); }
 VertexBuffer* VertexBuffer::create(float* verts, int size) {

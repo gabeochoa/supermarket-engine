@@ -1,5 +1,5 @@
 
-#include "font.h"
+#include "mrender/font.h"
 
 INCBIN(default_font, DEFAULT_FONT);
 INCBIN(default_cjk_font, DEFAULT_CJK_FONT);
