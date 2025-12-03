@@ -1,8 +1,7 @@
 
 
-#include "shader.h"
-
-#include "resources.h"
+#include "mrender/shader.h"
+#include "mrender/resources.h"
 
 Shader::Shader(const std::string &n, const std::string &vertexSource,
                const std::string &fragmentSource)

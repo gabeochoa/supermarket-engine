@@ -28,6 +28,13 @@ https://github.com/graphitemaster/incbin/
 - used for including data (shaders / default texture / default fonts) in the binary 
 
 
+## Vendorized renderer (`vendor/mrender`)
+
+- Houses the rendering, shader, texture, font, and OpenGL window sources that were previously under `engine/`.
+- Provides a lightweight Raylib-inspired facade in `mrender/mrender.h` (`mrender::Init`, `BeginMode2D`, `ClearBackground`, `DrawQuad`, `LoadTexture`, etc.) so other projects can reuse the batching renderer without the rest of the engine.
+- `engine/` now consumes this API (see `App`) and only forwards headers such as `renderer.h` to the vendor version for backwards compatibility.
+- Build system compiles `vendor/mrender/src/*.cpp` into `libengine.a`, so including `vendor/mrender/include` is enough for external consumers.
+
 ```
 
 TODOs

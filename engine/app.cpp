@@ -46,7 +46,7 @@ App::App(AppSettings settings) {
         resources.init();
     }
 
-    Renderer::init();
+    mrender::Init();
 }
 
 App::~App() {}
@@ -70,7 +70,7 @@ bool App::onWindowResized(WindowResizeEvent& event) {
         isMinimized = true;
     }
     isMinimized = false;
-    Renderer::resize(event.width(), event.height());
+    mrender::ResizeViewport(event.width(), event.height());
     this->settings.width = event.width();
     this->settings.height = event.height();
     this->settings.ratio = 1.f * this->settings.width / this->settings.height;
@@ -112,7 +112,7 @@ int App::run() {
         Renderer::stats.begin();
         if (isMinimized) continue;
         if (settings.clearEnabled)
-            Renderer::clear(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
+            mrender::ClearBackground(/* color */ {0.1f, 0.1f, 0.1f, 1.0f});
         for (Layer* layer : layerstack) {
             layer->onUpdate(time);
         }

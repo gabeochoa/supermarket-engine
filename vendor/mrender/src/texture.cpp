@@ -1,6 +1,6 @@
 
 
-#include "texture.h"
+#include "mrender/texture.h"
 
 Texture::Texture()
     : name("TEXTURE_HAS_NO_NAME"), width(0), height(0), tilingFactor(1.f) {}
