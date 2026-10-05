@@ -797,13 +797,10 @@ inline void _button_render(const uuid id, const WidgetConfig& config) {
 }
 
 inline void handle_tabbing(const uuid id) {
-    if (has_kb_focus(id)) {
-        if (get()->pressed(get()->keyMapping["Widget Next"])) {
-            get()->kbFocusID = rootID;
-            if (get()->isKeyPressed(get()->keyMapping["Widget Mod"])) {
-                get()->kbFocusID = get()->lastProcessed;
-            }
-        }
+    if (has_kb_focus(id) && get()->pressed(get()->keyMapping["Widget Next"])) {
+        get()->kbFocusID = focus_after_tab(
+            id, get()->lastProcessed, rootID,
+            get()->isKeyPressed(get()->keyMapping["Widget Mod"]));
     }
     // before any returns
     get()->lastProcessed = id;
