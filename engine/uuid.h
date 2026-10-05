@@ -1,85 +1,53 @@
 #pragma once
-
-#include <atomic>
-#include <iostream>
-
-#include "constexpr_map.h"
-#include "external_include.h"
+// Widget identity. CORRECT rule (see CORRECT.md): identity is the tuple
+// (ownerLayer, parentHash, file, line, index) compared field-by-field.
+// The old folded `h0 ^ (h1<<1) ^ (h2<<2) ^ (h3<<3)` hash was equality itself,
+// so distinct tuples collided (e.g. line=2,index=0 vs line=0,index=1 both
+// gave 8) and widgets silently shared state/focus. `hash` below is only a
+// bucket hint for maps/parents, never identity.
+#include <cstddef>
+#include <ostream>
+#include <string>
 
 namespace GOUI {
-
-// From cppreference.com
-// For two different parameters k1 and k2 that are not equal, the probability
-// that std::hash<Key>()(k1) == std::hash<Key>()(k2) should be very small,
-// approaching 1.0/std::numeric_limits<std::size_t>::max().
-//
-// so basically dont have more than numeric_limits::max() ui items per layer
-//
-// thx
-
+inline std::size_t uuid_combine(std::size_t seed, std::size_t v) {
+    return seed ^ (v + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2));
+}
 struct uuid {
-    int ownerLayer;
-    std::size_t hash;
-
-    uuid() : uuid(-99, 0, "__MAGIC__STRING__", -1) {}
+    int ownerLayer = -99;
+    std::size_t parentHash = 0;
+    std::size_t fileHash = 0;
+    int line = -1;
+    int index = -1;
+    std::size_t hash = 0;
+    uuid() = default;
     uuid(const std::string& s1, int i1) : uuid(-1, 0, s1, i1) {}
-
-    uuid(int layer, std::size_t ownerHash, const std::string& s1, int i1) {
-        ownerLayer = layer;
-        auto h0 = std::hash<int>{}(ownerHash);
-        auto h1 = std::hash<std::string>{}(s1);
-        auto h2 = std::hash<int>{}(i1);
-        hash = h0 ^ (h1 << 1) ^ (h2 << 2);
+    uuid(int layer, std::size_t parent, const std::string& s1, int i1, int idx = -1)
+        : ownerLayer(layer), parentHash(parent), fileHash(std::hash<std::string>{}(s1)), line(i1), index(idx) {
+        hash = uuid_combine(uuid_combine(uuid_combine(uuid_combine(
+            std::hash<int>{}(ownerLayer), parentHash), fileHash),
+            std::hash<int>{}(line)), std::hash<int>{}(index));
     }
-
-    uuid(int o, std::size_t ownerHash, const std::string& s1, int i1,
-         int index) {
-        ownerLayer = o;
-        auto h0 = std::hash<int>{}(ownerHash);
-        auto h1 = std::hash<std::string>{}(s1);
-        auto h2 = std::hash<int>{}(i1);
-        auto h3 = std::hash<int>{}(index);
-        hash = h0 ^ (h1 << 1) ^ (h2 << 2) ^ (h3 << 3);
+    bool operator==(const uuid& o) const {
+        return ownerLayer == o.ownerLayer && parentHash == o.parentHash &&
+               fileHash == o.fileHash && line == o.line && index == o.index;
     }
-
-    uuid(const uuid& other) { this->operator=(other); }
-
-    uuid& operator=(const uuid& other) {
-        this->ownerLayer = other.ownerLayer;
-        this->hash = other.hash;
-        return *this;
+    bool operator!=(const uuid& o) const { return !(*this == o); }
+    bool operator<(const uuid& o) const {
+        if (ownerLayer != o.ownerLayer) return ownerLayer < o.ownerLayer;
+        if (parentHash != o.parentHash) return parentHash < o.parentHash;
+        if (fileHash != o.fileHash) return fileHash < o.fileHash;
+        if (line != o.line) return line < o.line;
+        return index < o.index;
     }
-
-    bool operator==(const uuid& other) const {
-        return ownerLayer == other.ownerLayer && hash == other.hash;
-    }
-
-    bool operator<(const uuid& other) const {
-        if (ownerLayer < other.ownerLayer) return true;
-        if (ownerLayer > other.ownerLayer) return false;
-        if (hash < other.hash) return true;
-        if (hash > other.hash) return false;
-        return false;
-    }
-
-    operator std::size_t() const { return this->hash; }
-
+    operator std::size_t() const { return hash; }
     operator std::string() const {
-        return fmt::format("layer: {} hash: {}", this->ownerLayer, this->hash);
+        return "layer: " + std::to_string(ownerLayer) + " hash: " + std::to_string(hash);
     }
 };
-
-std::ostream& operator<<(std::ostream& os, const uuid& obj) {
-    os << fmt::format("layer: {} hash: {}", obj.ownerLayer, obj.hash);
-    return os;
-}
-
+inline std::ostream& operator<<(std::ostream& os, const uuid& obj) { return os << std::string(obj); }
 #define MK_UUID(x, parent) uuid(x, parent, __FILE__, __LINE__)
-#define MK_UUID_LOOP(x, parent, index) \
-    uuid(x, parent, __FILE__, __LINE__, index)
-
+#define MK_UUID_LOOP(x, parent, index) uuid(x, parent, __FILE__, __LINE__, index)
 static uuid rootID = MK_UUID(-1, -1);
 static uuid fakeID = MK_UUID(-2, -1);
-
 }  // namespace GOUI
-
