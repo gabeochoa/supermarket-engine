@@ -489,21 +489,21 @@ struct UIContext {
     uuid hotID;     // probably about to be touched
     uuid activeID;  // currently being touched
 
-    glm::vec2 mousePosition;
-    bool lmouseDown;
+    glm::vec2 mousePosition{};
+    bool lmouseDown = false;
 
     std::map<std::string, int> keyMapping;
 
     std::set<int> widgetKeys;
     uuid kbFocusID;
-    int key;
-    int mod;
+    int key = 0;
+    int mod = 0;
     uuid lastProcessed;
 
     std::set<int> textfieldMods;
     std::set<int> widgetMods;
-    int keychar;
-    int modchar;
+    int keychar = 0;
+    int modchar = 0;
 
     bool pressed(int code) {
         bool a = pressedWithoutEat(code);
@@ -535,7 +535,7 @@ struct UIContext {
         return false;
     }
 
-    float yscrolled;
+    float yscrolled = 0.f;
     bool processMouseScrolled(float yoffset) {
         yscrolled = yoffset;
         return true;
@@ -548,9 +548,9 @@ struct UIContext {
 
     struct FontPhraseTexInfo {
         std::string textureName;
-        int width;
-        int height;
-        int fontSize;
+        int width = 0;
+        int height = 0;
+        int fontSize = 0;
 
         bool valid() {
             return fontSize != 0 && width != 0 && height != 0 &&

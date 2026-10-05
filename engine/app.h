@@ -19,8 +19,8 @@
 #define M_BIND(x) std::bind(&App::x, this, std::placeholders::_1)
 
 struct AppSettings {
-    int width;
-    int height;
+    int width = 0;
+    int height = 0;
     float ratio = 0.f;
     const char* title;
     // should the app manager clear before drawing layers?
@@ -34,10 +34,10 @@ struct AppSettings {
 struct App {
     std::unique_ptr<Window> window;
     Time time;
-    bool isMinimized;
+    bool isMinimized = false;
     AppSettings settings;
 
-    bool running;
+    bool running = false;
     LayerStack layerstack;
 
     static void create(AppSettings settings);
