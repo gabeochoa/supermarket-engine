@@ -324,6 +324,7 @@ keyboard focus. Must be called after the widget code has run.
 #include "log.h"
 #include "strutil.h"
 #include "typeutil.h"
+#include "focus_nav.h"
 #include "uuid.h"
 
 namespace GOUI {
